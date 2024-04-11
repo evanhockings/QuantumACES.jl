@@ -1,6 +1,6 @@
 # Scalable noise characterisation of syndrome extraction circuits with averaged circuit eigenvalue sampling
 
-This repository contains the code used to generate the results for [arXiv:2404.00000](https://arxiv.org/abs/2404.00000).
+This repository contains the code used to generate the results for [arXiv:2404.06545](https://arxiv.org/abs/2404.06545).
 
 For these files, the prefix `rot` refers to the rotated surface code, whereas the prefix `unrot` refers to the unrotated surface code, and the Jupyter notebooks corresponding to each file plots and displays the results.
 - `optimise` files optimise designs at a range of depolarising noise strengths.
