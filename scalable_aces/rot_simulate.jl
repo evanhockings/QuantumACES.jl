@@ -11,7 +11,7 @@ shots_set = [10^6; 10^7; 10^8]
 repetitions = 1000
 rotated_param = RotatedPlanarParameters(dist)
 dep_param = DepolarisingParameters(r_1, r_2, r_m)
-log_param = LogNormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
+log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
 # Load the design
 metadata_dict = load("data/design_metadata_$(code_filename(rotated_param)).jld2")
 @assert rotated_param == metadata_dict["rotated_param"]
@@ -29,30 +29,35 @@ d = load_design(
     true,
 )
 @assert d.code.noise_param == dep_param
-d_log = Update(d, log_param)
+d_log = update_noise(d, log_param)
 # Generate the trivial design
 code = Code(rotated_param, dep_param)
-trivial_tuple_set = TrivialTupleSet(code)
-d_triv = GenerateDesign(code, trivial_tuple_set)
-@assert d_triv.code.noise_param == dep_param
-d_triv_log = Update(d_triv, log_param)
+basic_tuple_set = get_basic_tuple_set(code)
+d_basic = generate_design(code, basic_tuple_set)
+@assert d_basic.code.noise_param == dep_param
+d_basic_log = update_noise(d_basic, log_param)
 # Simualte ACES for the optimised design and depolarising noise
 aces_data_dep =
-    SimulateACES(d, shots_set; repetitions = repetitions, seed = seed, save_data = true)
+    simulate_aces(d, shots_set; repetitions = repetitions, seed = seed, save_data = true)
 # Simualte ACES for the optimised design and log-normal noise
-aces_data_log =
-    SimulateACES(d_log, shots_set; repetitions = repetitions, seed = seed, save_data = true)
+aces_data_log = simulate_aces(
+    d_log,
+    shots_set;
+    repetitions = repetitions,
+    seed = seed,
+    save_data = true,
+)
 # Simualte ACES for the trivial design and depolarising noise
-aces_data_triv_dep = SimulateACES(
-    d_triv,
+aces_data_basic_dep = simulate_aces(
+    d_basic,
     shots_set;
     repetitions = repetitions,
     seed = seed,
     save_data = true,
 )
 # Simualte ACES for the trivial design and log-normal noise
-aces_data_triv_log = SimulateACES(
-    d_triv_log,
+aces_data_basic_log = simulate_aces(
+    d_basic_log,
     shots_set;
     repetitions = repetitions,
     seed = seed,

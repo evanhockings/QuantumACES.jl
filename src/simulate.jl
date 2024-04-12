@@ -4,8 +4,66 @@ function __init__()
     return PythonCall.pycopy!(stim, pyimport("stim"))
 end
 
+struct ACESData
+    # The design
+    d::Design
+    # The set of shots to repeatedly sample from the probability distribution
+    shots_set::Vector{Int}
+    # The set of shots to sample 
+    shots_set_norm::Vector{Int}
+    # The number of times to repeat the ACES estimation procedure
+    repetitions::Int
+    # Seeds for each of the repetitions
+    seeds::Vector{UInt64}
+    # Circuit eigenvalues
+    eigenvalues::Vector{Float64}
+    # Circuit eigenvalue estimator covariance matrix
+    covariance::SparseMatrixCSC{Float64, Int32}
+    # The estimated circuit eigenvalues for each of the shots in the set
+    est_eigenvalues_coll::Matrix{Vector{Float64}}
+    # The FGLS estimated gate eigenvalues for each of the shots in the set
+    fgls_gate_eigenvalues_coll::Matrix{Vector{Float64}}
+    # The GLS estimated gate eigenvalues for each of the shots in the set
+    # This uses the true covariance matrix
+    gls_gate_eigenvalues_coll::Matrix{Vector{Float64}}
+    # The WLS estimated gate eigenvalues for each of the shots in the set
+    wls_gate_eigenvalues_coll::Matrix{Vector{Float64}}
+    # The OLS estimated gate eigenvalues for each of the shots in the set
+    ols_gate_eigenvalues_coll::Matrix{Vector{Float64}}
+    # The FGLS estimated gate probability distributions for each of the shots in the set
+    fgls_gate_probabilities_coll::Matrix{Dict{Gate, Vector{Float64}}}
+    # The GLS estimated gate probability distributions for each of the shots in the set
+    gls_gate_probabilities_coll::Matrix{Dict{Gate, Vector{Float64}}}
+    # The WLS estimated gate probability distributions for each of the shots in the set
+    wls_gate_probabilities_coll::Matrix{Dict{Gate, Vector{Float64}}}
+    # The OLS estimated gate probability distributions for each of the shots in the set
+    ols_gate_probabilities_coll::Matrix{Dict{Gate, Vector{Float64}}}
+    # The 2-norm between the FGLS estimated gate eigenvalues and the synthetic gate eigenvalues for each of the shots in the set
+    fgls_gate_norm_coll::Matrix{Float64}
+    # The 2-norm between the GLS estimated gate eigenvalues and the synthetic gate eigenvalues for each of the shots in the set
+    gls_gate_norm_coll::Matrix{Float64}
+    # The 2-norm between the WLS estimated gate eigenvalues and the synthetic gate eigenvalues for each of the shots in the set
+    wls_gate_norm_coll::Matrix{Float64}
+    # The 2-norm between the OLS estimated gate eigenvalues and the synthetic gate eigenvalues for each of the shots in the set
+    ols_gate_norm_coll::Matrix{Float64}
+    # The time taken to simulate sampling and estimate the gate eigenvalues for each repetition
+    # (simulate_time, fgls_time, gls_time, wls_time, ols_time)
+    calculation_times::Matrix{Float64}
+    # The overall time taken to simulate ACES across all repetitions
+    overall_time::Float64
+end
+
+function Base.show(io::IO, a::ACESData)
+    return print(
+        io,
+        "ACES data from a design for a $(a.d.code.circuit_param.code_name) code with $(length(a.d.tuple_set)) tuples and $(a.d.experiment_number) experiments.",
+    )
+end
+
+@struct_hash_equal_isequal ACESData
+
 #
-function StimCircuitString(
+function get_stim_circuit_string(
     circuit::Vector{Layer},
     gate_probabilities::Dict{Gate, Vector{Float64}},
     add_prep::Bool,
@@ -98,13 +156,13 @@ function StimCircuitString(
 end
 
 """
-    StimSample(circuit::Vector{Layer}, gate_probabilities::Dict{Gate, Vector{Float64}}, shots::Integer, add_prep::Bool, add_meas::Bool; stim_seed::Union{UInt64, Nothing} = nothing)
+    stim_sample(circuit::Vector{Layer}, gate_probabilities::Dict{Gate, Vector{Float64}}, shots::Int, add_prep::Bool, add_meas::Bool; stim_seed::Union{UInt64, Nothing} = nothing)
 
 Rapidly simulate the provided circuit using the Python package Stim and return the measurement outcomes. Note that while the seed for Stim can be fixed, Stim guarantees inconsistency when using the same seed on different versions.
 """
-function StimSample(
+function stim_sample(
     stim_circuit_string::String,
-    shots::Integer;
+    shots::Int;
     stim_seed::Union{UInt64, Nothing} = nothing,
     force_gc::Bool = false,
 )
@@ -132,11 +190,11 @@ function StimSample(
     if force_gc
         GC.gc()
     end
-    return stim_samples::Matrix{UInt8}#, measurements::Integer)
+    return stim_samples::Matrix{UInt8}
 end
 
 #
-function batch_shots(shots::Integer, measurements::Integer, max_samples::Integer)
+function batch_shots(shots::Int, measurements::Int, max_samples::Int)
     # Divide the shots into batches
     # Stim samples in batches of 256, so we want batch sizes that are multiples of 256
     base = 256
@@ -155,17 +213,17 @@ function batch_shots(shots::Integer, measurements::Integer, max_samples::Integer
 end
 
 """
-    SampleEigenvalues(d::Design, shots_set::Vector{Int}; seed::Union{UInt64, Nothing} = nothing)
+    estimate_eigenvalues(d::Design, shots_set::Vector{Int}; seed::Union{UInt64, Nothing} = nothing)
 
 Simulate ACES data for the design using the specified number of shots and noise parameters, and use that data to estimate the circuit eigenvalues, setting those greater than 1 to 1.
 """
-function SampleEigenvalues(
+function estimate_eigenvalues(
     d::Design,
     shots_set::Vector{Int};
     seed::Union{UInt64, Nothing} = nothing,
     epsilon::Float64 = 0.1,
     detailed_diagnostics::Bool = false,
-    max_samples::Integer = 10^10,
+    max_samples::Int = 10^10,
     force_gc::Bool = false,
 )
     # Set up some variables describing organisation of the circuits
@@ -229,7 +287,7 @@ function SampleEigenvalues(
         circuit_tuple = d.tuple_set[i]
         tuple_circuit = d.code.circuit[circuit_tuple]
         tuple_circuit_string =
-            StimCircuitString(tuple_circuit, gate_probabilities, add_prep, add_meas)
+            get_stim_circuit_string(tuple_circuit, gate_probabilities, add_prep, add_meas)
         # Initialise the Pauli mappings
         mappings = d.mapping_ensemble[i]
         L = length(mappings)
@@ -240,9 +298,9 @@ function SampleEigenvalues(
         for l in 1:L
             m = mappings[l]
             initial_set[l] = m.initial
-            initial_support_set[l] = Support(m.initial)
+            initial_support_set[l] = get_support(m.initial)
             final_set[l] = m.final
-            final_support_set[l] = Support(m.final)
+            final_support_set[l] = get_support(m.final)
         end
         # Initialise the eigenvalue estimator containers
         eigenvalues_pos = [zeros(Int, L) for _ in 1:shots_count]
@@ -258,8 +316,12 @@ function SampleEigenvalues(
             prep_layers = d.prep_ensemble[i][j]
             sign_circuit_number = length(prep_layers)
             meas_layer = d.meas_ensemble[i][j]
-            meas_layer_string =
-                StimCircuitString([meas_layer], gate_probabilities, add_prep, add_meas)
+            meas_layer_string = get_stim_circuit_string(
+                [meas_layer],
+                gate_probabilities,
+                add_prep,
+                add_meas,
+            )
             # Determine the qubits prepared and measured by the circuit
             prep_qubits = [
                 [gate.targets[1] for gate in prep_layers[k].layer] for
@@ -270,7 +332,7 @@ function SampleEigenvalues(
             sign_data = Vector{Matrix{UInt8}}(undef, sign_circuit_number)
             for k in 1:sign_circuit_number
                 # Initialise variables
-                prep_layer_string = StimCircuitString(
+                prep_layer_string = get_stim_circuit_string(
                     [prep_layers[k]],
                     gate_probabilities,
                     add_prep,
@@ -286,7 +348,7 @@ function SampleEigenvalues(
                     batches = length(shot_batches)
                     sign_data_coll = Vector{Matrix{UInt8}}(undef, batches)
                     for b in 1:batches
-                        sign_data_coll[b] = StimSample(
+                        sign_data_coll[b] = stim_sample(
                             stim_circuit_string,
                             shot_batches[b];
                             stim_seed = stim_seeds[i][j][k][b],
@@ -296,7 +358,7 @@ function SampleEigenvalues(
                     sign_data[k] = vcat(sign_data_coll...)
                 else
                     # Sample all of the shots at once
-                    sign_data[k] = StimSample(
+                    sign_data[k] = stim_sample(
                         stim_circuit_string,
                         shots_maximum[i];
                         stim_seed = stim_seeds[i][j][k],
@@ -402,16 +464,16 @@ function SampleEigenvalues(
 end
 
 """
-    FGLSGateEigenvalues(d::Design, est_eigenvalues::Vector{Float64}; epsilon::Float64 = 1e-10, max_iter::Integer = 10, recalc_eigenvalues::Bool = true, constrain::Bool = true, diagnostics::Bool = false)
+    fgls_estimate_gate_eigenvalues(d::Design, est_eigenvalues::Vector{Float64}; epsilon::Float64 = 1e-10, max_iter::Int = 10, recalc_eigenvalues::Bool = true, constrain::Bool = true, diagnostics::Bool = false)
 
 Estimate the gate eigenvalues from the circuit eigenvalues using feasible generalised least squares, iterating estimating the gate eigenvalues while using them to update the covariance matrix.
 By default, `recalc_eigenvalues` is true, so this uses the circuit eigenvalues estimated from the gate eigenvalues, rather than the actual circuit eigenvalue estimators. This is to try and ensure that the circuit eigenvalue entries are positive and hence the covariance matrix is positive-definite. Unfortunately, that is not always the case, and so we sometimes have to set covariance matrix entries to 0.
 """
-function FGLSGateEigenvalues(
+function fgls_estimate_gate_eigenvalues(
     d::Design,
     est_eigenvalues::Vector{Float64};
     epsilon::Float64 = 1e-10,
-    max_iter::Integer = 10,
+    max_iter::Int = 10,
     recalc_eigenvalues::Bool = true,
     constrain::Bool = true,
     diagnostics::Bool = false,
@@ -419,20 +481,24 @@ function FGLSGateEigenvalues(
     # Initialise variables
     N = size(d.matrix, 2)
     # Initialise the gate eigenvalues using the diagonal covariance matrix estimator
-    old_gate_eigenvalues = WLSGateEigenvalues(d, est_eigenvalues)
+    old_gate_eigenvalues = wls_estimate_gate_eigenvalues(d, est_eigenvalues)
     # Recursively perform generalised least squares until convergence
     iter = 1
     while true
         # Calculate the covariance matrix
         if recalc_eigenvalues
             old_eigenvalues = exp.(-(d.matrix * (-log.(old_gate_eigenvalues))))
-            covariance = CalculateCovariance(d, old_eigenvalues, old_gate_eigenvalues)
+            covariance = calc_covariance(d, old_eigenvalues, old_gate_eigenvalues)
         else
-            covariance = CalculateCovariance(d, est_eigenvalues, old_gate_eigenvalues)
+            covariance = calc_covariance(d, est_eigenvalues, old_gate_eigenvalues)
         end
         # Perform generalised least squares
-        new_gate_eigenvalues =
-            GLSGateEigenvalues(d, est_eigenvalues, covariance; constrain = constrain)
+        new_gate_eigenvalues = gls_estimate_gate_eigenvalues(
+            d,
+            est_eigenvalues,
+            covariance;
+            constrain = constrain,
+        )
         # Check for convergence
         norm_difference = norm(new_gate_eigenvalues - old_gate_eigenvalues, 2) / sqrt(N)
         old_gate_eigenvalues = new_gate_eigenvalues
@@ -458,11 +524,11 @@ function FGLSGateEigenvalues(
 end
 
 """
-    GLSGateEigenvalues(d::Design, est_eigenvalues::Vector{Float64}, est_covariance::SparseMatrixCSC{Float64, Int32}; constrain::Bool = true)
+    gls_estimate_gate_eigenvalues(d::Design, est_eigenvalues::Vector{Float64}, est_covariance::SparseMatrixCSC{Float64, Int32}; constrain::Bool = true)
 
 Estimate the gate eigenvalues from the circuit eigenvalues using generalised least squares, using the supplied covariance matrix.
 """
-function GLSGateEigenvalues(
+function gls_estimate_gate_eigenvalues(
     d::Design,
     est_eigenvalues::Vector{Float64},
     est_covariance::SparseMatrixCSC{Float64, Int32};
@@ -509,11 +575,11 @@ function GLSGateEigenvalues(
 end
 
 """
-    WLSGateEigenvalues(d::Design, est_eigenvalues::Vector{Float64}; constrain::Bool = true)
+    wls_estimate_gate_eigenvalues(d::Design, est_eigenvalues::Vector{Float64}; constrain::Bool = true)
 
 Estimate the gate eigenvalues from the circuit eigenvalues using weighted least squares.
 """
-function WLSGateEigenvalues(
+function wls_estimate_gate_eigenvalues(
     d::Design,
     est_eigenvalues::Vector{Float64};
     constrain::Bool = true,
@@ -562,11 +628,11 @@ function WLSGateEigenvalues(
 end
 
 """
-    OLSGateEigenvalues(d::Design, est_eigenvalues::Vector{Float64}; constrain::Bool = true)
+    ols_estimate_gate_eigenvalues(d::Design, est_eigenvalues::Vector{Float64}; constrain::Bool = true)
 
 Estimate the gate eigenvalues from the circuit eigenvalues using ordinary least squares.
 """
-function OLSGateEigenvalues(
+function ols_estimate_gate_eigenvalues(
     d::Design,
     est_eigenvalues::Vector{Float64};
     constrain::Bool = true,
@@ -583,24 +649,24 @@ function OLSGateEigenvalues(
 end
 
 """
-    EstimateGateProbabilities(d::Design, est_gate_eigenvalues::Vector{Float64})
+    estimate_gate_probabilities(d::Design, est_gate_eigenvalues::Vector{Float64})
 
 Estimate the gate error probabilities from the gate eigenvalues using the Walsh-Hadamard transform, projecting the resulting distributions into the probability simplex.
 """
-function EstimateGateProbabilities(d::Design, est_gate_eigenvalues::Vector{Float64})
+function estimate_gate_probabilities(d::Design, est_gate_eigenvalues::Vector{Float64})
     # Determine the transform matrices
     H₁ = [1 1; 1 -1]
     # The index orders 1-qubit Paulis as:
     # (I=0),  X=1,    Z=2,    Y=3
     # This is the natural bit string ordering.
-    W_1 = WHTMatrix(1)
+    W_1 = wht_matrix(1)
     # The index orders 2-qubit Paulis as:
     # (II=0), XI=1,   IX=2,   XX=3
     # ZI=4,   YI=5,   ZX=6,   YX=7
     # IZ=8,   XZ=9,   IY=10,  XY=11
     # ZZ=12,  YZ=13,  ZY=14,  YY=15
     # This is the natural bit string ordering.
-    W_2 = WHTMatrix(2)
+    W_2 = wht_matrix(2)
     # Estimate the gate error probabilities from the eigenvalues, projecting into the probability simplex
     gates = d.code.total_gates
     gate_index = d.code.gate_index
@@ -625,30 +691,30 @@ function EstimateGateProbabilities(d::Design, est_gate_eigenvalues::Vector{Float
         ]
         # Generate the probability distribution
         est_gate_probabilities[gate] =
-            SimplexProject(transform_matrix * est_gate / transform_size)
+            project_simplex(transform_matrix * est_gate / transform_size)
     end
     return est_gate_probabilities::Dict{Gate, Vector{Float64}}
 end
 
 """
-    SimulateACES(d::Design, shots_set::Vector{Int}; repetitions::Integer = 1, seed::Union{UInt64, Nothing} = nothing, diagnostics::Bool = true, save_data::Bool = false)
+    simulate_aces(d::Design, shots_set::Vector{Int}; repetitions::Int = 1, seed::Union{UInt64, Nothing} = nothing, diagnostics::Bool = true, save_data::Bool = false)
 
 Simulates ACES for the design, performing `repetitions` repetitions, and sampling shots according to `shots_set` for each repetition.
 
 WARNING: seeding will have all of the same features as seeding in Stim. In particular, this means if you sample the shots in batches, which happens when `max_samples` is exceeded, the results will differ from when you sample the shots all at once.
 """
-function SimulateACES(
+function simulate_aces(
     d::Design,
     shots_set::Vector{Int};
-    repetitions::Integer = 1,
+    repetitions::Int = 1,
     seed::Union{UInt64, Nothing} = nothing,
-    N_warn::Integer = 10^4,
-    max_samples::Integer = 10^10,
+    N_warn::Int = 3 * 10^4,
+    max_samples::Int = 10^10,
     force_gc::Bool = false,
     diagnostics::Bool = true,
     detailed_diagnostics::Bool = false,
     save_data::Bool = false,
-    save_interval::Integer = 50,
+    save_interval::Int = 50,
     clear_design::Bool = false,
 )
     # Warn the user if they have unadvisable settings for a large circuit
@@ -669,7 +735,7 @@ function SimulateACES(
     # Generate synthetic ACES data
     N = size(d.matrix, 2)
     gate_eigenvalues = d.code.gate_eigenvalues
-    (eigenvalues, covariance) = SyntheticEigenvalues(d)
+    (eigenvalues, covariance) = calc_eigenvalues_covariance(d)
     # Normalise the sampled shot count by the amount of time taken to perform the circuits
     shots_count = length(shots_set)
     tuple_times_factor = sum(d.shot_weights .* d.tuple_times)
@@ -737,7 +803,7 @@ function SimulateACES(
             return saved_aces_data::ACESData
         end
         same_data =
-            (saved_aces_data.d.code.code_param == d.code.code_param) &&
+            (saved_aces_data.d.code.circuit_param == d.code.circuit_param) &&
             (saved_aces_data.d.code.noise_param == d.code.noise_param) &&
             (saved_aces_data.d.matrix == d.matrix) &&
             (saved_aces_data.d.tuple_set == d.tuple_set) &&
@@ -797,7 +863,7 @@ function SimulateACES(
     for idx in (saved_repetitions + 1):repetitions
         # Simulate ACES circuits and process the data to estimate the circuit eigenvalues
         simulate_start = time()
-        est_eigenvalues_set = SampleEigenvalues(
+        est_eigenvalues_set = estimate_eigenvalues(
             d,
             shots_set_norm;
             seed = seeds[idx],
@@ -820,10 +886,13 @@ function SimulateACES(
             if d.full_covariance
                 # FGLS estimates
                 time_1 = time()
-                fgls_gate_eigenvalues =
-                    FGLSGateEigenvalues(d, est_eigenvalues; diagnostics = diagnostics)
+                fgls_gate_eigenvalues = fgls_estimate_gate_eigenvalues(
+                    d,
+                    est_eigenvalues;
+                    diagnostics = diagnostics,
+                )
                 fgls_gate_probabilities =
-                    EstimateGateProbabilities(d, fgls_gate_eigenvalues)
+                    estimate_gate_probabilities(d, fgls_gate_eigenvalues)
                 fgls_gate_norm =
                     sqrt(shots_set[s] / N) *
                     norm(fgls_gate_eigenvalues - gate_eigenvalues, 2)
@@ -833,8 +902,10 @@ function SimulateACES(
                 ls_times[1, s] = time() - time_1
                 # GLS estimates
                 time_2 = time()
-                gls_gate_eigenvalues = GLSGateEigenvalues(d, est_eigenvalues, covariance)
-                gls_gate_probabilities = EstimateGateProbabilities(d, gls_gate_eigenvalues)
+                gls_gate_eigenvalues =
+                    gls_estimate_gate_eigenvalues(d, est_eigenvalues, covariance)
+                gls_gate_probabilities =
+                    estimate_gate_probabilities(d, gls_gate_eigenvalues)
                 gls_gate_norm =
                     sqrt(shots_set[s] / N) *
                     norm(gls_gate_eigenvalues - gate_eigenvalues, 2)
@@ -845,8 +916,8 @@ function SimulateACES(
             end
             # WLS estimates
             time_3 = time()
-            wls_gate_eigenvalues = WLSGateEigenvalues(d, est_eigenvalues)
-            wls_gate_probabilities = EstimateGateProbabilities(d, wls_gate_eigenvalues)
+            wls_gate_eigenvalues = wls_estimate_gate_eigenvalues(d, est_eigenvalues)
+            wls_gate_probabilities = estimate_gate_probabilities(d, wls_gate_eigenvalues)
             wls_gate_norm =
                 sqrt(shots_set[s] / N) * norm(wls_gate_eigenvalues - gate_eigenvalues, 2)
             wls_gate_eigenvalues_coll[idx, s] = wls_gate_eigenvalues
@@ -855,8 +926,8 @@ function SimulateACES(
             ls_times[3, s] = time() - time_3
             # OLS estimates
             time_4 = time()
-            ols_gate_eigenvalues = OLSGateEigenvalues(d, est_eigenvalues)
-            ols_gate_probabilities = EstimateGateProbabilities(d, ols_gate_eigenvalues)
+            ols_gate_eigenvalues = ols_estimate_gate_eigenvalues(d, est_eigenvalues)
+            ols_gate_probabilities = estimate_gate_probabilities(d, ols_gate_eigenvalues)
             ols_gate_norm =
                 sqrt(shots_set[s] / N) * norm(ols_gate_eigenvalues - gate_eigenvalues, 2)
             ols_gate_eigenvalues_coll[idx, s] = ols_gate_eigenvalues

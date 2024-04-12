@@ -10,22 +10,22 @@ seed = UInt(0)
 rotated_param = RotatedPlanarParameters(dist)
 unrotated_param = UnrotatedPlanarParameters(dist)
 dep_param = DepolarisingParameters(r_1, r_2, r_m)
-log_param = LogNormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
+log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
 rotated_planar = Code(rotated_param, log_param)
 unrotated_planar = Code(unrotated_param, dep_param)
 # Set up designs
-rot_trivial = TrivialTupleSet(rotated_planar)
-rot_tuple_set = [[rotated_planar.circuit_tuple]; rot_trivial]
-d_rot = GenerateDesign(rotated_planar, rot_tuple_set)
-unrot_trivial = TrivialTupleSet(unrotated_planar)
-unrot_tuple_set = [[unrotated_planar.circuit_tuple]; unrot_trivial]
-d_unrot = GenerateDesign(unrotated_planar, unrot_tuple_set)
+rot_basic = get_basic_tuple_set(rotated_planar)
+rot_tuple_set = [[rotated_planar.circuit_tuple]; rot_basic]
+d_rot = generate_design(rotated_planar, rot_tuple_set)
+unrot_basic = get_basic_tuple_set(unrotated_planar)
+unrot_tuple_set = [[unrotated_planar.circuit_tuple]; unrot_basic]
+d_unrot = generate_design(unrotated_planar, unrot_tuple_set)
 # Test that the trivial experiment numbers are correctly generated
 @testset "Trivial experiment numbers" begin
-    d_rot_trivial = GenerateDesign(rotated_planar, rot_trivial)
-    d_unrot_trivial = GenerateDesign(unrotated_planar, unrot_trivial)
-    @test d_rot_trivial.experiment_numbers == TrivialExperimentNumbers(rotated_planar)
-    @test d_unrot_trivial.experiment_numbers == TrivialExperimentNumbers(unrotated_planar)
+    d_rot_basic = generate_design(rotated_planar, rot_basic)
+    d_unrot_basic = generate_design(unrotated_planar, unrot_basic)
+    @test d_rot_basic.experiment_numbers == get_basic_experiment_numbers(rotated_planar)
+    @test d_unrot_basic.experiment_numbers == get_basic_experiment_numbers(unrotated_planar)
 end
 # Test that we can generate codes with a range of different parameters
 test_param_1 = RotatedPlanarParameters(
@@ -58,12 +58,12 @@ test_param_3 = UnrotatedPlanarParameters(
 test_code_3 = Code(test_param_3, dep_param)
 # Set up gradient descent parameters
 max_steps = 3
-rot_covariance_log = MeritData(d_rot)
+rot_covariance_log = calc_covariance_log(d_rot)
 N_rot = rotated_planar.N
 T_rot = length(d_rot.tuple_set)
 rot_mapping_lengths = length.(d_rot.mapping_ensemble)
 rot_gate_eigenvalues_diag = Diagonal(d_rot.code.gate_eigenvalues)
-unrot_covariance_log = MeritData(d_unrot)
+unrot_covariance_log = calc_covariance_log(d_unrot)
 N_unrot = unrotated_planar.N
 T_unrot = length(d_unrot.tuple_set)
 unrot_mapping_lengths = length.(d_unrot.mapping_ensemble)
@@ -71,31 +71,41 @@ unrot_gate_eigenvalues_diag = Diagonal(d_unrot.code.gate_eigenvalues)
 # Test the merit gradient for GLS
 @testset "GLS merit gradient" begin
     # Test GLS gradient descent
-    (d_rot_gls, rot_covariance_log_gls, rot_merit_descent_gls) =
-        GLSDescent(d_rot, rot_covariance_log; max_steps = max_steps)
+    (d_rot_gls, rot_covariance_log_gls, rot_merit_descent_gls) = gls_optimise_weights(
+        d_rot,
+        rot_covariance_log;
+        options = OptimOptions(; max_steps = max_steps),
+    )
     @test d_rot_gls.shot_weights != d_rot.shot_weights
     @test rot_covariance_log_gls != rot_covariance_log
     # Test the covariance matrix output by gradient descent is correct
-    rot_gls_opt_merit = GLSMerit(d_rot_gls)
-    rot_gls_opt_cov_eigvals = eigvals(GLSCovariance(d_rot_gls, rot_covariance_log_gls))
-    (rot_gls_opt_expectation, rot_gls_opt_variance) = NRMSEMoments(rot_gls_opt_cov_eigvals)
+    rot_gls_opt_merit = calc_gls_merit(d_rot_gls)
+    rot_gls_opt_cov_eigvals =
+        eigvals(calc_gls_covariance(d_rot_gls, rot_covariance_log_gls))
+    (rot_gls_opt_expectation, rot_gls_opt_variance) = nrmse_moments(rot_gls_opt_cov_eigvals)
     @test rot_gls_opt_merit.eigenvalues ≈ rot_gls_opt_cov_eigvals
     @test rot_gls_opt_merit.expectation ≈ rot_gls_opt_expectation
     @test rot_gls_opt_merit.variance ≈ rot_gls_opt_variance
     # Check that gradient descent improved the figure of merit
-    rot_gls_unopt_expectation = GLSMoments(d_rot, rot_covariance_log)[1]
+    rot_gls_unopt_expectation = calc_gls_moments(d_rot, rot_covariance_log)[1]
     @test rot_gls_opt_expectation < rot_gls_unopt_expectation
     # Test the GLS gradient
     gls_1 = time()
     rot_gls_shot_weights = d_rot_gls.shot_weights
-    rot_gls_shot_weights_factor_inv =
-        ShotFactorInv(rot_gls_shot_weights, d_rot_gls.tuple_times, rot_mapping_lengths)
+    rot_gls_shot_weights_factor_inv = get_shot_weights_factor_inv(
+        rot_gls_shot_weights,
+        d_rot_gls.tuple_times,
+        rot_mapping_lengths,
+    )
     rot_covariance_log_gls_unweighted =
         rot_covariance_log_gls * rot_gls_shot_weights_factor_inv
     rot_covariance_log_gls_unweighted_inv =
-        SparseCovarianceInv(rot_covariance_log_gls_unweighted, rot_mapping_lengths)
-    (gls_expectation_grad, gls_expectation) =
-        GLSGradient(d_rot_gls, rot_gls_shot_weights, rot_covariance_log_gls_unweighted_inv)
+        sparse_covariance_inv(rot_covariance_log_gls_unweighted, rot_mapping_lengths)
+    (gls_expectation_grad, gls_expectation) = calc_gls_merit_grad(
+        d_rot_gls,
+        rot_gls_shot_weights,
+        rot_covariance_log_gls_unweighted_inv,
+    )
     gls_2 = time()
     # Compare against ForwardDiff
     function DifferentiableGLSExpectation(shot_weights)
@@ -145,29 +155,39 @@ end
 # Test the merit gradient for WLS
 @testset "WLS merit gradient" begin
     # Test WLS gradient descent
-    (d_rot_wls, rot_covariance_log_wls, rot_merit_descent_wls) =
-        WLSDescent(d_rot, rot_covariance_log; max_steps = max_steps)
+    (d_rot_wls, rot_covariance_log_wls, rot_merit_descent_wls) = wls_optimise_weights(
+        d_rot,
+        rot_covariance_log;
+        options = OptimOptions(; max_steps = max_steps),
+    )
     @test d_rot_wls.shot_weights != d_rot.shot_weights
     @test rot_covariance_log_wls != rot_covariance_log
     # Check the covariance matrix output by gradient descent yields the correct quantities
-    rot_wls_opt_merit = WLSMerit(d_rot_wls)
-    rot_wls_opt_cov_eigvals = eigvals(WLSCovariance(d_rot_wls, rot_covariance_log_wls))
-    (rot_wls_opt_expectation, rot_wls_opt_variance) = NRMSEMoments(rot_wls_opt_cov_eigvals)
+    rot_wls_opt_merit = calc_wls_merit(d_rot_wls)
+    rot_wls_opt_cov_eigvals =
+        eigvals(calc_wls_covariance(d_rot_wls, rot_covariance_log_wls))
+    (rot_wls_opt_expectation, rot_wls_opt_variance) = nrmse_moments(rot_wls_opt_cov_eigvals)
     @test rot_wls_opt_merit.eigenvalues ≈ rot_wls_opt_cov_eigvals
     @test rot_wls_opt_merit.expectation ≈ rot_wls_opt_expectation
     @test rot_wls_opt_merit.variance ≈ rot_wls_opt_variance
     # Check that gradient descent improved the figure of merit
-    rot_wls_unopt_expectation = WLSMoments(d_rot, rot_covariance_log)[1]
+    rot_wls_unopt_expectation = calc_wls_moments(d_rot, rot_covariance_log)[1]
     @test rot_wls_opt_expectation < rot_wls_unopt_expectation
     # Test the WLS gradient
     wls_1 = time()
     rot_wls_shot_weights = d_rot_wls.shot_weights
-    rot_wls_shot_weights_factor_inv =
-        ShotFactorInv(rot_wls_shot_weights, d_rot_wls.tuple_times, rot_mapping_lengths)
+    rot_wls_shot_weights_factor_inv = get_shot_weights_factor_inv(
+        rot_wls_shot_weights,
+        d_rot_wls.tuple_times,
+        rot_mapping_lengths,
+    )
     rot_covariance_log_wls_unweighted =
         rot_covariance_log_wls * rot_wls_shot_weights_factor_inv
-    (wls_expectation_grad, wls_expectation) =
-        WLSGradient(d_rot_wls, rot_wls_shot_weights, rot_covariance_log_wls_unweighted)
+    (wls_expectation_grad, wls_expectation) = calc_wls_merit_grad(
+        d_rot_wls,
+        rot_wls_shot_weights,
+        rot_covariance_log_wls_unweighted,
+    )
     wls_2 = time()
     # Compare against ForwardDiff
     function DifferentiableWLSExpectation(shot_weights)
@@ -220,26 +240,29 @@ end
 # Test the merit gradient for OLS
 @testset "OLS merit gradient" begin
     # Test OLS gradient descent
-    (d_unrot_ols, unrot_covariance_log_ols, unrot_merit_descent_ols) =
-        OLSDescent(d_unrot, unrot_covariance_log; max_steps = max_steps)
+    (d_unrot_ols, unrot_covariance_log_ols, unrot_merit_descent_ols) = ols_optimise_weights(
+        d_unrot,
+        unrot_covariance_log;
+        options = OptimOptions(; max_steps = max_steps),
+    )
     @test d_unrot_ols.shot_weights != d_unrot.shot_weights
     @test unrot_covariance_log_ols != unrot_covariance_log
     # Check the covariance matrix output by gradient descent yields the correct quantities
-    unrot_ols_opt_merit = OLSMerit(d_unrot_ols)
+    unrot_ols_opt_merit = calc_ols_merit(d_unrot_ols)
     unrot_ols_opt_cov_eigvals =
-        eigvals(OLSCovariance(d_unrot_ols, unrot_covariance_log_ols))
+        eigvals(calc_ols_covariance(d_unrot_ols, unrot_covariance_log_ols))
     (unrot_ols_opt_expectation, unrot_ols_opt_variance) =
-        NRMSEMoments(unrot_ols_opt_cov_eigvals)
+        nrmse_moments(unrot_ols_opt_cov_eigvals)
     @test unrot_ols_opt_merit.eigenvalues ≈ unrot_ols_opt_cov_eigvals
     @test unrot_ols_opt_merit.expectation ≈ unrot_ols_opt_expectation
     @test unrot_ols_opt_merit.variance ≈ unrot_ols_opt_variance
     # Check that gradient descent improved the figure of merit
-    unrot_ols_unopt_expectation = OLSMoments(d_unrot, unrot_covariance_log)[1]
+    unrot_ols_unopt_expectation = calc_ols_moments(d_unrot, unrot_covariance_log)[1]
     @test unrot_ols_opt_expectation < unrot_ols_unopt_expectation
     # Test the OLS gradient
     ols_1 = time()
     unrot_ols_shot_weights = d_unrot_ols.shot_weights
-    unrot_ols_shot_weights_factor_inv = ShotFactorInv(
+    unrot_ols_shot_weights_factor_inv = get_shot_weights_factor_inv(
         unrot_ols_shot_weights,
         d_unrot_ols.tuple_times,
         unrot_mapping_lengths,
@@ -253,7 +276,7 @@ end
     unrot_ols_estimator_covariance =
         unrot_ols_estimator * unrot_covariance_log_ols_unweighted
     unrot_ols_gram_covariance = unrot_ols_estimator' * unrot_ols_estimator_covariance
-    (ols_expectation_grad, ols_expectation) = OLSGradient(
+    (ols_expectation_grad, ols_expectation) = calc_ols_merit_grad(
         d_unrot_ols,
         unrot_ols_shot_weights,
         unrot_ols_estimator,
@@ -303,7 +326,7 @@ end
 @testset "LS merit comparison" begin
     # Compare the merits when optimised for the three LS estimators
     (d_rot_set, rot_covariance_log_set, rot_merit_descent_set, rot_merit_array) =
-        CompareDescents(d_rot, rot_covariance_log)
+        compare_ls_optimise_weights(d_rot, rot_covariance_log)
     # Plot the loss curves
     rot_merit_descent_plot = scatter(
         rot_merit_descent_set[1];
@@ -330,24 +353,25 @@ end
     @test rot_merit_array[3, 3] <= rot_merit_array[1, 3]
     @test rot_merit_array[3, 3] <= rot_merit_array[2, 3]
     # Pretty print the results
-    PrettyPrint(rot_merit_array)
+    pretty_print(rot_merit_array)
 end
 # Test the functions for growing and pruning designs
 @testset "Growing and pruning designs" begin
     # Generate the design
-    d_rot_trivial = GenerateDesign(rotated_planar, rot_trivial)
-    rot_covariance_log_trivial = MeritData(d_rot_trivial)
+    d_rot_basic = generate_design(rotated_planar, rot_basic)
+    rot_covariance_log_basic = calc_covariance_log(d_rot_basic)
     # Grow the design
     (d_rot_grow, rot_covariance_log_grow) =
-        Grow(d_rot_trivial, rot_covariance_log_trivial, rotated_planar.circuit_tuple)
+        grow_design(d_rot_basic, rot_covariance_log_basic, rotated_planar.circuit_tuple)
     # Test that the grown design and covariance matrix are correct
-    rot_grow = [rot_trivial; [rotated_planar.circuit_tuple]]
-    d_rot_grow_test = GenerateDesign(rotated_planar, rot_grow)
-    rot_covariance_log_test = MeritData(d_rot_grow)
+    rot_grow = [rot_basic; [rotated_planar.circuit_tuple]]
+    d_rot_grow_test = generate_design(rotated_planar, rot_grow)
+    rot_covariance_log_test = calc_covariance_log(d_rot_grow)
     @test d_rot_grow.code == d_rot_grow_test.code
     @test d_rot_grow.full_covariance == d_rot_grow_test.full_covariance
     @test d_rot_grow.matrix == d_rot_grow_test.matrix
     @test d_rot_grow.tuple_set == d_rot_grow_test.tuple_set
+    @test d_rot_grow.tuple_set_data == d_rot_grow_test.tuple_set_data
     @test d_rot_grow.mapping_ensemble == d_rot_grow_test.mapping_ensemble
     @test d_rot_grow.experiment_ensemble == d_rot_grow_test.experiment_ensemble
     @test d_rot_grow.covariance_dict_ensemble == d_rot_grow_test.covariance_dict_ensemble
@@ -359,28 +383,49 @@ end
     @test d_rot_grow.experiment_number == d_rot_grow_test.experiment_number
     @test d_rot_grow.ls_type == d_rot_grow_test.ls_type
     @test rot_covariance_log_grow ≈ rot_covariance_log_test
+    # Test completing the design
+    d_rot_grow_completed =
+        complete_design(generate_design(rotated_planar, rot_grow; full_covariance = false))
+    @test d_rot_grow.code == d_rot_grow_completed.code
+    @test d_rot_grow.full_covariance == d_rot_grow_completed.full_covariance
+    @test d_rot_grow.matrix == d_rot_grow_completed.matrix
+    @test d_rot_grow.tuple_set == d_rot_grow_completed.tuple_set
+    @test d_rot_grow.tuple_set_data == d_rot_grow_completed.tuple_set_data
+    @test d_rot_grow.mapping_ensemble == d_rot_grow_completed.mapping_ensemble
+    @test d_rot_grow.experiment_ensemble == d_rot_grow_completed.experiment_ensemble
+    @test d_rot_grow.covariance_dict_ensemble ==
+          d_rot_grow_completed.covariance_dict_ensemble
+    @test d_rot_grow.prep_ensemble == d_rot_grow_completed.prep_ensemble
+    @test d_rot_grow.meas_ensemble == d_rot_grow_completed.meas_ensemble
+    @test d_rot_grow.tuple_times ≈ d_rot_grow_completed.tuple_times
+    @test d_rot_grow.shot_weights ≈ d_rot_grow_completed.shot_weights
+    @test d_rot_grow.experiment_numbers == d_rot_grow_completed.experiment_numbers
+    @test d_rot_grow.experiment_number == d_rot_grow_completed.experiment_number
+    @test d_rot_grow.ls_type == d_rot_grow_completed.ls_type
     # Prune the design
     T = length(rot_grow)
-    (d_rot_prune, rot_covariance_log_prune) = Prune(d_rot_grow, rot_covariance_log_grow, T)
+    (d_rot_prune, rot_covariance_log_prune) =
+        prune_design(d_rot_grow, rot_covariance_log_grow, T)
     # Test that the pruned design and covariance matrix are correct
-    @test d_rot_prune.code == d_rot_trivial.code
-    @test d_rot_prune.full_covariance == d_rot_trivial.full_covariance
-    @test d_rot_prune.matrix == d_rot_trivial.matrix
-    @test d_rot_prune.tuple_set == d_rot_trivial.tuple_set
-    @test d_rot_prune.mapping_ensemble == d_rot_trivial.mapping_ensemble
-    @test d_rot_prune.experiment_ensemble == d_rot_trivial.experiment_ensemble
-    @test d_rot_prune.covariance_dict_ensemble == d_rot_trivial.covariance_dict_ensemble
-    @test d_rot_prune.prep_ensemble == d_rot_trivial.prep_ensemble
-    @test d_rot_prune.meas_ensemble == d_rot_trivial.meas_ensemble
-    @test d_rot_prune.tuple_times ≈ d_rot_trivial.tuple_times
-    @test d_rot_prune.shot_weights ≈ d_rot_trivial.shot_weights
-    @test d_rot_prune.experiment_numbers == d_rot_trivial.experiment_numbers
-    @test d_rot_prune.experiment_number == d_rot_trivial.experiment_number
-    @test d_rot_prune.ls_type == d_rot_trivial.ls_type
-    @test rot_covariance_log_prune ≈ rot_covariance_log_trivial
+    @test d_rot_prune.code == d_rot_basic.code
+    @test d_rot_prune.full_covariance == d_rot_basic.full_covariance
+    @test d_rot_prune.matrix == d_rot_basic.matrix
+    @test d_rot_prune.tuple_set == d_rot_basic.tuple_set
+    @test d_rot_prune.tuple_set_data == d_rot_basic.tuple_set_data
+    @test d_rot_prune.mapping_ensemble == d_rot_basic.mapping_ensemble
+    @test d_rot_prune.experiment_ensemble == d_rot_basic.experiment_ensemble
+    @test d_rot_prune.covariance_dict_ensemble == d_rot_basic.covariance_dict_ensemble
+    @test d_rot_prune.prep_ensemble == d_rot_basic.prep_ensemble
+    @test d_rot_prune.meas_ensemble == d_rot_basic.meas_ensemble
+    @test d_rot_prune.tuple_times ≈ d_rot_basic.tuple_times
+    @test d_rot_prune.shot_weights ≈ d_rot_basic.shot_weights
+    @test d_rot_prune.experiment_numbers == d_rot_basic.experiment_numbers
+    @test d_rot_prune.experiment_number == d_rot_basic.experiment_number
+    @test d_rot_prune.ls_type == d_rot_basic.ls_type
+    @test rot_covariance_log_prune ≈ rot_covariance_log_basic
     # Test that the sparse covariance inverse works correctly
     rot_covariance_log_grow_inv =
-        SparseCovarianceInv(rot_covariance_log_grow, length.(d_rot_grow.mapping_ensemble))
+        sparse_covariance_inv(rot_covariance_log_grow, length.(d_rot_grow.mapping_ensemble))
     @test Array(rot_covariance_log_grow_inv) ≈ inv(cholesky(Array(rot_covariance_log_grow)))
 end
 # Test the NRMSE probability distribution
@@ -390,7 +435,7 @@ end
     repetitions = 1000
     N = d_rot.code.N
     gate_eigenvalues = d_rot.code.gate_eigenvalues
-    (rot_eigenvalues, rot_covariance) = SyntheticEigenvalues(d_rot)
+    (rot_eigenvalues, rot_covariance) = calc_eigenvalues_covariance(d_rot)
     # Sample the eigenvalues according to the calculated WLS estimator covariance matrix
     est_eigenvalues_distribution =
         MvNormal(rot_eigenvalues, Array((1 / S) * rot_covariance))
@@ -404,7 +449,7 @@ end
     for idx in 1:repetitions
         est_eigenvalues_coll[idx] = est_eigenvalues_matrix[:, idx]
         wls_gate_eigenvalues_coll[idx] =
-            WLSGateEigenvalues(d_rot, est_eigenvalues_coll[idx])
+            wls_estimate_gate_eigenvalues(d_rot, est_eigenvalues_coll[idx])
         wls_gate_norm_coll[idx] =
             sqrt(S / N) * norm(wls_gate_eigenvalues_coll[idx] - gate_eigenvalues, 2)
     end
@@ -419,7 +464,7 @@ end
     y_max = 3.0
     y_pad = 0.1
     x_values = collect(x_min:x_pdf_int:x_max)
-    (gls_rot_merit, wls_rot_merit, ols_rot_merit) = MeritSet(d_rot)
+    (gls_rot_merit, wls_rot_merit, ols_rot_merit) = calc_merit_set(d_rot)
     wls_rot_nrmse_pdf = nrmse_pdf(wls_rot_merit.eigenvalues, x_values)
     # Plot the empirical and predicted distributions
     wls_nrmse_test = histogram(

@@ -25,13 +25,13 @@ function exit_folder(folder::String)
 end
 
 #
-function code_filename(code_param::AbstractCodeParameters)
-    filename = "$(code_param.code_name)"
-    if typeof(code_param) == RotatedPlanarParameters ||
-       typeof(code_param) == UnrotatedPlanarParameters
-        filename *= "_$(code_param.vertical_dist)_$(code_param.horizontal_dist)"
+function code_filename(circuit_param::AbstractCircuitParameters)
+    filename = "$(circuit_param.code_name)"
+    if typeof(circuit_param) == RotatedPlanarParameters ||
+       typeof(circuit_param) == UnrotatedPlanarParameters
+        filename *= "_$(circuit_param.vertical_dist)_$(circuit_param.horizontal_dist)"
     else
-        throw(error("Unsupported code type $(typeof(code_param))."))
+        throw(error("Unsupported code type $(typeof(circuit_param))."))
     end
     return filename::String
 end
@@ -40,7 +40,7 @@ end
 function noise_filename(noise_param::AbstractNoiseParameters)
     if typeof(noise_param) == DepolarisingParameters
         filename = "depolarising"
-    elseif typeof(noise_param) == LogNormalParameters
+    elseif typeof(noise_param) == LognormalParameters
         filename = "lognormal"
     else
         throw(error("Unsupported noise type $(typeof(noise_param))."))
@@ -61,20 +61,20 @@ end
 
 #
 function design_filename(
-    code_param::AbstractCodeParameters,
+    circuit_param::AbstractCircuitParameters,
     noise_param::AbstractNoiseParameters,
     tuple_number::Int,
     repeat_numbers::Vector{Int},
     full_covariance::Bool,
 )
-    filename = "design_$(code_filename(code_param))_$(noise_filename(noise_param))_$(tuples_filename(tuple_number, repeat_numbers))_$(full_covariance).jld2"
+    filename = "design_$(code_filename(circuit_param))_$(noise_filename(noise_param))_$(tuples_filename(tuple_number, repeat_numbers))_$(full_covariance).jld2"
     return filename::String
 end
 
 #
 function design_filename(d::Design)
     filename = design_filename(
-        d.code.code_param,
+        d.code.circuit_param,
         d.code.noise_param,
         length(d.tuple_set),
         d.tuple_set_data.repeat_numbers,
@@ -85,20 +85,20 @@ end
 
 #
 function dep_scaling_filename(
-    code_param::AbstractCodeParameters,
+    circuit_param::AbstractCircuitParameters,
     noise_param::AbstractNoiseParameters,
     tuple_number::Int,
     repeat_numbers::Vector{Int},
     ls_type::Symbol,
 )
-    filename = "depolarising_scaling_$(code_filename(code_param))_$(noise_filename(noise_param))_$(tuples_filename(tuple_number, repeat_numbers))_$(ls_type).jld2"
+    filename = "depolarising_scaling_$(code_filename(circuit_param))_$(noise_filename(noise_param))_$(tuples_filename(tuple_number, repeat_numbers))_$(ls_type).jld2"
     return filename::String
 end
 
 #
 function dep_scaling_filename(d::Design, ls_type::Symbol)
     filename = dep_scaling_filename(
-        d.code.code_param,
+        d.code.circuit_param,
         d.code.noise_param,
         length(d.tuple_set),
         d.tuple_set_data.repeat_numbers,
@@ -110,7 +110,7 @@ end
 #
 function dep_scaling_filename(dep_scaling_data::DepolarisingScalingData)
     filename = dep_scaling_filename(
-        dep_scaling_data.code_param,
+        dep_scaling_data.circuit_param,
         dep_scaling_data.noise_param,
         length(dep_scaling_data.tuple_set),
         dep_scaling_data.tuple_set_data.repeat_numbers,
@@ -121,20 +121,20 @@ end
 
 #
 function log_scaling_filename(
-    code_param::AbstractCodeParameters,
+    circuit_param::AbstractCircuitParameters,
     noise_param::AbstractNoiseParameters,
     tuple_number::Int,
     repeat_numbers::Vector{Int},
     ls_type::Symbol,
 )
-    filename = "lognormal_scaling_$(code_filename(code_param))_$(noise_filename(noise_param))_$(tuples_filename(tuple_number, repeat_numbers))_$(ls_type).jld2"
+    filename = "lognormal_scaling_$(code_filename(circuit_param))_$(noise_filename(noise_param))_$(tuples_filename(tuple_number, repeat_numbers))_$(ls_type).jld2"
     return filename::String
 end
 
 #
 function log_scaling_filename(d::Design, ls_type::Symbol)
     filename = log_scaling_filename(
-        d.code.code_param,
+        d.code.circuit_param,
         d.code.noise_param,
         length(d.tuple_set),
         d.tuple_set_data.repeat_numbers,
@@ -144,9 +144,9 @@ function log_scaling_filename(d::Design, ls_type::Symbol)
 end
 
 #
-function log_scaling_filename(log_scaling_data::LogNormalScalingData)
+function log_scaling_filename(log_scaling_data::LognormalScalingData)
     filename = log_scaling_filename(
-        log_scaling_data.code_param,
+        log_scaling_data.circuit_param,
         log_scaling_data.noise_param,
         length(log_scaling_data.tuple_set),
         log_scaling_data.tuple_set_data.repeat_numbers,
@@ -157,21 +157,21 @@ end
 
 #
 function aces_data_filename(
-    code_param::AbstractCodeParameters,
+    circuit_param::AbstractCircuitParameters,
     noise_param::AbstractNoiseParameters,
     tuple_number::Int,
     repeat_numbers::Vector{Int},
     full_covariance::Bool,
     shots_set::Vector{Int},
 )
-    filename = "aces_data_$(code_filename(code_param))_$(noise_filename(noise_param))_$(tuples_filename(tuple_number, repeat_numbers))_$(full_covariance)_$(join(round.(shots_set, sigdigits=4), "_")).jld2"
+    filename = "aces_data_$(code_filename(circuit_param))_$(noise_filename(noise_param))_$(tuples_filename(tuple_number, repeat_numbers))_$(full_covariance)_$(join(round.(shots_set, sigdigits=4), "_")).jld2"
     return filename::String
 end
 
 #
 function aces_data_filename(d::Design, shots_set::Vector{Int})
     filename = aces_data_filename(
-        d.code.code_param,
+        d.code.circuit_param,
         d.code.noise_param,
         length(d.tuple_set),
         d.tuple_set_data.repeat_numbers,
@@ -209,7 +209,7 @@ end
 Load the design from a file specified by the supplied variables.
 """
 function load_design(
-    code_param::AbstractCodeParameters,
+    circuit_param::AbstractCircuitParameters,
     noise_param::AbstractNoiseParameters,
     tuple_number::Int,
     repeat_numbers::Vector{Int},
@@ -217,7 +217,7 @@ function load_design(
 )
     # Load the design
     filename = design_filename(
-        code_param,
+        circuit_param,
         noise_param,
         tuple_number,
         repeat_numbers,
@@ -253,7 +253,7 @@ end
 
 #
 function load_scaling(
-    code_param::AbstractCodeParameters,
+    circuit_param::AbstractCircuitParameters,
     noise_param::AbstractNoiseParameters,
     tuple_number::Int,
     repeat_numbers::Vector{Int},
@@ -263,7 +263,7 @@ function load_scaling(
     # Load the design
     if scaling_type == :dep
         filename = dep_scaling_filename(
-            code_param,
+            circuit_param,
             noise_param,
             tuple_number,
             repeat_numbers,
@@ -273,14 +273,14 @@ function load_scaling(
         return dep_scaling_data::DepolarisingScalingData
     elseif scaling_type == :log
         filename = log_scaling_filename(
-            code_param,
+            circuit_param,
             noise_param,
             tuple_number,
             repeat_numbers,
             ls_type,
         )
         log_scaling_data = load_object(pwd() * "/data/" * filename)
-        return log_scaling_data::LogNormalScalingData
+        return log_scaling_data::LognormalScalingData
     else
         throw(
             error(
@@ -300,7 +300,7 @@ function load_scaling(d::Design, ls_type::Symbol, scaling_type::Symbol)
     elseif scaling_type == :log
         filename = log_scaling_filename(d, ls_type)
         log_scaling_data = load_object(pwd() * "/data/" * filename)
-        return log_scaling_data::LogNormalScalingData
+        return log_scaling_data::LognormalScalingData
     else
         throw(
             error(
@@ -323,7 +323,7 @@ function delete_scaling(dep_scaling_data::DepolarisingScalingData)
 end
 
 #
-function save_scaling(log_scaling_data::LogNormalScalingData)
+function save_scaling(log_scaling_data::LognormalScalingData)
     # Check for the data directory
     if !isdir("data")
         mkdir("data")
@@ -335,7 +335,7 @@ function save_scaling(log_scaling_data::LogNormalScalingData)
 end
 
 #
-function delete_scaling(log_scaling_data::LogNormalScalingData)
+function delete_scaling(log_scaling_data::LognormalScalingData)
     # Delete the saved design data
     filename = log_scaling_filename(log_scaling_data)
     if isfile(pwd() * "/data/" * filename)
@@ -372,7 +372,7 @@ end
 Load the processed ACES data from a file specified by the design and the shots.
 """
 function load_aces(
-    code_param::AbstractCodeParameters,
+    circuit_param::AbstractCircuitParameters,
     noise_param::AbstractNoiseParameters,
     tuple_number::Int,
     repeat_numbers::Vector{Int},
@@ -381,7 +381,7 @@ function load_aces(
 )
     # Load the ACES data
     filename = aces_data_filename(
-        code_param,
+        circuit_param,
         noise_param,
         tuple_number,
         repeat_numbers,

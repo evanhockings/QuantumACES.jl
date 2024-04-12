@@ -1,46 +1,50 @@
 #
-function OptimalExpectation(
+function optimal_expectation(
     tuple_set_data::TupleSetData,
     expectation_dict::Dict{Vector{Int}, Float64},
     code::Code;
-    kwargs...,
+    options::OptimOptions = OptimOptions(),
 )
     # Get the keyword arguments
-    kwarg_dict = Dict{Symbol, Any}(kwargs)
-    ls_type = LeastSquaresType(kwarg_dict)
+    ls_type = options.ls_type
     # Retrieve the NRMSE expectation if it has already been calculated, else calculate it
     repeat_numbers = tuple_set_data.repeat_numbers
     if haskey(expectation_dict, repeat_numbers)
         expectation = expectation_dict[repeat_numbers]
+    elseif any(repeat_numbers .< 0)
+        expectation = 1e20
+        expectation_dict[repeat_numbers] = expectation
     else
         # Generate the tuple set and design
-        d = GenerateDesign(code, tuple_set_data)
-        covariance_log = MeritData(d)
+        d = generate_design(code, tuple_set_data)
+        covariance_log = calc_covariance_log(d)
         # Optimise the design
-        (d, covariance_log) = OptimiseShotWeights(d, covariance_log; kwargs...)[1:2]
+        (d, covariance_log) = optimise_weights(d, covariance_log; options = options)[1:2]
         # Calculate the NRMSE expectation
-        expectation = LSMoments(d, covariance_log, ls_type)[1]
+        expectation = calc_ls_moments(d, covariance_log, ls_type)[1]
         expectation_dict[repeat_numbers] = expectation
     end
     return (expectation::Float64, expectation_dict::Dict{Vector{Int}, Float64})
 end
 
-function StepRepetitions(
+function step_repetitions(
     tuple_set_data::TupleSetData,
     expectation_dict::Dict{Vector{Int}, Float64},
     step_tracker::Vector{Int},
     coordinate_idx::Int,
     code::Code;
-    kwargs...,
+    options::OptimOptions = OptimOptions(),
 )
+    # Get the keyword arguments
+    diagnostics = options.rep_diagnostics
     # Calculate the figure of merit for the current repetition numbers
     (expectation, expectation_dict) =
-        OptimalExpectation(tuple_set_data, expectation_dict, code; kwargs...)
+        optimal_expectation(tuple_set_data, expectation_dict, code; options = options)
     # Calculate the figure of merit adding one to the coordinate's repetition number
     tuple_set_data_upper = deepcopy(tuple_set_data)
-    tuple_set_data_upper.repeat_numbers[coordinate_idx] += 1
+    tuple_set_data_upper.repeat_numbers[coordinate_idx] += 2
     (upper_expectation, expectation_dict) =
-        OptimalExpectation(tuple_set_data_upper, expectation_dict, code; kwargs...)
+        optimal_expectation(tuple_set_data_upper, expectation_dict, code; options = options)
     # Determine the direction in which to step, if at all
     if tuple_set_data.repeat_numbers[coordinate_idx] == 0
         if upper_expectation < expectation
@@ -53,9 +57,13 @@ function StepRepetitions(
     else
         # Calculate the figure of merit subtracting one from the coordinate's repetition number
         tuple_set_data_lower = deepcopy(tuple_set_data)
-        tuple_set_data_lower.repeat_numbers[coordinate_idx] -= 1
-        (lower_expectation, expectation_dict) =
-            OptimalExpectation(tuple_set_data_lower, expectation_dict, code; kwargs...)
+        tuple_set_data_lower.repeat_numbers[coordinate_idx] -= 2
+        (lower_expectation, expectation_dict) = optimal_expectation(
+            tuple_set_data_lower,
+            expectation_dict,
+            code;
+            options = options,
+        )
         if lower_expectation > expectation && expectation > upper_expectation
             # Increasing the repetition number decreases the figure of merit
             step_sign = 1
@@ -67,9 +75,16 @@ function StepRepetitions(
             step_sign = 0
         else
             # The repetition number is a local maximum in the figure of merit
-            # By default, step towards lower shot numbers
-            step_sign = -1
-            @warn "The repetition number is a local maximum in the figure of merit; stepping towards lower shot numbers."
+            if upper_expectation <= lower_expectation
+                step_sign = 1
+            else
+                step_sign = -1
+            end
+            if diagnostics
+                println(
+                    "Repetition number $(coordinate_idx) is a local maximum in the figure of merit; stepping towards $(step_sign == 1 ? "more" : "fewer") repetitions.",
+                )
+            end
         end
     end
     # Determine the step size
@@ -78,17 +93,18 @@ function StepRepetitions(
         step_tracker[coordinate_idx] = step_sign
     elseif sign(step_tracker[coordinate_idx]) == step_sign
         # The step sign has not changed
-        step = step_sign * 2^abs(step_tracker[coordinate_idx])
+        step = 2 * step_sign * 2^(max(0, abs(step_tracker[coordinate_idx]) - 1))
         step_tracker[coordinate_idx] += step_sign
     else
         # The step sign has changed
-        step = step_sign
+        step = 2 * step_sign
         step_tracker[coordinate_idx] = step_sign
     end
     # Step the repetition number
-    tuple_set_data.repeat_numbers[coordinate_idx] += step
+    tuple_set_data.repeat_numbers[coordinate_idx] =
+        max(1, tuple_set_data.repeat_numbers[coordinate_idx] + step)
     (expectation, expectation_dict) =
-        OptimalExpectation(tuple_set_data, expectation_dict, code; kwargs...)
+        optimal_expectation(tuple_set_data, expectation_dict, code; options = options)
     return (
         tuple_set_data::TupleSetData,
         expectation_dict::Dict{Vector{Int}, Float64},
@@ -96,16 +112,14 @@ function StepRepetitions(
     )
 end
 
-# TODO: Try this with Nelder-Mead from Optim
-function OptimiseRepetitions(code::Code, tuple_set_data::TupleSetData; kwargs...)
+function optimise_repetitions(
+    code::Code,
+    tuple_set_data::TupleSetData;
+    options::OptimOptions = OptimOptions(),
+)
     # Get the keyword arguments
-    kwarg_dict = Dict{Symbol, Any}(kwargs)
-    max_cycles = MaxCycles(kwarg_dict)
-    if Diagnostics(kwarg_dict) === nothing
-        diagnostics = true
-    else
-        diagnostics = Diagnostics(kwarg_dict)
-    end
+    max_cycles = options.max_cycles
+    diagnostics = options.rep_diagnostics
     # Perform cyclic coordinate descent until the repetition numbers converge
     start_time = time()
     if max_cycles > 0
@@ -126,13 +140,13 @@ function OptimiseRepetitions(code::Code, tuple_set_data::TupleSetData; kwargs...
         cycle_repeat_numbers = Vector{Vector{Int}}(undef, type_num)
         # Perform a cycle of repetition number steps
         for coordinate_idx in 1:type_num
-            (tuple_set_data, expectation_dict, step_tracker) = StepRepetitions(
+            (tuple_set_data, expectation_dict, step_tracker) = step_repetitions(
                 tuple_set_data,
                 expectation_dict,
                 step_tracker,
                 coordinate_idx,
                 code;
-                kwarg_dict...,
+                options,
             )
             # Update tracking parameters
             repeat_numbers = tuple_set_data.repeat_numbers
@@ -171,11 +185,11 @@ function OptimiseRepetitions(code::Code, tuple_set_data::TupleSetData; kwargs...
 end
 
 """
-    SampleZipf(N::Int, s::Float64)
+    sample_zipf(N::Int, s::Float64)
 
 Sample from a generalised Zipf distribution supported on 1 to N with parameter s.
 """
-function SampleZipf(N::Int, s::Float64)
+function sample_zipf(N::Int, s::Float64)
     # Generate the (unnormalised) Zipf PMF
     i_values = collect(1:N)
     zipf_pmf = [1 / i^s for i in i_values]
@@ -185,7 +199,7 @@ function SampleZipf(N::Int, s::Float64)
 end
 
 #
-function TupleAppend!(
+function tuple_append!(
     circuit_tuple::Vector{Int},
     tuple_length::Int,
     s::Float64,
@@ -193,14 +207,14 @@ function TupleAppend!(
 )
     # This function should not be used with dynamically decoupled code circuits
     # Append a Zipf-distributed number of copies of a random layer index to the tuple
-    num_add = SampleZipf(tuple_length, s)
+    num_add = sample_zipf(tuple_length, s)
     tuple_add = rand(unique_indices)
     append!(circuit_tuple, repeat([tuple_add], num_add))
     return nothing
 end
 
 #
-function TupleAppend!(
+function tuple_append!(
     circuit_tuple::Vector{Int},
     tuple_length::Int,
     s::Float64,
@@ -212,11 +226,11 @@ function TupleAppend!(
     # Append a Zipf-distributed number of copies, divided by two, of pairs of random layer indices to the tuple
     # Ensure that two-qubit layers are always followed by other layers in the tuple
     if length(circuit_tuple) > 0 && circuit_tuple[end] ∈ two_qubit_indices
-        num_add = ceil(Int, SampleZipf(tuple_length, s) / 2)
+        num_add = ceil(Int, sample_zipf(tuple_length, s) / 2)
         tuples_add = [rand(other_indices); rand(unique_indices)]
         append!(circuit_tuple, repeat(tuples_add, num_add))
     else
-        num_add = ceil(Int, SampleZipf(tuple_length, s) / 2)
+        num_add = ceil(Int, sample_zipf(tuple_length, s) / 2)
         tuple_add = rand(unique_indices)
         if tuple_add ∈ two_qubit_indices
             tuples_add = [tuple_add; rand(other_indices)]
@@ -229,18 +243,18 @@ function TupleAppend!(
 end
 
 """
-    RandomTuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
+    random_tuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
 
 Generates a random tuple, or arrangement with repetition, for the `unique_layer_indices` of a circuit whose length is `tuple_length`. Adds random layers to the tuple, with the number of copies following a generalised Zipf distribution; when the parameter `s` is `Inf`, this only adds one copy, and 2 is another common choice. If `mirror`, mirrors the first `floor((tuple_length - 1) / 2)` layers of the circuit.
 """
-function RandomTuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
+function random_tuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
     # Set parameters
     two_qubit_type = :two_qubit
     unique_indices = code.unique_layer_indices
     # If the code employs dynamical decoupling, ensure the tuples respect that
     tuple_decouple = false
-    if hasproperty(code.code_param, :dynamically_decouple) &&
-       code.code_param.dynamically_decouple
+    if hasproperty(code.circuit_param, :dynamically_decouple) &&
+       code.circuit_param.dynamically_decouple
         tuple_decouple = true
         layer_types = code.layer_types
         types = unique(layer_types)
@@ -256,7 +270,7 @@ function RandomTuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
         mirror_length = convert(Int, floor((tuple_length - 1) / 2))
         while length(circuit_tuple) < mirror_length
             if tuple_decouple
-                TupleAppend!(
+                tuple_append!(
                     circuit_tuple,
                     mirror_length,
                     s,
@@ -265,7 +279,7 @@ function RandomTuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
                     other_indices,
                 )
             else
-                TupleAppend!(circuit_tuple, mirror_length, s, unique_indices)
+                tuple_append!(circuit_tuple, mirror_length, s, unique_indices)
             end
         end
         # Trim extra layers
@@ -282,7 +296,7 @@ function RandomTuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
         post_mirror_length = tuple_length - 2 * mirror_length
         while length(circuit_tuple) < tuple_length
             if tuple_decouple
-                TupleAppend!(
+                tuple_append!(
                     circuit_tuple,
                     post_mirror_length,
                     s,
@@ -291,7 +305,7 @@ function RandomTuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
                     other_indices,
                 )
             else
-                TupleAppend!(circuit_tuple, post_mirror_length, s, unique_indices)
+                tuple_append!(circuit_tuple, post_mirror_length, s, unique_indices)
             end
         end
         # Trim extra layers
@@ -300,7 +314,7 @@ function RandomTuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
         # Add the layers
         while length(circuit_tuple) < tuple_length
             if tuple_decouple
-                TupleAppend!(
+                tuple_append!(
                     circuit_tuple,
                     tuple_length,
                     s,
@@ -309,7 +323,7 @@ function RandomTuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
                     other_indices,
                 )
             else
-                TupleAppend!(circuit_tuple, tuple_length, s, unique_indices)
+                tuple_append!(circuit_tuple, tuple_length, s, unique_indices)
             end
         end
         # Trim extra layers
@@ -319,24 +333,25 @@ function RandomTuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
 end
 
 #
-function Grow(
+function grow_design(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int},
     circuit_tuple::Vector{Int},
 )
     # Determine the design data for the tuple
-    code_tuple = ApplyTuple(d.code, circuit_tuple)
+    code_tuple = apply_tuple(d.code, circuit_tuple)
     time_1 = time()
-    (mapping_set, mapping_matrix) = MappingSet(code_tuple)
+    (mapping_set, mapping_matrix) = calc_mapping_set(code_tuple)
     time_2 = time()
-    consistency_set = ConsistencySet(mapping_set)
+    consistency_set = calc_consistency_set(mapping_set)
     time_3 = time()
-    experiment_set = PackPaulis(mapping_set, consistency_set)
+    experiment_set = calc_experiment_set(mapping_set, consistency_set)
     time_4 = time()
     covariance_dict =
-        CovarianceDict(code_tuple, mapping_set, experiment_set, d.full_covariance)
+        calc_covariance_dict(code_tuple, mapping_set, experiment_set, d.full_covariance)
     time_5 = time()
-    (prep_set, meas_set) = PackCircuits(code_tuple, mapping_set, experiment_set)
+    (prep_layer_set, meas_layer_set) =
+        get_experiment_layers(code_tuple, mapping_set, experiment_set)
     time_6 = time()
     # Track the times taken
     mapping_time = time_2 - time_1
@@ -344,17 +359,22 @@ function Grow(
     pauli_time = time_4 - time_3
     covariance_time = time_5 - time_4
     circuit_time = time_6 - time_5
-    calculation_time =
-        [mapping_time; consistency_time; pauli_time; covariance_time; circuit_time]
+    calculation_time = [
+        mapping_time
+        consistency_time
+        pauli_time
+        covariance_time
+        circuit_time
+    ]
     overall_time = time_6 - time_1
     # Construct the new design
     grow_tuple_set = [d.tuple_set; [circuit_tuple]]
     grow_set_data = deepcopy(d.tuple_set_data)
     grow_set_data.tuple_set = [grow_set_data.tuple_set; [circuit_tuple]]
-    grow_experiment = length(vcat(prep_set...))
+    grow_experiment = length(vcat(prep_layer_set...))
     grow_experiment_numbers = [d.experiment_numbers; grow_experiment]
     (grow_tuple_times, default_shot_weights) =
-        TupleSetParameters(d.code, grow_tuple_set, grow_experiment_numbers)
+        get_tuple_set_params(d.code, grow_tuple_set, grow_experiment_numbers)
     grow_shot_weights = deepcopy(default_shot_weights)
     grow_shot_weights[1:(end - 1)] = d.shot_weights * sum(default_shot_weights[1:(end - 1)])
     d_grow = Design(
@@ -366,8 +386,8 @@ function Grow(
         [d.mapping_ensemble; [mapping_set]],
         [d.experiment_ensemble; [experiment_set]],
         [d.covariance_dict_ensemble; [covariance_dict]],
-        [d.prep_ensemble; [prep_set]],
-        [d.meas_ensemble; [meas_set]],
+        [d.prep_ensemble; [prep_layer_set]],
+        [d.meas_ensemble; [meas_layer_set]],
         grow_tuple_times,
         grow_shot_weights,
         grow_experiment_numbers,
@@ -387,8 +407,8 @@ function Grow(
         [mapping_set],
         [experiment_set],
         [covariance_dict],
-        [prep_set],
-        [meas_set],
+        [prep_layer_set],
+        [meas_layer_set],
         [grow_tuple_times[end]],
         [1.0],
         [grow_experiment],
@@ -399,12 +419,13 @@ function Grow(
         :none,
     )
     # Construct the covariance matrix of the extra tuple
-    covariance_log_extra = MeritData(d_extra)
+    covariance_log_extra = calc_covariance_log(d_extra)
     # Unweight the extra covariance matrix
     covariance_log_extra_unweighted = covariance_log_extra / d_extra.tuple_times[end]
     # Unweight the original covariance matrix
     mapping_lengths = length.(d.mapping_ensemble)
-    shot_weights_factor_inv = ShotFactorInv(d.shot_weights, d.tuple_times, mapping_lengths)
+    shot_weights_factor_inv =
+        get_shot_weights_factor_inv(d.shot_weights, d.tuple_times, mapping_lengths)
     covariance_log_unweighted = covariance_log * shot_weights_factor_inv
     # Construct the new unweighted covariance matrix
     covariance_log_grow_unweighted =
@@ -412,13 +433,13 @@ function Grow(
     # Reweight the new covariance matrix
     grow_lengths = length.(d_grow.mapping_ensemble)
     shot_weights_grow_factor =
-        ShotFactor(d_grow.shot_weights, d_grow.tuple_times, grow_lengths)
+        get_shot_weights_factor(d_grow.shot_weights, d_grow.tuple_times, grow_lengths)
     covariance_log_grow = covariance_log_grow_unweighted * shot_weights_grow_factor
     return (d_grow::Design, covariance_log_grow::SparseMatrixCSC{Float64, Int})
 end
 
 #
-function Prune(
+function prune_design(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int},
     prune_idx::Int;
@@ -451,7 +472,7 @@ function Prune(
     else
         throw(error("The pruned tuple does not appear in the tuple set data."))
     end
-    @assert d.tuple_set[prune_indices] == TupleSet(prune_set_data)
+    @assert d.tuple_set[prune_indices] == get_tuple_set(prune_set_data)
     # Update the shot weights
     prune_weights = d.shot_weights[prune_indices] / sum(d.shot_weights[prune_indices])
     # Construct the new design
@@ -479,15 +500,18 @@ function Prune(
     if update_weights
         # Unweight the covariance matrix
         shot_weights_factor_inv =
-            ShotFactorInv(d.shot_weights, d.tuple_times, mapping_lengths)
+            get_shot_weights_factor_inv(d.shot_weights, d.tuple_times, mapping_lengths)
         covariance_log_unweighted = covariance_log * shot_weights_factor_inv
         # Prune the unweighted covariance matrix
         covariance_log_prune_unweighted =
             covariance_log_unweighted[prune_eigenvalue_indices, prune_eigenvalue_indices]
         # Reweight the covariance matrix
         prune_lengths = mapping_lengths[prune_indices]
-        shot_weights_prune_factor =
-            ShotFactor(d_prune.shot_weights, d_prune.tuple_times, prune_lengths)
+        shot_weights_prune_factor = get_shot_weights_factor(
+            d_prune.shot_weights,
+            d_prune.tuple_times,
+            prune_lengths,
+        )
         covariance_log_prune = covariance_log_prune_unweighted * shot_weights_prune_factor
     else
         covariance_log_prune =
@@ -497,27 +521,26 @@ function Prune(
 end
 
 """
-    GrowDesign(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; kwargs...)
+    grow_design_excursion(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; options::OptimOptions = OptimOptions())
 """
-function GrowDesign(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; kwargs...)
+function grow_design_excursion(
+    d::Design,
+    covariance_log::SparseMatrixCSC{Float64, Int};
+    options::OptimOptions = OptimOptions(),
+)
     # Get the keyword arguments
-    kwarg_dict = Dict{Symbol, Any}(kwargs)
-    ls_type = LeastSquaresType(kwarg_dict)
-    tuple_num = TupleNumber(kwarg_dict, d.code) + ExcursionLength(kwarg_dict)
-    max_tuple_len = MaxTupleLength(kwarg_dict, d.code)
-    tuple_length_zipf_power = TupleLengthZipfPower(kwarg_dict)
-    repeat_zipf_powers = RepeatZipfPowers(kwarg_dict)
-    mirror_values = MirrorValues(kwarg_dict)
-    trial_factor = TrialFactor(kwarg_dict)
-    grow_greedy = GrowGreedy(kwarg_dict)
-    seed = Seed(kwarg_dict)
-    if Diagnostics(kwarg_dict) === nothing
-        diagnostics = true
-    else
-        diagnostics = Diagnostics(kwarg_dict)
-    end
+    ls_type = options.ls_type
+    max_tuple_number = options.max_tuple_number + options.excursion_length
+    max_tuple_length = options.max_tuple_length
+    tuple_length_zipf_power = options.tuple_length_zipf_power
+    repeat_zipf_powers = options.repeat_zipf_powers
+    mirror_values = options.mirror_values
+    trial_factor = options.trial_factor
+    grow_greedy = options.grow_greedy
+    seed = options.seed
+    diagnostics = options.tuple_diagnostics
     # Initialise the trial tuples
-    if length(d.tuple_set) >= tuple_num
+    if length(d.tuple_set) >= max_tuple_number
         growing = false
         trial_tuple_set = Vector{Vector{Int}}(undef, 0)
     else
@@ -526,13 +549,13 @@ function GrowDesign(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; kw
         if seed !== nothing
             Random.seed!(seed)
         end
-        trial_num = trial_factor * (tuple_num - length(d.tuple_set))
+        trial_num = trial_factor * (max_tuple_number - length(d.tuple_set))
         trial_tuple_set = Vector{Vector{Int}}(undef, 0)
         while length(trial_tuple_set) < trial_num
-            tuple_length = SampleZipf(max_tuple_len, tuple_length_zipf_power)
+            tuple_length = sample_zipf(max_tuple_length, tuple_length_zipf_power)
             s = rand(repeat_zipf_powers)
             mirror = rand(mirror_values)
-            trial_tuple = RandomTuple(d.code, tuple_length, s, mirror)
+            trial_tuple = random_tuple(d.code, tuple_length, s, mirror)
             if trial_tuple ∉ d.tuple_set && trial_tuple ∉ trial_tuple_set
                 push!(trial_tuple_set, trial_tuple)
             end
@@ -544,16 +567,16 @@ function GrowDesign(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; kw
     end
     # Calculate the figure of merit if growing greedily
     if grow_greedy
-        expectation = LSMoments(d, covariance_log, ls_type)[1]
+        expectation = calc_ls_moments(d, covariance_log, ls_type)[1]
     end
     # Add each of the tuples from the trial set that improve the figure of merit
     while growing
         # Try adding a tuple to the design
         circuit_tuple = pop!(trial_tuple_set)
-        (d_trial, covariance_log_trial) = Grow(d, covariance_log, circuit_tuple)
+        (d_trial, covariance_log_trial) = grow_design(d, covariance_log, circuit_tuple)
         if grow_greedy
             # Calculate the figure of merit
-            expectation_trial = LSMoments(d_trial, covariance_log_trial, ls_type)[1]
+            expectation_trial = calc_ls_moments(d_trial, covariance_log_trial, ls_type)[1]
             # Add the tuple if it improves the figure of merit
             if expectation_trial < expectation
                 d = d_trial
@@ -572,17 +595,17 @@ function GrowDesign(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; kw
                 println("There are now $(length(d.tuple_set)) tuples in the set.")
             end
         end
-        if length(d.tuple_set) >= tuple_num || length(trial_tuple_set) == 0
+        if length(d.tuple_set) >= max_tuple_number || length(trial_tuple_set) == 0
             growing = false
         end
     end
-    @assert length(d.tuple_set) <= tuple_num
+    @assert length(d.tuple_set) <= max_tuple_number
     if diagnostics
-        if length(d.tuple_set) == tuple_num
-            println("Grew the tuple set to $(tuple_num) tuples.")
+        if length(d.tuple_set) == max_tuple_number
+            println("Grew the tuple set to $(max_tuple_number) tuples.")
         else
             println(
-                "Unable to find enough tuples in the $(trial_num) tested to grow the tuple set of $(length(d.tuple_set)) tuples to $(tuple_num).",
+                "Unable to find enough tuples in the $(trial_num) tested to grow the tuple set of $(length(d.tuple_set)) tuples to $(max_tuple_number).",
             )
         end
     end
@@ -590,35 +613,35 @@ function GrowDesign(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; kw
 end
 
 #
-function PruneDesign(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; kwargs...)
+function prune_design_excursion(
+    d::Design,
+    covariance_log::SparseMatrixCSC{Float64, Int};
+    options::OptimOptions = OptimOptions(),
+)
     # Get the keyword arguments
-    kwarg_dict = Dict{Symbol, Any}(kwargs)
-    ls_type = LeastSquaresType(kwarg_dict)
-    tuple_num = TupleNumber(kwarg_dict, d.code)
-    if Diagnostics(kwarg_dict) === nothing
-        diagnostics = true
-    else
-        diagnostics = Diagnostics(kwarg_dict)
-    end
+    ls_type = options.ls_type
+    max_tuple_number = options.max_tuple_number
+    diagnostics = options.tuple_diagnostics
     # Set some parameters
-    if length(d.tuple_set) >= tuple_num
+    if length(d.tuple_set) >= max_tuple_number
         pruning = true
     else
         pruning = false
     end
     # Greedily prune tuples from the trial set according to the figure of merit
-    expectation = LSMoments(d, covariance_log, ls_type)[1]
+    expectation = calc_ls_moments(d, covariance_log, ls_type)[1]
     while pruning
         # Try removing each of the tuples from the design
         T = length(d.tuple_set)
         expectation_trial = Array{Float64}(undef, T)
         for t in 1:T
-            (d_trial, covariance_log_trial) = Prune(d, covariance_log, t)
+            (d_trial, covariance_log_trial) = prune_design(d, covariance_log, t)
             # Calculate the figure of merit
             # Sometimes removing a tuple can cause the design to be less than full rank
             # If we get an error, we set the figure of merit to a large number
             try
-                expectation_trial[t] = LSMoments(d_trial, covariance_log_trial, ls_type)[1]
+                expectation_trial[t] =
+                    calc_ls_moments(d_trial, covariance_log_trial, ls_type)[1]
             catch
                 @debug "Error in calculating the figure of merit after removing the $(t)th tuple; the design matrix is probably no longer full-rank."
                 expectation_trial[t] = 1e20
@@ -627,8 +650,8 @@ function PruneDesign(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; k
         # Prune the tuple it improves the figure of merit or if the desired tuple number has not been reached
         (expectation_min, t_min) = findmin(expectation_trial)
         if expectation_min < 1e20 &&
-           (expectation_min < expectation || length(d.tuple_set) > tuple_num)
-            (d, covariance_log) = Prune(d, covariance_log, t_min)
+           (expectation_min < expectation || length(d.tuple_set) > max_tuple_number)
+            (d, covariance_log) = prune_design(d, covariance_log, t_min)
             expectation = expectation_min
             if diagnostics
                 println(
@@ -639,7 +662,7 @@ function PruneDesign(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; k
             pruning = false
         end
     end
-    @assert length(d.tuple_set) <= tuple_num
+    @assert length(d.tuple_set) <= max_tuple_number
     if diagnostics
         println("Pruned the tuple set until only $(length(d.tuple_set)) remain.")
     end
@@ -647,32 +670,27 @@ function PruneDesign(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; k
 end
 
 #
-function OptimiseTupleSet(
+function optimise_tuple_set(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int};
-    kwargs...,
+    options::OptimOptions = OptimOptions(),
 )
     # Get the keyword arguments
-    kwarg_dict = Dict{Symbol, Any}(kwargs)
-    ls_type = LeastSquaresType(kwarg_dict)
-    excursion_num = ExcursionNumber(kwarg_dict)
-    seed = Seed(kwarg_dict)
-    if Diagnostics(kwarg_dict) === nothing
-        diagnostics = true
-    else
-        diagnostics = Diagnostics(kwarg_dict)
-    end
+    ls_type = options.ls_type
+    excursion_number = options.excursion_number
+    seed = options.seed
+    diagnostics = options.tuple_diagnostics
     # Generate the requisite random seeds using the fixed seed
     start_time = time()
     if seed !== nothing
         Random.seed!(seed)
     end
-    seeds = rand(UInt64, excursion_num)
+    seeds = rand(UInt64, excursion_number)
     if seed !== nothing
         Random.seed!()
     end
     # Repeatedly perform excursions
-    if excursion_num > 0
+    if excursion_number > 0
         excursioning = true
         excursion = 1
     else
@@ -680,18 +698,19 @@ function OptimiseTupleSet(
     end
     while excursioning
         # Grow the design
-        seeded_kwarg_dict = deepcopy(kwarg_dict)
-        seeded_kwarg_dict[:seed] = seeds[excursion]
-        (d, covariance_log) = GrowDesign(d, covariance_log; seeded_kwarg_dict...)
+        seeded_options = deepcopy(options)
+        @reset seeded_options.seed = seeds[excursion]
+        (d, covariance_log) =
+            grow_design_excursion(d, covariance_log; options = seeded_options)
         # Prune the design
-        (d, covariance_log) = PruneDesign(d, covariance_log; kwargs...)
+        (d, covariance_log) = prune_design_excursion(d, covariance_log; options = options)
         if diagnostics
-            expectation = LSMoments(d, covariance_log, ls_type)[1]
+            expectation = calc_ls_moments(d, covariance_log, ls_type)[1]
             println(
                 "Excursion $(excursion) complete, obtaining a design with figure of merit $(round(expectation, sigdigits = 6)). The time elapsed since starting is $(round(time() - start_time, digits = 3)) s.",
             )
         end
-        if excursion == excursion_num
+        if excursion == excursion_number
             excursioning = false
         else
             excursion += 1
@@ -707,48 +726,42 @@ function OptimiseTupleSet(
     return (d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
 end
 
-function OptimiseDesign(code::Code, tuple_set_data::TupleSetData; kwargs...)
-    # Generate the keyword argument dictionary
-    kwarg_dict = Dict{Symbol, Any}(kwargs)
-    if SaveData(kwarg_dict) === nothing
-        save_data = false
-    else
-        save_data = SaveData(kwarg_dict)
-    end
-    if Diagnostics(kwarg_dict) === nothing
-        diagnostics = true
-    else
-        diagnostics = Diagnostics(kwarg_dict)
-    end
+function optimise_design(
+    code::Code,
+    tuple_set_data::TupleSetData;
+    options::OptimOptions = OptimOptions(),
+)
+    # Get the keyword arguments
+    save_data = options.save_data
+    rep_diagnostics = options.rep_diagnostics
+    tuple_diagnostics = options.tuple_diagnostics
     # Optimise the repetitions
     time_1 = time()
-    tuple_set_data = OptimiseRepetitions(code, tuple_set_data; kwargs...)
+    tuple_set_data = optimise_repetitions(code, tuple_set_data; options = options)
     time_2 = time()
-    if diagnostics
+    if rep_diagnostics
         println(
             "The time taken to optimise the repetitions is $(round(time_2 - time_1, digits = 3)) s.",
         )
     end
     # Generate the design
-    d = GenerateDesign(code, tuple_set_data)
-    covariance_log = MeritData(d)
+    d = generate_design(code, tuple_set_data)
+    covariance_log = calc_covariance_log(d)
     # Optimise the tuples in the design
-    (d, covariance_log) = OptimiseTupleSet(d, covariance_log; kwargs...)
+    (d, covariance_log) = optimise_tuple_set(d, covariance_log; options = options)
     time_3 = time()
-    if diagnostics
+    if tuple_diagnostics
         println(
             "The time taken to optimise the tuple set is $(round(time_3 - time_2, digits = 3)) s, and the overall time elapsed is $(round(time_3 - time_1, digits = 3)) s.",
         )
     end
     # Optimise the shot weights
-    # Treat `diagnostics` as the diagnostics here, rather than `grad_diagnostics`
-    if GradDiagnostics(kwarg_dict) === nothing &&
-       (Diagnostics(kwarg_dict) === nothing || Diagnostics(kwarg_dict))
-        kwarg_dict[:grad_diagnostics] = true
-    end
-    d = OptimiseShotWeights(d, covariance_log; kwarg_dict...)[1]
+    # Treat `tuple_diagnostics` as the diagnostics here, rather than `grad_diagnostics`
+    options_copy = deepcopy(options)
+    @reset options_copy.grad_diagnostics = tuple_diagnostics
+    d = optimise_weights(d, covariance_log; options = options_copy)[1]
     time_4 = time()
-    if diagnostics
+    if tuple_diagnostics
         println(
             "The time taken to optimise the shot weights is $(round(time_4 - time_3, digits = 3)) s, and the overall time elapsed is $(round(time_4 - time_1, digits = 3)) s.",
         )
@@ -762,10 +775,10 @@ function OptimiseDesign(code::Code, tuple_set_data::TupleSetData; kwargs...)
 end
 
 #
-function OptimiseDesign(code::Code; kwargs...)
+function optimise_design(code::Code; options::OptimOptions = OptimOptions())
     # Generate the tuple set data
-    tuple_set_data = TupleSetData(code)
+    tuple_set_data = get_tuple_set_data(code)
     # Optimise the design
-    d = OptimiseDesign(code, tuple_set_data; kwargs...)
+    d = optimise_design(code, tuple_set_data; options = options)
     return d::Design
 end

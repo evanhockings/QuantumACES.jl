@@ -10,7 +10,7 @@ total_std_log = sqrt(log(10 / 9))
 seed = UInt(0)
 unrotated_param = UnrotatedPlanarParameters(dist)
 dep_param = DepolarisingParameters(r_1, r_2, r_m)
-log_param = LogNormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
+log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
 unrotated_planar = Code(unrotated_param, dep_param)
 # Load the designs
 metadata_dict = load("data/design_metadata_$(code_filename(unrotated_param)).jld2")
@@ -44,7 +44,7 @@ d_wls_worst = load_design(
     true,
 )
 d_ols = load_design(unrotated_param, dep_param, ols_tuple_number, ols_repeat_numbers, true)
-d_triv = GenerateDesign(unrotated_planar, TrivialTupleSet(unrotated_planar))
+d_basic = generate_design(unrotated_planar, get_basic_tuple_set(unrotated_planar))
 # Calculate the merits over a range of random instances of log-normal noise
 expectation_array = Matrix{Float64}(undef, dep_param_num, repetitions)
 variance_array = Matrix{Float64}(undef, dep_param_num, repetitions)
@@ -66,16 +66,16 @@ for idx in 1:dep_param_num
         true,
     )
     for rep in 1:repetitions
-        log_param_rep = LogNormalParameters(
+        log_param_rep = LognormalParameters(
             log_param.r_1,
             log_param.r_2,
             log_param.r_m,
             log_param.total_std_log;
             seed = seeds[rep],
         )
-        d_log = Update(d, log_param_rep)
-        covariance_log = MeritData(d_log)
-        (expectation, variance) = LSMoments(d_log, covariance_log, :wls)
+        d_log = update_noise(d, log_param_rep)
+        covariance_log = calc_covariance_log(d_log)
+        (expectation, variance) = calc_ls_moments(d_log, covariance_log, :wls)
         expectation_array[idx, rep] = expectation
         variance_array[idx, rep] = variance
     end
@@ -84,21 +84,21 @@ for idx in 1:dep_param_num
     )
 end
 for rep in 1:repetitions
-    log_param_rep = LogNormalParameters(
+    log_param_rep = LognormalParameters(
         log_param.r_1,
         log_param.r_2,
         log_param.r_m,
         log_param.total_std_log;
         seed = seeds[rep],
     )
-    d_gls_log = Update(d_gls, log_param_rep)
-    gls_covariance_log = MeritData(d_gls_log)
-    (gls_expectation, gls_variance) = LSMoments(d_gls_log, gls_covariance_log, :gls)
+    d_gls_log = update_noise(d_gls, log_param_rep)
+    gls_covariance_log = calc_covariance_log(d_gls_log)
+    (gls_expectation, gls_variance) = calc_ls_moments(d_gls_log, gls_covariance_log, :gls)
     gls_expectation_set[rep] = gls_expectation
     gls_variance_set[rep] = gls_variance
-    d_ols_log = Update(d_ols, log_param_rep)
-    ols_covariance_log = MeritData(d_ols_log)
-    (ols_expectation, ols_variance) = LSMoments(d_ols_log, ols_covariance_log, :ols)
+    d_ols_log = update_noise(d_ols, log_param_rep)
+    ols_covariance_log = calc_covariance_log(d_ols_log)
+    (ols_expectation, ols_variance) = calc_ls_moments(d_ols_log, ols_covariance_log, :ols)
     ols_expectation_set[rep] = ols_expectation
     ols_variance_set[rep] = ols_variance
 end
@@ -117,25 +117,30 @@ jldsave(
 # Optimised WLS design
 @assert d_wls.code.noise_param == dep_param
 dep_scaling_data_wls =
-    DepolarisingScaling(d_wls, dist_max; ls_type = :wls, save_data = true)
-d_wls_log = Update(d_wls, log_param)
-log_scaling_data_wls =
-    LogNormalScaling(d_wls_log, dist_max; ls_type = :wls, seed = seed, save_data = true)
+    calc_depolarising_scaling_data(d_wls, dist_max; ls_type = :wls, save_data = true)
+d_wls_log = update_noise(d_wls, log_param)
+log_scaling_data_wls = calc_lognormal_scaling_data(
+    d_wls_log,
+    dist_max;
+    ls_type = :wls,
+    seed = seed,
+    save_data = true,
+)
 # Load the design and calculate the depolarising noise scaling data
 # Optimised GLS design
 @assert d_gls.code.noise_param == dep_param
 dep_scaling_data_gls =
-    DepolarisingScaling(d_gls, dist_max; ls_type = :gls, save_data = true)
+    calc_depolarising_scaling_data(d_gls, dist_max; ls_type = :gls, save_data = true)
 # Optimised OLS design
 @assert d_ols.code.noise_param == dep_param
 dep_scaling_data_ols =
-    DepolarisingScaling(d_ols, dist_max; ls_type = :ols, save_data = true)
+    calc_depolarising_scaling_data(d_ols, dist_max; ls_type = :ols, save_data = true)
 # Badly optimised WLS design
-d_wls_worst = Update(d_wls_worst, dep_param)
+d_wls_worst = update_noise(d_wls_worst, dep_param)
 @assert d_wls_worst.code.noise_param == dep_param
 dep_scaling_data_wls_worst =
-    DepolarisingScaling(d_wls_worst, dist_max; ls_type = :wls, save_data = true)
+    calc_depolarising_scaling_data(d_wls_worst, dist_max; ls_type = :wls, save_data = true)
 # Trivial design
-@assert d_triv.code.noise_param == dep_param
-dep_scaling_data_triv =
-    DepolarisingScaling(d_triv, dist_max; ls_type = :wls, save_data = true)
+@assert d_basic.code.noise_param == dep_param
+dep_scaling_data_basic =
+    calc_depolarising_scaling_data(d_basic, dist_max; ls_type = :wls, save_data = true)

@@ -21,16 +21,25 @@ tuple_number_set = Vector{Int}(undef, dep_param_num)
 repeat_numbers_set = Vector{Vector{Int}}(undef, dep_param_num)
 for (idx, param) in enumerate(dep_param_set)
     code = Code(rotated_param, param)
-    d = OptimiseDesign(code; ls_type = :wls, seed = seed, save_data = true)
+    d = optimise_design(
+        code;
+        options = OptimOptions(; ls_type = :wls, save_data = true, seed = seed),
+    )
     tuple_number_set[idx] = length(d.tuple_set)
     repeat_numbers_set[idx] = d.tuple_set_data.repeat_numbers
 end
 # Optimise designs for the other least squares estimators
 code = Code(rotated_param, dep_param)
-d_gls = OptimiseDesign(code; ls_type = :gls, seed = seed, save_data = true)
+d_gls = optimise_design(
+    code;
+    options = OptimOptions(; ls_type = :gls, save_data = true, seed = seed),
+)
 gls_tuple_number = length(d_gls.tuple_set)
 gls_repeat_numbers = d_gls.tuple_set_data.repeat_numbers
-d_ols = OptimiseDesign(code; ls_type = :ols, seed = seed, save_data = true)
+d_ols = optimise_design(
+    code;
+    options = OptimOptions(; ls_type = :ols, save_data = true, seed = seed),
+)
 ols_tuple_number = length(d_ols.tuple_set)
 ols_repeat_numbers = d_ols.tuple_set_data.repeat_numbers
 # Save the file data

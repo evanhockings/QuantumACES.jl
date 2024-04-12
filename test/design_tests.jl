@@ -15,22 +15,22 @@ rotated_param = RotatedPlanarParameters(dist)
 unrotated_param = UnrotatedPlanarParameters(dist)
 big_rotated_param = RotatedPlanarParameters(vertical_dist, horizontal_dist)
 dep_param = DepolarisingParameters(r_1, r_2, r_m)
-log_param = LogNormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
+log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
 rotated_planar = Code(rotated_param, dep_param)
 unrotated_planar = Code(unrotated_param, dep_param)
 big_rotated_planar = Code(big_rotated_param, log_param)
 # Set up optimisation parameters
 rot_ls_type = :wls
 unrot_ls_type = :gls
+rot_max_steps = 5
 rot_max_cycles = 0
 unrot_max_cycles = 1
-rot_tuple_num = 2 * length(rotated_planar.unique_layer_indices) + 3
-unrot_tuple_num = 2 * length(unrotated_planar.unique_layer_indices) + 2
-excursion_len = 2
-excursion_num = 2
-rot_max_steps = 5
+excursion_number = 2
+excursion_length = 2
+rot_tuple_number = 2 * length(rotated_planar.unique_layer_indices) + 3
+unrot_tuple_number = 2 * length(unrotated_planar.unique_layer_indices) + 2
 # Set up scaling parameters
-dist_max = 4
+dist_max = 5
 precision = 1.0
 min_repetitions = 5
 # Set up simulation parameters
@@ -41,36 +41,38 @@ z_score_cutoff = 4.0
 # Optimise and simulate a design for a rotated planar code
 @testset "Rotated planar design" begin
     # Set up a trivial design
-    rot_trivial = TrivialTupleSet(rotated_planar)
-    d_rot_trivial = GenerateDesign(rotated_planar, rot_trivial; save_data = true)
+    rot_basic = get_basic_tuple_set(rotated_planar)
+    d_rot_basic = generate_design(rotated_planar, rot_basic; save_data = true)
     # Test saving and loading and deletion
-    d_rot_trivial_load = load_design(
-        d_rot_trivial.code.code_param,
-        d_rot_trivial.code.noise_param,
-        length(d_rot_trivial.tuple_set),
-        d_rot_trivial.tuple_set_data.repeat_numbers,
-        d_rot_trivial.full_covariance,
+    d_rot_basic_load = load_design(
+        d_rot_basic.code.circuit_param,
+        d_rot_basic.code.noise_param,
+        length(d_rot_basic.tuple_set),
+        d_rot_basic.tuple_set_data.repeat_numbers,
+        d_rot_basic.full_covariance,
     )
-    @test d_rot_trivial_load == d_rot_trivial
-    delete_design(d_rot_trivial)
-    rot_trivial_merit = WLSMerit(d_rot_trivial)
+    @test d_rot_basic_load == d_rot_basic
+    delete_design(d_rot_basic)
+    rot_basic_merit = calc_wls_merit(d_rot_basic)
     # Optimise a design
-    d_rot_opt = OptimiseDesign(
+    d_rot_opt = optimise_design(
         rotated_planar;
-        ls_type = rot_ls_type,
-        max_cycles = rot_max_cycles,
-        tuple_num = rot_tuple_num,
-        excursion_len = excursion_len,
-        excursion_num = excursion_num,
-        max_steps = rot_max_steps,
-        seed = seed,
-        save_data = true,
+        options = OptimOptions(;
+            ls_type = rot_ls_type,
+            save_data = true,
+            max_steps = rot_max_steps,
+            max_cycles = rot_max_cycles,
+            excursion_number = excursion_number,
+            excursion_length = excursion_length,
+            max_tuple_number = rot_tuple_number,
+            seed = seed,
+        ),
     )
-    rot_opt_merit = WLSMerit(d_rot_opt)
-    @test rot_opt_merit.expectation < rot_trivial_merit.expectation
+    rot_opt_merit = calc_wls_merit(d_rot_opt)
+    @test rot_opt_merit.expectation < rot_basic_merit.expectation
     # Test saving and loading and deletion
     d_rot_opt_load = load_design(
-        d_rot_opt.code.code_param,
+        d_rot_opt.code.circuit_param,
         d_rot_opt.code.noise_param,
         length(d_rot_opt.tuple_set),
         d_rot_opt.tuple_set_data.repeat_numbers,
@@ -79,9 +81,9 @@ z_score_cutoff = 4.0
     @test d_rot_opt_load == d_rot_opt
     delete_design(d_rot_opt)
     # Examine the scaling of the merit for depolarising and log-normal noise
-    dep_scaling_data = DepolarisingScaling(d_rot_opt, dist_max; save_data = true)
-    d_rot_opt_log = Update(d_rot_opt, log_param)
-    log_scaling_data = LogNormalScaling(
+    dep_scaling_data = calc_depolarising_scaling_data(d_rot_opt, dist_max; save_data = true)
+    d_rot_opt_log = update_noise(d_rot_opt, log_param)
+    log_scaling_data = calc_lognormal_scaling_data(
         d_rot_opt_log,
         dist_max;
         precision = precision,
@@ -90,25 +92,27 @@ z_score_cutoff = 4.0
     )
     # Test saving and loading and deletion
     dep_scaling_data_load = load_scaling(d_rot_opt, d_rot_opt.ls_type, :dep)
-    @test dep_scaling_data_load == dep_scaling_data
+    @test dep_scaling_data_load.merit_scaling == dep_scaling_data.merit_scaling
     delete_scaling(dep_scaling_data)
     log_scaling_data_load = load_scaling(d_rot_opt_log, d_rot_opt_log.ls_type, :log)
-    @test log_scaling_data_load == log_scaling_data
+    @test log_scaling_data_load.expectation_scaling == log_scaling_data.expectation_scaling
+    @test log_scaling_data_load.variance_scaling == log_scaling_data.variance_scaling
+    @test log_scaling_data_load.eigenvalues_scaling == log_scaling_data.eigenvalues_scaling
     delete_scaling(log_scaling_data)
     # Transfer the tuple set to a differently-sized code
-    d_rot_big = GenerateDesign(
+    d_rot_big = generate_design(
         big_rotated_planar,
         d_rot_opt.tuple_set_data;
         shot_weights = d_rot_opt.shot_weights,
         save_data = true,
     )
     # Test that the merit is improved by better LS estimators
-    rot_merit_set = MeritSet(d_rot_big)
+    rot_merit_set = calc_merit_set(d_rot_big)
     (rot_gls_merit, rot_wls_merit, rot_ols_merit) = rot_merit_set
     @test rot_gls_merit.expectation <= rot_wls_merit.expectation
     @test rot_wls_merit.expectation <= rot_ols_merit.expectation
     # Simulate the design
-    aces_data_rot_big = SimulateACES(
+    aces_data_rot_big = simulate_aces(
         d_rot_big,
         shots_set;
         seed = seed,
@@ -116,7 +120,7 @@ z_score_cutoff = 4.0
         save_data = true,
         clear_design = true,
     )
-    aces_data_rot_big = SimulateACES(
+    aces_data_rot_big = simulate_aces(
         d_rot_big,
         shots_set;
         repetitions = repetitions,
@@ -124,7 +128,7 @@ z_score_cutoff = 4.0
         max_samples = max_samples,
         save_data = false,
     )
-    PrettyPrint(aces_data_rot_big, rot_merit_set)
+    pretty_print(aces_data_rot_big, rot_merit_set)
     delete_aces(aces_data_rot_big)
     # Test that the simulations agree sufficiently with the predicted distributions
     rot_big_gls_z_scores =
@@ -146,24 +150,27 @@ end
 # Optimise and simulate a design for a unrotated planar code
 @testset "Unrotated planar design" begin
     # Set up a trivial design
-    unrot_trivial = TrivialTupleSet(unrotated_planar)
-    d_unrot_trivial = GenerateDesign(unrotated_planar, unrot_trivial)
-    unrot_trivial_merit = GLSMerit(d_unrot_trivial)
+    unrot_basic = get_basic_tuple_set(unrotated_planar)
+    d_unrot_basic = generate_design(unrotated_planar, unrot_basic)
+    unrot_basic_merit = calc_gls_merit(d_unrot_basic)
     # Optimise a design
-    d_unrot_opt = OptimiseDesign(
+    d_unrot_opt = optimise_design(
         unrotated_planar;
-        ls_type = unrot_ls_type,
-        max_cycles = unrot_max_cycles,
-        tuple_num = unrot_tuple_num,
-        excursion_len = excursion_len,
-        excursion_num = excursion_num,
-        seed = seed,
+        options = OptimOptions(;
+            ls_type = unrot_ls_type,
+            save_data = true,
+            max_cycles = unrot_max_cycles,
+            excursion_number = excursion_number,
+            excursion_length = excursion_length,
+            max_tuple_number = unrot_tuple_number,
+            seed = seed,
+        ),
     )
-    unrot_opt_merit = GLSMerit(d_unrot_opt)
-    @test unrot_opt_merit.expectation < unrot_trivial_merit.expectation
+    unrot_opt_merit = calc_gls_merit(d_unrot_opt)
+    @test unrot_opt_merit.expectation < unrot_basic_merit.expectation
     # Update the noise on the design
-    d_unrot_opt_log = Update(d_unrot_opt, log_param)
-    unrot_merit_set = MeritSet(d_unrot_opt_log)
+    d_unrot_opt_log = update_noise(d_unrot_opt, log_param)
+    unrot_merit_set = calc_merit_set(d_unrot_opt_log)
     (unrot_gls_merit, unrot_wls_merit, unrot_ols_merit) = unrot_merit_set
     @test unrot_gls_merit.expectation <= unrot_wls_merit.expectation
     @test unrot_wls_merit.expectation <= unrot_ols_merit.expectation
@@ -172,8 +179,8 @@ end
     @test unrot_gls_merit.cond_num ≈ unrot_opt_merit.cond_num
     @test unrot_gls_merit.pinv_norm ≈ unrot_opt_merit.pinv_norm
     # Examine the scaling of the merit for depolarising and log-normal noise
-    dep_scaling_data = DepolarisingScaling(d_unrot_opt, dist_max)
-    log_scaling_data = LogNormalScaling(
+    dep_scaling_data = calc_depolarising_scaling_data(d_unrot_opt, dist_max)
+    log_scaling_data = calc_lognormal_scaling_data(
         d_unrot_opt_log,
         dist_max;
         precision = precision,
@@ -181,8 +188,8 @@ end
     )
     # Simulate the design
     aces_data_unrot_log =
-        SimulateACES(d_unrot_opt_log, shots_set; repetitions = repetitions, seed = seed)
-    PrettyPrint(aces_data_unrot_log, unrot_merit_set)
+        simulate_aces(d_unrot_opt_log, shots_set; repetitions = repetitions, seed = seed)
+    pretty_print(aces_data_unrot_log, unrot_merit_set)
     # Test that the simulations agree sufficiently with the predicted distributions
     unrot_log_gls_z_scores =
         (aces_data_unrot_log.fgls_gate_norm_coll .- unrot_gls_merit.expectation) ./

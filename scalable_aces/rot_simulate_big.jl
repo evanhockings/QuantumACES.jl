@@ -12,7 +12,7 @@ shots_set = [10^6; 10^7; 10^8; 10^9]
 rotated_param = RotatedPlanarParameters(dist)
 rotated_param_big = RotatedPlanarParameters(dist_big)
 dep_param = DepolarisingParameters(r_1, r_2, r_m)
-log_param = LogNormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
+log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
 # Load the design
 metadata_dict = load("data/design_metadata_$(code_filename(rotated_param)).jld2")
 @assert rotated_param == metadata_dict["rotated_param"]
@@ -37,7 +37,7 @@ if isfile(
 else
     println("Calculating the design.")
     code_big = Code(rotated_param_big, dep_param)
-    d_big = GenerateDesign(
+    d_big = generate_design(
         code_big,
         d.tuple_set_data;
         shot_weights = d.shot_weights,
@@ -47,7 +47,7 @@ else
     )
 end
 # Simualte ACES for the optimised design and depolarising noise
-aces_data_dep = SimulateACES(
+aces_data_dep = simulate_aces(
     d_big,
     shots_set;
     seed = seed,
@@ -57,9 +57,9 @@ aces_data_dep = SimulateACES(
 )
 aces_data_dep = nothing
 # Simualte ACES for the optimised design and log-normal noise
-d_big_log = Update(d_big, log_param)
+d_big_log = update_noise(d_big, log_param)
 d_big = nothing
-aces_data_log = SimulateACES(
+aces_data_log = simulate_aces(
     d_big_log,
     shots_set;
     seed = seed,

@@ -1,14 +1,37 @@
 """
-    DepolarisingNoise(d::Design, p_1::Float64, p_2::Float64, m::Float64)
-
-Generate depolarising noise of per-Pauli strength p_1 for 1-qubit gates and per-Pauli strength p_2 for 2-qubit gates, and of strength p_m for measurements.
+Depolarising Pauli noise. Do all the documentation here.
 """
-function DepolarisingNoise(
+struct DepolarisingParameters <: AbstractNoiseParameters
+    # Single-qubit gate entanglement infidelity
+    # This is the sum of all 3 non-identity Pauli error probabilities
+    r_1::Float64
+    # Two-qubit gate entanglement infidelity
+    # This is the sum of all 15 non-identity Pauli error probabilities
+    r_2::Float64
+    # Measurement entanglement infidelity
+    # This is the measurement error probability
+    r_m::Float64
+    # Default constructor
+    function DepolarisingParameters(r_1::Float64, r_2::Float64, r_m::Float64)
+        # Check the nosie parameters
+        @assert (r_1 >= 0) && (r_1 <= 3 / 4) "The single-qubit gate entanglement infidelity $(r_1) is out of bounds."
+        @assert (r_2 >= 0) && (r_2 <= 15 / 16) "The two-qubit gate entanglement infidelity $(r_2) is out of bounds."
+        @assert (r_m >= 0) && (r_m <= 1 / 2) "The measurement entanglement infidelity $(r_m) is out of bounds."
+        # Return parameters
+        return new(r_1, r_2, r_m)::DepolarisingParameters
+    end
+end
+
+@struct_hash_equal_isequal DepolarisingParameters
+
+function get_gate_probabilities(
     total_gates::Vector{Gate},
-    p_1::Float64,
-    p_2::Float64,
-    p_m::Float64,
+    noise_param::DepolarisingParameters,
 )
+    # Extract the parameters for generating the noise
+    p_1 = noise_param.r_1 / 3
+    p_2 = noise_param.r_2 / 15
+    p_m = noise_param.r_m
     # Generate the noise
     gate_probabilities = Dict{Gate, Vector{Float64}}()
     for gate in total_gates
@@ -28,20 +51,63 @@ function DepolarisingNoise(
 end
 
 """
-    LogNormalNoise(code::Code, log_p_1_mean::Float64, log_p_1_std::Float64, log_p_2_mean::Float64, log_p_2_std::Float64, log_m_mean::Float64, log_m_std::Float64; seed::Union{UInt64, Nothing} = nothing)
-
-Generate log-normally distributed Pauli noise where the supplied means and standard deviations describe the normal distributions for individual Pauli errors for one- and two-qubit gates as well as measurements.
+Log-normal Pauli noise. Do all the documentation here.
 """
-function LogNormalNoise(
-    total_gates::Vector{Gate},
-    p_1_mean_log::Float64,
-    p_1_std_log::Float64,
-    p_2_mean_log::Float64,
-    p_2_std_log::Float64,
-    p_m_mean_log::Float64,
-    p_m_std_log::Float64,
-    seed::UInt64,
-)
+struct LognormalParameters <: AbstractNoiseParameters
+    # Mean of the single-qubit gate entanglement infidelity
+    r_1::Float64
+    # Mean of the two-qubit gate entanglement infidelity
+    r_2::Float64
+    # Mean of the measurement entanglement infidelity
+    r_m::Float64
+    # Approximate standard deviation of the logarithm of the entanglement infidelity
+    total_std_log::Float64
+    # Random seed
+    seed::UInt64
+    # Constructor
+    function LognormalParameters(
+        r_1::Float64,
+        r_2::Float64,
+        r_m::Float64,
+        total_std_log::Float64;
+        seed::Union{UInt64, Nothing} = nothing,
+    )
+        # Check the nosie parameters
+        @assert (r_1 >= 0) && (r_1 <= 3 / 4) "The single-qubit gate entanglement infidelity $(r_1) is out of bounds."
+        @assert (r_2 >= 0) && (r_2 <= 15 / 16) "The two-qubit gate entanglement infidelity $(r_2) is out of bounds."
+        @assert (r_m >= 0) && (r_m <= 1 / 2) "The measurement entanglement infidelity $(r_m) is out of bounds."
+        # Randomly set the seed if one isn't supplied
+        if seed === nothing
+            seed = rand(UInt64)
+        end
+        # Return parameters
+        return new(
+            r_1::Float64,
+            r_2::Float64,
+            r_m::Float64,
+            total_std_log::Float64,
+            seed::UInt64,
+        )::LognormalParameters
+    end
+end
+
+@struct_hash_equal_isequal LognormalParameters
+
+function get_gate_probabilities(total_gates::Vector{Gate}, noise_param::LognormalParameters)
+    # Extract the parameters for generating the noise
+    r_1 = noise_param.r_1
+    r_2 = noise_param.r_2
+    r_m = noise_param.r_m
+    total_std_log = noise_param.total_std_log
+    seed = noise_param.seed
+    # We approximate the sum of log-normal random variables as a log-normal random variable # with the same mean and standard deviation, in order to ensure that the sum has a mean
+    # that is approximately independent of the standard deviation, total_std_log
+    p_1_std_log = sqrt(log(1 + 3 * (exp(total_std_log^2) - 1)))
+    p_2_std_log = sqrt(log(1 + 15 * (exp(total_std_log^2) - 1)))
+    p_m_std_log = total_std_log
+    p_1_mean_log = log(r_1 / 3) - p_1_std_log^2 / 2
+    p_2_mean_log = log(r_2 / 15) - p_2_std_log^2 / 2
+    p_m_mean_log = log(r_m) - p_m_std_log^2 / 2
     # Fix the random seed
     Random.seed!(seed)
     # Generate the noise
@@ -65,60 +131,15 @@ function LogNormalNoise(
 end
 
 #
-function GenerateNoise(total_gates::Vector{Gate}, noise_param::AbstractNoiseParameters)
-    if typeof(noise_param) == DepolarisingParameters
-        # Extract the parameters
-        r_1 = noise_param.r_1
-        r_2 = noise_param.r_2
-        r_m = noise_param.r_m
-        # Determine the appropriate noise parameters
-        p_1 = r_1 / 3
-        p_2 = r_2 / 15
-        p_m = r_m
-        # Generate the noise
-        gate_probabilities = DepolarisingNoise(total_gates, p_1, p_2, p_m)
-    elseif typeof(noise_param) == LogNormalParameters
-        # Extract the parameters
-        r_1 = noise_param.r_1
-        r_2 = noise_param.r_2
-        r_m = noise_param.r_m
-        total_std_log = noise_param.total_std_log
-        seed = noise_param.seed
-        # Determine the appropriate noise parameters
-        # Ensure that the entanglement infidelity of all of the gate types is approximately total_std_log
-        p_1_std_log = sqrt(log(1 + 3 * (exp(total_std_log^2) - 1)))
-        p_2_std_log = sqrt(log(1 + 15 * (exp(total_std_log^2) - 1)))
-        p_m_std_log = total_std_log
-        p_1_mean_log = log(r_1 / 3) - p_1_std_log^2 / 2
-        p_2_mean_log = log(r_2 / 15) - p_2_std_log^2 / 2
-        p_m_mean_log = log(r_m) - p_m_std_log^2 / 2
-        # Generate the noise
-        gate_probabilities = LogNormalNoise(
-            total_gates,
-            p_1_mean_log,
-            p_1_std_log,
-            p_2_mean_log,
-            p_2_std_log,
-            p_m_mean_log,
-            p_m_std_log,
-            seed,
-        )
-    else
-        throw(error("Unsupported noise parameter type $(typeof(noise_param))."))
-    end
-    return gate_probabilities::Dict{Gate, Vector{Float64}}
-end
-
-#
-function GateEigenvalues(
+function get_gate_eigenvalues(
     gate_probabilities::Dict{Gate, Vector{Float64}},
     total_gates::Vector{Gate},
     gate_index::Dict{Gate, Int},
     N::Int,
 )
     # Generate the Walsh-Hadamard transform matrices
-    W_1 = WHTMatrix(1)
-    W_2 = WHTMatrix(2)
+    W_1 = wht_matrix(1)
+    W_2 = wht_matrix(2)
     # Generate the gate eigenvalues
     gate_eigenvalues = Vector{Float64}(undef, N)
     for gate in total_gates
@@ -139,31 +160,4 @@ function GateEigenvalues(
         end
     end
     return gate_eigenvalues::Vector{Float64}
-end
-
-#
-function Update(c::Code, noise_param::AbstractNoiseParameters)
-    # Generate the noise
-    gate_probabilities = GenerateNoise(c.total_gates, noise_param)
-    gate_eigenvalues = GateEigenvalues(gate_probabilities, c.total_gates, c.gate_index, c.N)
-    # Update the circuit
-    c_update = deepcopy(c)
-    @reset c_update.noise_param = noise_param
-    @reset c_update.gate_probabilities = gate_probabilities
-    @reset c_update.gate_eigenvalues = gate_eigenvalues
-    return c_update::Code
-end
-
-#
-function Update(d::Design, noise_param::AbstractNoiseParameters)
-    # Generate the noise
-    gate_probabilities = GenerateNoise(d.code.total_gates, noise_param)
-    gate_eigenvalues =
-        GateEigenvalues(gate_probabilities, d.code.total_gates, d.code.gate_index, d.code.N)
-    # Update the circuit
-    d_update = deepcopy(d)
-    @reset d_update.code.noise_param = noise_param
-    @reset d_update.code.gate_probabilities = gate_probabilities
-    @reset d_update.code.gate_eigenvalues = gate_eigenvalues
-    return d_update::Design
 end
