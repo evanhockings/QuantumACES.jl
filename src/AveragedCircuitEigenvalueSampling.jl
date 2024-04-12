@@ -24,7 +24,9 @@ using PythonCall,
 abstract type AbstractNoiseParameters end
 abstract type AbstractCircuitParameters end
 abstract type AbstractCircuit end
-export AbstractNoiseParameters, AbstractCircuitParameters, AbstractCircuit
+abstract type AbstractScalingData end
+export AbstractNoiseParameters,
+    AbstractCircuitParameters, AbstractCircuit, AbstractScalingData
 
 # TODO: Clean up exports
 # Note that people can still use the functions directly, if for example they do
@@ -182,12 +184,11 @@ export
     # io.jl functions
     enter_folder,
     exit_folder,
-    code_filename,
+    circuit_filename,
     noise_filename,
     tuples_filename,
     design_filename,
-    dep_scaling_filename,
-    log_scaling_filename,
+    scaling_filename,
     aces_data_filename,
     save_design,
     load_design,

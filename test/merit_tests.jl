@@ -60,14 +60,14 @@ test_code_3 = Code(test_param_3, dep_param)
 max_steps = 3
 rot_covariance_log = calc_covariance_log(d_rot)
 N_rot = rotated_planar.N
-T_rot = length(d_rot.tuple_set)
+C_rot = length(d_rot.tuple_set)
 rot_mapping_lengths = length.(d_rot.mapping_ensemble)
-rot_gate_eigenvalues_diag = Diagonal(d_rot.code.gate_eigenvalues)
+rot_gate_eigenvalues_diag = Diagonal(d_rot.c.gate_eigenvalues)
 unrot_covariance_log = calc_covariance_log(d_unrot)
 N_unrot = unrotated_planar.N
-T_unrot = length(d_unrot.tuple_set)
+C_unrot = length(d_unrot.tuple_set)
 unrot_mapping_lengths = length.(d_unrot.mapping_ensemble)
-unrot_gate_eigenvalues_diag = Diagonal(d_unrot.code.gate_eigenvalues)
+unrot_gate_eigenvalues_diag = Diagonal(d_unrot.c.gate_eigenvalues)
 # Test the merit gradient for GLS
 @testset "GLS merit gradient" begin
     # Test GLS gradient descent
@@ -116,7 +116,7 @@ unrot_gate_eigenvalues_diag = Diagonal(d_unrot.code.gate_eigenvalues)
                 vcat(
                     [
                         shot_weights[idx] * ones(rot_mapping_lengths[idx]) for
-                        idx in 1:T_rot
+                        idx in 1:C_rot
                     ]...,
                 ),
             )
@@ -198,7 +198,7 @@ end
                 vcat(
                     [
                         (1 / shot_weights[idx]) * ones(rot_mapping_lengths[idx]) for
-                        idx in 1:T_rot
+                        idx in 1:C_rot
                     ]...,
                 ),
             )
@@ -293,7 +293,7 @@ end
                 vcat(
                     [
                         (1 / shot_weights[idx]) * ones(unrot_mapping_lengths[idx]) for
-                        idx in 1:T_unrot
+                        idx in 1:C_unrot
                     ]...,
                 ),
             )
@@ -367,7 +367,7 @@ end
     rot_grow = [rot_basic; [rotated_planar.circuit_tuple]]
     d_rot_grow_test = generate_design(rotated_planar, rot_grow)
     rot_covariance_log_test = calc_covariance_log(d_rot_grow)
-    @test d_rot_grow.code == d_rot_grow_test.code
+    @test d_rot_grow.c == d_rot_grow_test.c
     @test d_rot_grow.full_covariance == d_rot_grow_test.full_covariance
     @test d_rot_grow.matrix == d_rot_grow_test.matrix
     @test d_rot_grow.tuple_set == d_rot_grow_test.tuple_set
@@ -386,7 +386,7 @@ end
     # Test completing the design
     d_rot_grow_completed =
         complete_design(generate_design(rotated_planar, rot_grow; full_covariance = false))
-    @test d_rot_grow.code == d_rot_grow_completed.code
+    @test d_rot_grow.c == d_rot_grow_completed.c
     @test d_rot_grow.full_covariance == d_rot_grow_completed.full_covariance
     @test d_rot_grow.matrix == d_rot_grow_completed.matrix
     @test d_rot_grow.tuple_set == d_rot_grow_completed.tuple_set
@@ -407,7 +407,7 @@ end
     (d_rot_prune, rot_covariance_log_prune) =
         prune_design(d_rot_grow, rot_covariance_log_grow, T)
     # Test that the pruned design and covariance matrix are correct
-    @test d_rot_prune.code == d_rot_basic.code
+    @test d_rot_prune.c == d_rot_basic.c
     @test d_rot_prune.full_covariance == d_rot_basic.full_covariance
     @test d_rot_prune.matrix == d_rot_basic.matrix
     @test d_rot_prune.tuple_set == d_rot_basic.tuple_set
@@ -433,8 +433,8 @@ end
     # Randomly sample eigenvalues according to the WLS estimator covariance matrix
     S = 10^9
     repetitions = 1000
-    N = d_rot.code.N
-    gate_eigenvalues = d_rot.code.gate_eigenvalues
+    N = d_rot.c.N
+    gate_eigenvalues = d_rot.c.gate_eigenvalues
     (rot_eigenvalues, rot_covariance) = calc_eigenvalues_covariance(d_rot)
     # Sample the eigenvalues according to the calculated WLS estimator covariance matrix
     est_eigenvalues_distribution =

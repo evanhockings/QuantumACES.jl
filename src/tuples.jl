@@ -50,12 +50,12 @@ function get_basic_experiment_numbers(c::T) where {T <: AbstractCircuit}
 end
 
 # 
-function get_basic_times_harm_mean(code::Code)
+function get_basic_times_harm_mean(c::T) where {T <: AbstractCircuit}
     # Initialise times
-    meas_reset_time = code.layer_times[end]
-    layer_times = code.layer_times[1:(end - 1)]
+    meas_reset_time = c.layer_times[end]
+    layer_times = c.layer_times[1:(end - 1)]
     # Initialise the trivial tuple set
-    basic_tuple_set = get_basic_tuple_set(code)
+    basic_tuple_set = get_basic_tuple_set(c)
     # Determine the times for each of the tuples in the trivial tuple set
     basic_tuple_times = Vector{Float64}(undef, length(basic_tuple_set))
     for (idx, tuple) in enumerate(basic_tuple_set)
@@ -66,7 +66,7 @@ function get_basic_times_harm_mean(code::Code)
         basic_tuple_times[idx] = tuple_time
     end
     # Determine the experiment numbers for the trivial tuple set
-    basic_experiment_numbers = get_basic_experiment_numbers(code)
+    basic_experiment_numbers = get_basic_experiment_numbers(c)
     # Normalise the tuple set times by the haarmonic mean of the trivial tuple set experiment times
     basic_times_harm_mean =
         sum(basic_experiment_numbers) / sum(basic_experiment_numbers ./ basic_tuple_times)
@@ -75,13 +75,13 @@ end
 
 # 
 function get_tuple_set_params(
-    code::Code,
+    c::T,
     tuple_set::Vector{Vector{Int}},
     experiment_numbers::Vector{Int},
-)
+) where {T <: AbstractCircuit}
     # Initialise times
-    meas_reset_time = code.layer_times[end]
-    layer_times = code.layer_times[1:(end - 1)]
+    meas_reset_time = c.layer_times[end]
+    layer_times = c.layer_times[1:(end - 1)]
     # Determine the times for each of the tuples in the tuple set
     unnormalised_tuple_times = Vector{Float64}(undef, length(tuple_set))
     for (idx, tuple) in enumerate(tuple_set)
@@ -92,7 +92,7 @@ function get_tuple_set_params(
         unnormalised_tuple_times[idx] = tuple_time
     end
     # Normalise the tuple set times by the haarmonic mean of the trivial tuple set experiment times
-    basic_times_harm_mean = get_basic_times_harm_mean(code)
+    basic_times_harm_mean = get_basic_times_harm_mean(c)
     tuple_times = unnormalised_tuple_times / basic_times_harm_mean
     # Determine the shot weights for the tuple set
     shot_weights =
@@ -102,24 +102,25 @@ function get_tuple_set_params(
 end
 
 #
-function get_tuple_set_data(code::Code)
+function get_tuple_set_data(c::T) where {T <: AbstractCircuit}
     # Initialise parameters
-    r_1 = code.noise_param.r_1
-    r_2 = code.noise_param.r_2
-    types = unique(code.layer_types)
+    r_1 = c.noise_param.r_1
+    r_2 = c.noise_param.r_2
+    types = unique(c.layer_types)
     type_num = length(types)
     repeat_numbers = zeros(type_num)
     initial_scale = 0.2
     # Generate the repeated tuple set data
-    if hasproperty(code.circuit_param, :dynamically_decouple) &&
-       code.circuit_param.dynamically_decouple
+    if hasproperty(c.circuit_param, :dynamically_decouple) &&
+       c.circuit_param.dynamically_decouple
         # Repeated tuples for dynamically decoupled circuits
         # Initialise relevant parameters
         type_indices = [
-            intersect(findall(code.layer_types .== types[idx]), code.unique_layer_indices) for idx in eachindex(types)
+            intersect(findall(c.layer_types .== types[idx]), c.unique_layer_indices) for
+            idx in eachindex(types)
         ]
-        @assert :two_qubit ∈ types "The code must have a two-qubit gate layer."
-        @assert :dynamical ∈ types "The code must have a dynamical decoupling gate layer."
+        @assert :two_qubit ∈ types "The circuit must have a two-qubit gate layer."
+        @assert :dynamical ∈ types "The circuit must have a dynamical decoupling gate layer."
         two_qubit_indices = vcat(type_indices[types .== :two_qubit]...)
         dynamical_indices = vcat(type_indices[types .== :dynamical]...)
         non_two_qubit_indices = vcat(type_indices[types .!= :two_qubit]...)
@@ -131,9 +132,9 @@ function get_tuple_set_data(code::Code)
         )
         repeat_tuple_set = vcat(non_two_qubit_tuple_set, two_qubit_tuple_set)
         non_two_qubit_repeat_indices =
-            [findfirst(code.layer_types[i] .== types) for i in non_two_qubit_indices]
+            [findfirst(c.layer_types[i] .== types) for i in non_two_qubit_indices]
         two_qubit_repeat_indices = repeat(
-            [findfirst(code.layer_types[i] .== types) for i in two_qubit_indices],
+            [findfirst(c.layer_types[i] .== types) for i in two_qubit_indices],
             length(dynamical_indices),
         )
         repeat_indices = vcat(non_two_qubit_repeat_indices, two_qubit_repeat_indices)
@@ -150,9 +151,9 @@ function get_tuple_set_data(code::Code)
         end
     else
         # Repeated tuples for other circuits
-        repeat_tuple_set = [[i] for i in code.unique_layer_indices]
+        repeat_tuple_set = [[i] for i in c.unique_layer_indices]
         repeat_indices =
-            [findfirst(code.layer_types[i] .== types) for i in code.unique_layer_indices]
+            [findfirst(c.layer_types[i] .== types) for i in c.unique_layer_indices]
         # Initialise the repeat numbers
         for (idx, type) in enumerate(types)
             if type == :single_qubit
@@ -168,7 +169,7 @@ function get_tuple_set_data(code::Code)
     # It seems best to have repeat tuples of order 2 repeated an odd number of times
     repeat_numbers = 2 * round.(Int, repeat_numbers / 2) .- 1
     # Generate the tuple set data
-    basic_tuple_set = get_basic_tuple_set(code)
+    basic_tuple_set = get_basic_tuple_set(c)
     tuple_set_data =
         TupleSetData(basic_tuple_set, repeat_tuple_set, repeat_numbers, repeat_indices)
     return tuple_set_data

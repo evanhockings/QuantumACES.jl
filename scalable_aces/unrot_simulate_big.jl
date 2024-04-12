@@ -14,7 +14,7 @@ unrotated_param_big = UnrotatedPlanarParameters(dist_big)
 dep_param = DepolarisingParameters(r_1, r_2, r_m)
 log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
 # Load the design
-metadata_dict = load("data/design_metadata_$(code_filename(unrotated_param)).jld2")
+metadata_dict = load("data/design_metadata_$(circuit_filename(unrotated_param)).jld2")
 @assert unrotated_param == metadata_dict["unrotated_param"]
 @assert dep_param == metadata_dict["dep_param"]
 dep_param_set = metadata_dict["dep_param_set"]
@@ -25,7 +25,7 @@ dep_idx = 14
 tuple_number = tuple_number_set[dep_idx]
 repeat_numbers = repeat_numbers_set[dep_idx]
 d = load_design(unrotated_param, dep_param, tuple_number, repeat_numbers, true)
-@assert d.code.noise_param == dep_param
+@assert d.c.noise_param == dep_param
 # Generate the design at a large code distance
 if isfile(
     pwd() *
@@ -36,9 +36,9 @@ if isfile(
     d_big = load_design(unrotated_param_big, dep_param, tuple_number, repeat_numbers, false)
 else
     println("Calculating the design.")
-    code_big = Code(unrotated_param_big, dep_param)
+    c_big = Code(unrotated_param_big, dep_param)
     d_big = generate_design(
-        code_big,
+        c_big,
         d.tuple_set_data;
         shot_weights = d.shot_weights,
         full_covariance = false,

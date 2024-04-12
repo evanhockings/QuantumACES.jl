@@ -56,7 +56,7 @@ function calc_covariance(
         @warn "The design does not include the full covariance matrix; only the diagonal will be calculated."
     end
     # Initialise some variables
-    T = length(d.tuple_set)
+    tuple_number = length(d.tuple_set)
     # Initialise a trivial mapping to check things are working properly
     trivial_pauli = Pauli(Bool[0], 0)
     trivial_row = SparseVector{Int32, Int32}(1, Int32[], Int32[])
@@ -67,14 +67,14 @@ function calc_covariance(
     tuple_times_factor = sum(d.shot_weights .* d.tuple_times)
     covariance = spzeros(Float64, Int32, M, M)
     reentrant_lock = ReentrantLock()
-    for i in 1:T
-        tuple_covariance_dict = d.covariance_dict_ensemble[i]
-        tuple_experiment_number = d.experiment_numbers[i]
-        shot_weight = d.shot_weights[i]
-        if i == 1
+    for idx in 1:tuple_number
+        tuple_covariance_dict = d.covariance_dict_ensemble[idx]
+        tuple_experiment_number = d.experiment_numbers[idx]
+        shot_weight = d.shot_weights[idx]
+        if idx == 1
             tuple_offset = 0
         else
-            tuple_offset = sum([length(d.mapping_ensemble[j]) for j in 1:(i - 1)])
+            tuple_offset = sum([length(d.mapping_ensemble[j]) for j in 1:(idx - 1)])
         end
         # Generate the relevant term in the covariance matrix for each key in the dictionary
         @threads :static for key in collect(keys(tuple_covariance_dict))
@@ -145,7 +145,7 @@ Returns the circuit eigenvalue estimator covariance matrix. If `warning=true`, w
 """
 function calc_covariance(d::Design, eigenvalues::Vector{Float64}; warning::Bool = true)
     # Calculate the covariance matrix
-    gate_eigenvalues = d.code.gate_eigenvalues
+    gate_eigenvalues = d.c.gate_eigenvalues
     covariance = calc_covariance(d, eigenvalues, gate_eigenvalues; warning = warning)
     return covariance::SparseMatrixCSC{Float64, Int32}
 end
@@ -157,7 +157,7 @@ Returns the circuit eigenvalue estimator covariance matrix. If `warning=true`, w
 """
 function calc_covariance(d::Design; warning::Bool = true)
     # Generate the circuit eigenvalues
-    gate_eigenvalues = d.code.gate_eigenvalues
+    gate_eigenvalues = d.c.gate_eigenvalues
     eigenvalues = exp.(-(d.matrix * (-log.(gate_eigenvalues))))
     # Calculate the covariance matrix
     covariance = calc_covariance(d, eigenvalues; warning = warning)
@@ -171,7 +171,7 @@ Returns the circuit eigenvalues and circuit eigenvalue estimator covariance matr
 """
 function calc_eigenvalues_covariance(d::Design; warning::Bool = true)
     # Generate the circuit eigenvalues
-    gate_eigenvalues = d.code.gate_eigenvalues
+    gate_eigenvalues = d.c.gate_eigenvalues
     eigenvalues = exp.(-(d.matrix * (-log.(gate_eigenvalues))))
     # Calculate the covariance matrix
     covariance = calc_covariance(d, eigenvalues; warning = warning)
@@ -226,7 +226,7 @@ end
 function calc_gls_covariance(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
     # Calculate the inverse of the covariance matrix of the circuit log-eigenvalues
     mapping_lengths = length.(d.mapping_ensemble)
-    gate_eigenvalues = d.code.gate_eigenvalues
+    gate_eigenvalues = d.c.gate_eigenvalues
     gate_eigenvalues_diag = Diagonal(gate_eigenvalues)
     covariance_log_inv = sparse_covariance_inv(covariance_log, mapping_lengths)
     # Calculate the covariance matrix of the gate eigenvalues using a first-order Taylor approximation
@@ -243,7 +243,7 @@ end
 """
 function calc_wls_covariance(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
     # Calculate the WLS estimator
-    gate_eigenvalues = d.code.gate_eigenvalues
+    gate_eigenvalues = d.c.gate_eigenvalues
     gate_eigenvalues_diag = Diagonal(gate_eigenvalues)
     covariance_log_diag_inv = Diagonal(covariance_log)^(-1)
     wls_estimator =
@@ -266,7 +266,7 @@ end
 """
 function calc_ols_covariance(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
     # Calculate the OLS estimator
-    gate_eigenvalues = d.code.gate_eigenvalues
+    gate_eigenvalues = d.c.gate_eigenvalues
     gate_eigenvalues_diag = Diagonal(gate_eigenvalues)
     ols_estimator = inv(bunchkaufman(Symmetric(Array(d.matrix' * d.matrix)))) * d.matrix'
     # Calculate the covariance matrix of the gate eigenvalues using a first-order Taylor approximation
@@ -357,7 +357,7 @@ function calc_gls_merit(d::Design)
     # Calculate the circuit log-eigenvalue covariance matrix and the gate eigenvalues
     covariance_log = calc_covariance_log(d)
     # Calculate the pseudoinverse norm and condition number of the design matrix
-    design_matrix_singular_vals = zeros(Float64, d.code.N)
+    design_matrix_singular_vals = zeros(Float64, d.c.N)
     try
         design_matrix_singular_vals = svd(convert(Matrix{Float64}, Array(d.matrix))).S
     catch
@@ -377,10 +377,10 @@ function calc_gls_merit(d::Design)
     gls_merit = Merit(
         d.tuple_set,
         d.tuple_set_data,
-        d.code.circuit_param,
-        d.code.noise_param,
-        length(d.code.total_gates),
-        d.code.N,
+        d.c.circuit_param,
+        d.c.noise_param,
+        length(d.c.total_gates),
+        d.c.N,
         :gls,
         gls_expectation,
         gls_variance,
@@ -400,7 +400,7 @@ function calc_wls_merit(d::Design)
     # Calculate the circuit log-eigenvalue covariance matrix and the gate eigenvalues
     covariance_log = calc_covariance_log(d)
     # Calculate the pseudoinverse norm and condition number of the design matrix
-    design_matrix_singular_vals = zeros(Float64, d.code.N)
+    design_matrix_singular_vals = zeros(Float64, d.c.N)
     try
         design_matrix_singular_vals = svd(convert(Matrix{Float64}, Array(d.matrix))).S
     catch
@@ -420,10 +420,10 @@ function calc_wls_merit(d::Design)
     wls_merit = Merit(
         d.tuple_set,
         d.tuple_set_data,
-        d.code.circuit_param,
-        d.code.noise_param,
-        length(d.code.total_gates),
-        d.code.N,
+        d.c.circuit_param,
+        d.c.noise_param,
+        length(d.c.total_gates),
+        d.c.N,
         :wls,
         wls_expectation,
         wls_variance,
@@ -443,7 +443,7 @@ function calc_ols_merit(d::Design)
     # Calculate the circuit log-eigenvalue covariance matrix and the gate eigenvalues
     covariance_log = calc_covariance_log(d)
     # Calculate the pseudoinverse norm and condition number of the design matrix
-    design_matrix_singular_vals = zeros(Float64, d.code.N)
+    design_matrix_singular_vals = zeros(Float64, d.c.N)
     try
         design_matrix_singular_vals = svd(convert(Matrix{Float64}, Array(d.matrix))).S
     catch
@@ -463,10 +463,10 @@ function calc_ols_merit(d::Design)
     ols_merit = Merit(
         d.tuple_set,
         d.tuple_set_data,
-        d.code.circuit_param,
-        d.code.noise_param,
-        length(d.code.total_gates),
-        d.code.N,
+        d.c.circuit_param,
+        d.c.noise_param,
+        length(d.c.total_gates),
+        d.c.N,
         :ols,
         ols_expectation,
         ols_variance,
@@ -500,7 +500,7 @@ function calc_merit_set(d::Design)
     # Calculate the circuit log-eigenvalue covariance matrix and the gate eigenvalues
     covariance_log = calc_covariance_log(d)
     # Calculate the pseudoinverse norm and condition number of the design matrix
-    design_matrix_singular_vals = zeros(Float64, d.code.N)
+    design_matrix_singular_vals = zeros(Float64, d.c.N)
     try
         design_matrix_singular_vals = svd(convert(Matrix{Float64}, Array(d.matrix))).S
     catch
@@ -520,10 +520,10 @@ function calc_merit_set(d::Design)
     gls_merit = Merit(
         d.tuple_set,
         d.tuple_set_data,
-        d.code.circuit_param,
-        d.code.noise_param,
-        length(d.code.total_gates),
-        d.code.N,
+        d.c.circuit_param,
+        d.c.noise_param,
+        length(d.c.total_gates),
+        d.c.N,
         :gls,
         gls_expectation,
         gls_variance,
@@ -541,10 +541,10 @@ function calc_merit_set(d::Design)
     wls_merit = Merit(
         d.tuple_set,
         d.tuple_set_data,
-        d.code.circuit_param,
-        d.code.noise_param,
-        length(d.code.total_gates),
-        d.code.N,
+        d.c.circuit_param,
+        d.c.noise_param,
+        length(d.c.total_gates),
+        d.c.N,
         :wls,
         wls_expectation,
         wls_variance,
@@ -562,10 +562,10 @@ function calc_merit_set(d::Design)
     ols_merit = Merit(
         d.tuple_set,
         d.tuple_set_data,
-        d.code.circuit_param,
-        d.code.noise_param,
-        length(d.code.total_gates),
-        d.code.N,
+        d.c.circuit_param,
+        d.c.noise_param,
+        length(d.c.total_gates),
+        d.c.N,
         :ols,
         ols_expectation,
         ols_variance,

@@ -45,8 +45,8 @@ z_score_cutoff = 4.0
     d_rot_basic = generate_design(rotated_planar, rot_basic; save_data = true)
     # Test saving and loading and deletion
     d_rot_basic_load = load_design(
-        d_rot_basic.code.circuit_param,
-        d_rot_basic.code.noise_param,
+        d_rot_basic.c.circuit_param,
+        d_rot_basic.c.noise_param,
         length(d_rot_basic.tuple_set),
         d_rot_basic.tuple_set_data.repeat_numbers,
         d_rot_basic.full_covariance,
@@ -72,8 +72,8 @@ z_score_cutoff = 4.0
     @test rot_opt_merit.expectation < rot_basic_merit.expectation
     # Test saving and loading and deletion
     d_rot_opt_load = load_design(
-        d_rot_opt.code.circuit_param,
-        d_rot_opt.code.noise_param,
+        d_rot_opt.c.circuit_param,
+        d_rot_opt.c.noise_param,
         length(d_rot_opt.tuple_set),
         d_rot_opt.tuple_set_data.repeat_numbers,
         d_rot_opt.full_covariance,
@@ -91,10 +91,10 @@ z_score_cutoff = 4.0
         save_data = true,
     )
     # Test saving and loading and deletion
-    dep_scaling_data_load = load_scaling(d_rot_opt, d_rot_opt.ls_type, :dep)
+    dep_scaling_data_load = load_scaling(d_rot_opt, d_rot_opt.ls_type)
     @test dep_scaling_data_load.merit_scaling == dep_scaling_data.merit_scaling
     delete_scaling(dep_scaling_data)
-    log_scaling_data_load = load_scaling(d_rot_opt_log, d_rot_opt_log.ls_type, :log)
+    log_scaling_data_load = load_scaling(d_rot_opt_log, d_rot_opt_log.ls_type)
     @test log_scaling_data_load.expectation_scaling == log_scaling_data.expectation_scaling
     @test log_scaling_data_load.variance_scaling == log_scaling_data.variance_scaling
     @test log_scaling_data_load.eigenvalues_scaling == log_scaling_data.eigenvalues_scaling
@@ -104,6 +104,7 @@ z_score_cutoff = 4.0
         big_rotated_planar,
         d_rot_opt.tuple_set_data;
         shot_weights = d_rot_opt.shot_weights,
+        diagnostics = true,
         save_data = true,
     )
     # Test that the merit is improved by better LS estimators

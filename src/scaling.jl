@@ -1,4 +1,4 @@
-struct DepolarisingScalingData
+struct DepolarisingScalingData <: AbstractScalingData
     # Code distances
     dist_range::Vector{Int}
     # Merit of the design for a range of code distances
@@ -49,11 +49,11 @@ end
 function Base.show(io::IO, s::DepolarisingScalingData)
     return print(
         io,
-        "Merit scaling data with depolarising noise of a design for a $(s.circuit_param.code_name) code with $(length(s.tuple_set)) tuples.",
+        "Merit scaling data with depolarising noise of a design for a $(s.circuit_param.circuit_name) code with $(length(s.tuple_set)) tuples.",
     )
 end
 
-struct LognormalScalingData
+struct LognormalScalingData <: AbstractScalingData
     # Code distances
     dist_range::Vector{Int}
     # Gate eigenvalue number fit
@@ -95,7 +95,7 @@ end
 function Base.show(io::IO, s::LognormalScalingData)
     return print(
         io,
-        "Merit scaling data with log-normal random noise of a design for a $(s.circuit_param.code_name) code with $(length(s.tuple_set)) tuples.",
+        "Merit scaling data with log-normal random noise of a design for a $(s.circuit_param.circuit_name) code with $(length(s.tuple_set)) tuples.",
     )
 end
 
@@ -112,11 +112,13 @@ function calc_depolarising_scaling_data(
     save_data::Bool = false,
 )
     # Check the parameters
-    @assert typeof(d.code.noise_param) == DepolarisingParameters "This function requires depolarising noise."
+    @assert typeof(d.c.noise_param) == DepolarisingParameters "This function requires depolarising noise."
+    @assert typeof(d.c.circuit_param) == RotatedPlanarParameters ||
+            typeof(d.c.circuit_param) == UnrotatedPlanarParameters "This function requires planar codes."
     @assert minimum(dist_range) >= 3 "The supplied distances must all be at least 3."
     # Set some variables
-    circuit_param = d.code.circuit_param
-    noise_param = d.code.noise_param
+    circuit_param = d.c.circuit_param
+    noise_param = d.c.noise_param
     tuple_set_data = d.tuple_set_data
     tuple_set = get_tuple_set(tuple_set_data)
     shot_weights = d.shot_weights
@@ -133,7 +135,7 @@ function calc_depolarising_scaling_data(
     start_time = time()
     calculation_times = Matrix{Float64}(undef, length(dist_range), 2)
     for (idx, dist) in enumerate(dist_range)
-        # Initialise up the code
+        # Initialise the code
         circuit_param_dist = deepcopy(circuit_param)
         if typeof(circuit_param_dist) == RotatedPlanarParameters
             @reset circuit_param_dist.vertical_dist = dist
@@ -144,10 +146,10 @@ function calc_depolarising_scaling_data(
         else
             throw(error("Unsupported code type $(code_type)."))
         end
-        code = Code(circuit_param_dist, noise_param)
+        c = Code(circuit_param_dist, noise_param)
         # Generate the design
         time_1 = time()
-        d_dist = generate_design(code, tuple_set_data; shot_weights = shot_weights)
+        d_dist = generate_design(c, tuple_set_data; shot_weights = shot_weights)
         time_2 = time()
         design_time = time_2 - time_1
         if diagnostics
@@ -265,9 +267,9 @@ function calc_depolarising_scaling_data(
     save_data::Bool = false,
 )
     # Generate the distance range
-    if typeof(d.code.circuit_param) == RotatedPlanarParameters
+    if typeof(d.c.circuit_param) == RotatedPlanarParameters
         dist_range = collect(3:dist_max)
-    elseif typeof(d.code.circuit_param) == UnrotatedPlanarParameters
+    elseif typeof(d.c.circuit_param) == UnrotatedPlanarParameters
         dist_range = collect(3:dist_max)
     else
         throw(error("Unsupported code type $(code_type)."))
@@ -301,7 +303,7 @@ function calc_lognormal_scaling_data(
     save_data::Bool = false,
 )
     # Check the parameters
-    @assert typeof(d.code.noise_param) == LognormalParameters "This function requires log-normal Pauli noise."
+    @assert typeof(d.c.noise_param) == LognormalParameters "This function requires log-normal Pauli noise."
     @assert minimum(dist_range) >= 3 "The supplied distances must all be at least 3."
     @assert precision > 0 "The precision must be positive."
     @assert max_repetitions > 0 "The maximum number of repetitions must be positive."
@@ -309,8 +311,8 @@ function calc_lognormal_scaling_data(
     @assert max_repetitions >= min_repetitions "The maximum number of repetitions must be greater than or equal to the minimum number of repetitions."
     @assert print_repetitions > 0 "The number of repetitions between printing must be positive."
     # Set some variables
-    circuit_param = d.code.circuit_param
-    noise_param = d.code.noise_param
+    circuit_param = d.c.circuit_param
+    noise_param = d.c.noise_param
     r_1 = noise_param.r_1
     r_2 = noise_param.r_2
     r_m = noise_param.r_m
@@ -345,7 +347,7 @@ function calc_lognormal_scaling_data(
     start_time = time()
     calculation_times = Matrix{Float64}(undef, length(dist_range), 3)
     for (idx, dist) in enumerate(dist_range)
-        # Initialise up the code
+        # Initialise the code
         circuit_param_dist = deepcopy(circuit_param)
         if typeof(circuit_param_dist) == RotatedPlanarParameters
             @reset circuit_param_dist.vertical_dist = dist
@@ -356,11 +358,11 @@ function calc_lognormal_scaling_data(
         else
             throw(error("Unsupported code type $(code_type)."))
         end
-        code = Code(circuit_param_dist, noise_param)
-        N_scaling[idx] = code.N
+        c = Code(circuit_param_dist, noise_param)
+        N_scaling[idx] = c.N
         # Generate the design
         time_1 = time()
-        d_dist = generate_design(code, tuple_set_data; shot_weights = shot_weights)
+        d_dist = generate_design(c, tuple_set_data; shot_weights = shot_weights)
         time_2 = time()
         design_time = time_2 - time_1
         if diagnostics
@@ -518,9 +520,9 @@ function calc_lognormal_scaling_data(
     save_data::Bool = false,
 )
     # Generate the distance range
-    if typeof(d.code.circuit_param) == RotatedPlanarParameters
+    if typeof(d.c.circuit_param) == RotatedPlanarParameters
         dist_range = collect(3:dist_max)
-    elseif typeof(d.code.circuit_param) == UnrotatedPlanarParameters
+    elseif typeof(d.c.circuit_param) == UnrotatedPlanarParameters
         dist_range = collect(3:dist_max)
     else
         throw(error("Unsupported code type $(code_type)."))

@@ -13,7 +13,7 @@ unrotated_param = UnrotatedPlanarParameters(dist)
 dep_param = DepolarisingParameters(r_1, r_2, r_m)
 log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
 # Load the design
-metadata_dict = load("data/design_metadata_$(code_filename(unrotated_param)).jld2")
+metadata_dict = load("data/design_metadata_$(circuit_filename(unrotated_param)).jld2")
 @assert unrotated_param == metadata_dict["unrotated_param"]
 @assert dep_param == metadata_dict["dep_param"]
 dep_param_set = metadata_dict["dep_param_set"]
@@ -28,13 +28,13 @@ d = load_design(
     repeat_numbers_set[dep_idx],
     true,
 )
-@assert d.code.noise_param == dep_param
+@assert d.c.noise_param == dep_param
 d_log = update_noise(d, log_param)
 # Generate the trivial design
-code = Code(unrotated_param, dep_param)
-basic_tuple_set = get_basic_tuple_set(code)
-d_basic = generate_design(code, basic_tuple_set)
-@assert d_basic.code.noise_param == dep_param
+c = Code(unrotated_param, dep_param)
+basic_tuple_set = get_basic_tuple_set(c)
+d_basic = generate_design(c, basic_tuple_set)
+@assert d_basic.c.noise_param == dep_param
 d_basic_log = update_noise(d_basic, log_param)
 # Simualte ACES for the optimised design and depolarising noise
 aces_data_dep =

@@ -56,7 +56,7 @@ end
 function Base.show(io::IO, a::ACESData)
     return print(
         io,
-        "ACES data from a design for a $(a.d.code.circuit_param.code_name) code with $(length(a.d.tuple_set)) tuples and $(a.d.experiment_number) experiments.",
+        "ACES data from a design for a $(a.d.c.circuit_param.circuit_name) circuit with $(length(a.d.tuple_set)) tuples and $(a.d.experiment_number) experiments.",
     )
 end
 
@@ -227,19 +227,19 @@ function estimate_eigenvalues(
     force_gc::Bool = false,
 )
     # Set up some variables describing organisation of the circuits
-    n = d.code.qubit_num
-    gate_probabilities = d.code.gate_probabilities
-    add_prep = d.code.add_prep
-    add_meas = d.code.add_meas
+    n = d.c.qubit_num
+    gate_probabilities = d.c.gate_probabilities
+    add_prep = d.c.add_prep
+    add_meas = d.c.add_meas
     shots_count = length(shots_set)
-    T = length(d.tuple_set)
+    tuple_number = length(d.tuple_set)
     start_time = time()
     # Divide the shots between the experiments
     @assert sum(d.shot_weights) ≈ 1.0 "The shot weights are not appropriately normalised."
     @assert all(d.shot_weights .> 0.0) "The shot weights are not all positive."
     shots_divided_float = [
-        shots_set[s] * d.shot_weights[t] / d.experiment_numbers[t] for t in 1:T,
-        s in 1:shots_count
+        shots_set[s] * d.shot_weights[t] / d.experiment_numbers[t] for
+        t in 1:tuple_number, s in 1:shots_count
     ]
     @assert vec(sum(shots_divided_float .* d.experiment_numbers; dims = 1)) ≈ shots_set "The shots have not been divided correctly."
     shots_divided = ceil.(Int, shots_divided_float)
@@ -250,8 +250,8 @@ function estimate_eigenvalues(
     end
     batched_shots = any(shots_maximum * n .> max_samples)
     if batched_shots
-        stim_seeds = Vector{Vector{Vector{Vector{UInt64}}}}(undef, T)
-        for i in 1:T
+        stim_seeds = Vector{Vector{Vector{Vector{UInt64}}}}(undef, tuple_number)
+        for i in 1:tuple_number
             batches = length(batch_shots(shots_maximum[i], n, max_samples))
             tuple_circuit_number = length(d.prep_ensemble[i])
             stim_seeds[i] = Vector{Vector{Vector{UInt64}}}(undef, tuple_circuit_number)
@@ -264,8 +264,8 @@ function estimate_eigenvalues(
             end
         end
     else
-        stim_seeds = Vector{Vector{Vector{UInt64}}}(undef, T)
-        for i in 1:T
+        stim_seeds = Vector{Vector{Vector{UInt64}}}(undef, tuple_number)
+        for i in 1:tuple_number
             tuple_circuit_number = length(d.prep_ensemble[i])
             stim_seeds[i] = Vector{Vector{UInt64}}(undef, tuple_circuit_number)
             for j in 1:tuple_circuit_number
@@ -280,12 +280,12 @@ function estimate_eigenvalues(
     # Determine and sample from the circuits and then process their contributions to the eigenvalues
     eigenvalues_coll = Vector{Vector{Vector{Float64}}}(undef, shots_count)
     for s in 1:shots_count
-        eigenvalues_coll[s] = Vector{Vector{Float64}}(undef, T)
+        eigenvalues_coll[s] = Vector{Vector{Float64}}(undef, tuple_number)
     end
-    for i in 1:T
+    for i in 1:tuple_number
         # Initialise variables
         circuit_tuple = d.tuple_set[i]
-        tuple_circuit = d.code.circuit[circuit_tuple]
+        tuple_circuit = d.c.circuit[circuit_tuple]
         tuple_circuit_string =
             get_stim_circuit_string(tuple_circuit, gate_probabilities, add_prep, add_meas)
         # Initialise the Pauli mappings
@@ -586,12 +586,12 @@ function wls_estimate_gate_eigenvalues(
 )
     # Generate the diagonal covariance matrix
     M = length(est_eigenvalues)
-    T = length(d.tuple_set)
+    tuple_number = length(d.tuple_set)
     mapping_lengths = length.(d.mapping_ensemble)
     index_lower = cumsum([0; mapping_lengths[1:(end - 1)]])
     tuple_times_factor = sum(d.shot_weights .* d.tuple_times)
     covariance_diag = Vector{Float64}(undef, M)
-    for i in 1:T
+    for i in 1:tuple_number
         tuple_covariance_dict = d.covariance_dict_ensemble[i]
         tuple_experiment_number = d.experiment_numbers[i]
         shot_weight = d.shot_weights[i]
@@ -668,8 +668,8 @@ function estimate_gate_probabilities(d::Design, est_gate_eigenvalues::Vector{Flo
     # This is the natural bit string ordering.
     W_2 = wht_matrix(2)
     # Estimate the gate error probabilities from the eigenvalues, projecting into the probability simplex
-    gates = d.code.total_gates
-    gate_index = d.code.gate_index
+    gates = d.c.total_gates
+    gate_index = d.c.gate_index
     est_gate_probabilities = Dict{Gate, Vector{Float64}}()
     for gate in gates
         # Determine the transformation matrix to turn eigenvalues into error probabilities
@@ -718,7 +718,7 @@ function simulate_aces(
     clear_design::Bool = false,
 )
     # Warn the user if they have unadvisable settings for a large circuit
-    if d.code.N >= N_warn
+    if d.c.N >= N_warn
         if !diagnostics
             @warn "This ACES simulation is for a very large circuit: turning on diagnostics is advised."
         end
@@ -734,7 +734,7 @@ function simulate_aces(
     end
     # Generate synthetic ACES data
     N = size(d.matrix, 2)
-    gate_eigenvalues = d.code.gate_eigenvalues
+    gate_eigenvalues = d.c.gate_eigenvalues
     (eigenvalues, covariance) = calc_eigenvalues_covariance(d)
     # Normalise the sampled shot count by the amount of time taken to perform the circuits
     shots_count = length(shots_set)
@@ -803,8 +803,8 @@ function simulate_aces(
             return saved_aces_data::ACESData
         end
         same_data =
-            (saved_aces_data.d.code.circuit_param == d.code.circuit_param) &&
-            (saved_aces_data.d.code.noise_param == d.code.noise_param) &&
+            (saved_aces_data.d.c.circuit_param == d.c.circuit_param) &&
+            (saved_aces_data.d.c.noise_param == d.c.noise_param) &&
             (saved_aces_data.d.matrix == d.matrix) &&
             (saved_aces_data.d.tuple_set == d.tuple_set) &&
             (saved_aces_data.d.full_covariance == d.full_covariance) &&

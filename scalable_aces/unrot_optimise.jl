@@ -20,31 +20,31 @@ dep_idx = 14
 tuple_number_set = Vector{Int}(undef, dep_param_num)
 repeat_numbers_set = Vector{Vector{Int}}(undef, dep_param_num)
 for (idx, param) in enumerate(dep_param_set)
-    code = Code(unrotated_param, param)
+    c = Code(unrotated_param, param)
     d = optimise_design(
-        code;
+        c;
         options = OptimOptions(; ls_type = :wls, save_data = true, seed = seed),
     )
     tuple_number_set[idx] = length(d.tuple_set)
     repeat_numbers_set[idx] = d.tuple_set_data.repeat_numbers
 end
 # Optimise designs for the other least squares estimators
-code = Code(unrotated_param, dep_param)
+c = Code(unrotated_param, dep_param)
 d_gls = optimise_design(
-    code;
+    c;
     options = OptimOptions(; ls_type = :gls, save_data = true, seed = seed),
 )
 gls_tuple_number = length(d_gls.tuple_set)
 gls_repeat_numbers = d_gls.tuple_set_data.repeat_numbers
 d_ols = optimise_design(
-    code;
+    c;
     options = OptimOptions(; ls_type = :ols, save_data = true, seed = seed),
 )
 ols_tuple_number = length(d_ols.tuple_set)
 ols_repeat_numbers = d_ols.tuple_set_data.repeat_numbers
 # Save the file data
 jldsave(
-    pwd() * "/data/design_metadata_$(code_filename(unrotated_param)).jld2";
+    pwd() * "/data/design_metadata_$(circuit_filename(unrotated_param)).jld2";
     unrotated_param,
     dep_param,
     dep_param_set,

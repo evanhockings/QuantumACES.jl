@@ -2,9 +2,9 @@
 function optimal_expectation(
     tuple_set_data::TupleSetData,
     expectation_dict::Dict{Vector{Int}, Float64},
-    code::Code;
+    c::T;
     options::OptimOptions = OptimOptions(),
-)
+) where {T <: AbstractCircuit}
     # Get the keyword arguments
     ls_type = options.ls_type
     # Retrieve the NRMSE expectation if it has already been calculated, else calculate it
@@ -16,7 +16,7 @@ function optimal_expectation(
         expectation_dict[repeat_numbers] = expectation
     else
         # Generate the tuple set and design
-        d = generate_design(code, tuple_set_data)
+        d = generate_design(c, tuple_set_data)
         covariance_log = calc_covariance_log(d)
         # Optimise the design
         (d, covariance_log) = optimise_weights(d, covariance_log; options = options)[1:2]
@@ -32,19 +32,19 @@ function step_repetitions(
     expectation_dict::Dict{Vector{Int}, Float64},
     step_tracker::Vector{Int},
     coordinate_idx::Int,
-    code::Code;
+    c::T;
     options::OptimOptions = OptimOptions(),
-)
+) where {T <: AbstractCircuit}
     # Get the keyword arguments
     diagnostics = options.rep_diagnostics
     # Calculate the figure of merit for the current repetition numbers
     (expectation, expectation_dict) =
-        optimal_expectation(tuple_set_data, expectation_dict, code; options = options)
+        optimal_expectation(tuple_set_data, expectation_dict, c; options = options)
     # Calculate the figure of merit adding one to the coordinate's repetition number
     tuple_set_data_upper = deepcopy(tuple_set_data)
     tuple_set_data_upper.repeat_numbers[coordinate_idx] += 2
     (upper_expectation, expectation_dict) =
-        optimal_expectation(tuple_set_data_upper, expectation_dict, code; options = options)
+        optimal_expectation(tuple_set_data_upper, expectation_dict, c; options = options)
     # Determine the direction in which to step, if at all
     if tuple_set_data.repeat_numbers[coordinate_idx] == 0
         if upper_expectation < expectation
@@ -61,7 +61,7 @@ function step_repetitions(
         (lower_expectation, expectation_dict) = optimal_expectation(
             tuple_set_data_lower,
             expectation_dict,
-            code;
+            c;
             options = options,
         )
         if lower_expectation > expectation && expectation > upper_expectation
@@ -104,7 +104,7 @@ function step_repetitions(
     tuple_set_data.repeat_numbers[coordinate_idx] =
         max(1, tuple_set_data.repeat_numbers[coordinate_idx] + step)
     (expectation, expectation_dict) =
-        optimal_expectation(tuple_set_data, expectation_dict, code; options = options)
+        optimal_expectation(tuple_set_data, expectation_dict, c; options = options)
     return (
         tuple_set_data::TupleSetData,
         expectation_dict::Dict{Vector{Int}, Float64},
@@ -113,10 +113,10 @@ function step_repetitions(
 end
 
 function optimise_repetitions(
-    code::Code,
+    c::T,
     tuple_set_data::TupleSetData;
     options::OptimOptions = OptimOptions(),
-)
+) where {T <: AbstractCircuit}
     # Get the keyword arguments
     max_cycles = options.max_cycles
     diagnostics = options.rep_diagnostics
@@ -145,7 +145,7 @@ function optimise_repetitions(
                 expectation_dict,
                 step_tracker,
                 coordinate_idx,
-                code;
+                c;
                 options,
             )
             # Update tracking parameters
@@ -205,7 +205,7 @@ function tuple_append!(
     s::Float64,
     unique_indices::Vector{Int},
 )
-    # This function should not be used with dynamically decoupled code circuits
+    # This function should not be used with dynamically decoupled circuits
     # Append a Zipf-distributed number of copies of a random layer index to the tuple
     num_add = sample_zipf(tuple_length, s)
     tuple_add = rand(unique_indices)
@@ -222,7 +222,7 @@ function tuple_append!(
     two_qubit_indices::Vector{Int},
     other_indices::Vector{Int},
 )
-    # This function should only be used with dynamically decoupled code circuits
+    # This function should only be used with dynamically decoupled circuits
     # Append a Zipf-distributed number of copies, divided by two, of pairs of random layer indices to the tuple
     # Ensure that two-qubit layers are always followed by other layers in the tuple
     if length(circuit_tuple) > 0 && circuit_tuple[end] ∈ two_qubit_indices
@@ -243,23 +243,28 @@ function tuple_append!(
 end
 
 """
-    random_tuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
+    random_tuple(c::T, tuple_length::Int, s::Float64, mirror::Bool)
 
 Generates a random tuple, or arrangement with repetition, for the `unique_layer_indices` of a circuit whose length is `tuple_length`. Adds random layers to the tuple, with the number of copies following a generalised Zipf distribution; when the parameter `s` is `Inf`, this only adds one copy, and 2 is another common choice. If `mirror`, mirrors the first `floor((tuple_length - 1) / 2)` layers of the circuit.
 """
-function random_tuple(code::Code, tuple_length::Int, s::Float64, mirror::Bool)
+function random_tuple(
+    c::T,
+    tuple_length::Int,
+    s::Float64,
+    mirror::Bool,
+) where {T <: AbstractCircuit}
     # Set parameters
     two_qubit_type = :two_qubit
-    unique_indices = code.unique_layer_indices
-    # If the code employs dynamical decoupling, ensure the tuples respect that
+    unique_indices = c.unique_layer_indices
+    # If the circuit employs dynamical decoupling, ensure the tuples respect that
     tuple_decouple = false
-    if hasproperty(code.circuit_param, :dynamically_decouple) &&
-       code.circuit_param.dynamically_decouple
+    if hasproperty(c.circuit_param, :dynamically_decouple) &&
+       c.circuit_param.dynamically_decouple
         tuple_decouple = true
-        layer_types = code.layer_types
+        layer_types = c.layer_types
         types = unique(layer_types)
-        @assert two_qubit_type ∈ types "The code must have a two-qubit gate layer."
-        @assert length(types) >= 2 "The code must have at least two types of gate layers."
+        @assert two_qubit_type ∈ types "The circuit must have a two-qubit gate layer."
+        @assert length(types) >= 2 "The circuit must have at least two types of gate layers."
         two_qubit_indices =
             intersect(findall(two_qubit_type .== layer_types), unique_indices)
         other_indices = setdiff(unique_indices, two_qubit_indices)
@@ -339,19 +344,19 @@ function grow_design(
     circuit_tuple::Vector{Int},
 )
     # Determine the design data for the tuple
-    code_tuple = apply_tuple(d.code, circuit_tuple)
+    c_tuple = apply_tuple(d.c, circuit_tuple)
     time_1 = time()
-    (mapping_set, mapping_matrix) = calc_mapping_set(code_tuple)
+    (mapping_set, mapping_matrix) = calc_mapping_set(c_tuple)
     time_2 = time()
     consistency_set = calc_consistency_set(mapping_set)
     time_3 = time()
     experiment_set = calc_experiment_set(mapping_set, consistency_set)
     time_4 = time()
     covariance_dict =
-        calc_covariance_dict(code_tuple, mapping_set, experiment_set, d.full_covariance)
+        calc_covariance_dict(c_tuple, mapping_set, experiment_set, d.full_covariance)
     time_5 = time()
     (prep_layer_set, meas_layer_set) =
-        get_experiment_layers(code_tuple, mapping_set, experiment_set)
+        get_experiment_layers(c_tuple, mapping_set, experiment_set)
     time_6 = time()
     # Track the times taken
     mapping_time = time_2 - time_1
@@ -374,11 +379,11 @@ function grow_design(
     grow_experiment = length(vcat(prep_layer_set...))
     grow_experiment_numbers = [d.experiment_numbers; grow_experiment]
     (grow_tuple_times, default_shot_weights) =
-        get_tuple_set_params(d.code, grow_tuple_set, grow_experiment_numbers)
+        get_tuple_set_params(d.c, grow_tuple_set, grow_experiment_numbers)
     grow_shot_weights = deepcopy(default_shot_weights)
     grow_shot_weights[1:(end - 1)] = d.shot_weights * sum(default_shot_weights[1:(end - 1)])
     d_grow = Design(
-        d.code,
+        d.c,
         d.full_covariance,
         vcat(d.matrix, mapping_matrix),
         grow_tuple_set,
@@ -399,7 +404,7 @@ function grow_design(
     )
     # Grow the covariance matrix
     d_extra = Design(
-        d.code,
+        d.c,
         d.full_covariance,
         mapping_matrix,
         [circuit_tuple],
@@ -477,7 +482,7 @@ function prune_design(
     prune_weights = d.shot_weights[prune_indices] / sum(d.shot_weights[prune_indices])
     # Construct the new design
     d_prune = Design(
-        d.code,
+        d.c,
         d.full_covariance,
         d.matrix[prune_eigenvalue_indices, :],
         d.tuple_set[prune_indices],
@@ -555,7 +560,7 @@ function grow_design_excursion(
             tuple_length = sample_zipf(max_tuple_length, tuple_length_zipf_power)
             s = rand(repeat_zipf_powers)
             mirror = rand(mirror_values)
-            trial_tuple = random_tuple(d.code, tuple_length, s, mirror)
+            trial_tuple = random_tuple(d.c, tuple_length, s, mirror)
             if trial_tuple ∉ d.tuple_set && trial_tuple ∉ trial_tuple_set
                 push!(trial_tuple_set, trial_tuple)
             end
@@ -632,19 +637,19 @@ function prune_design_excursion(
     expectation = calc_ls_moments(d, covariance_log, ls_type)[1]
     while pruning
         # Try removing each of the tuples from the design
-        T = length(d.tuple_set)
-        expectation_trial = Array{Float64}(undef, T)
-        for t in 1:T
-            (d_trial, covariance_log_trial) = prune_design(d, covariance_log, t)
+        tuple_number = length(d.tuple_set)
+        expectation_trial = Array{Float64}(undef, tuple_number)
+        for idx in 1:tuple_number
+            (d_trial, covariance_log_trial) = prune_design(d, covariance_log, idx)
             # Calculate the figure of merit
             # Sometimes removing a tuple can cause the design to be less than full rank
             # If we get an error, we set the figure of merit to a large number
             try
-                expectation_trial[t] =
+                expectation_trial[idx] =
                     calc_ls_moments(d_trial, covariance_log_trial, ls_type)[1]
             catch
                 @debug "Error in calculating the figure of merit after removing the $(t)th tuple; the design matrix is probably no longer full-rank."
-                expectation_trial[t] = 1e20
+                expectation_trial[idx] = 1e20
             end
         end
         # Prune the tuple it improves the figure of merit or if the desired tuple number has not been reached
@@ -727,17 +732,17 @@ function optimise_tuple_set(
 end
 
 function optimise_design(
-    code::Code,
+    c::T,
     tuple_set_data::TupleSetData;
     options::OptimOptions = OptimOptions(),
-)
+) where {T <: AbstractCircuit}
     # Get the keyword arguments
     save_data = options.save_data
     rep_diagnostics = options.rep_diagnostics
     tuple_diagnostics = options.tuple_diagnostics
     # Optimise the repetitions
     time_1 = time()
-    tuple_set_data = optimise_repetitions(code, tuple_set_data; options = options)
+    tuple_set_data = optimise_repetitions(c, tuple_set_data; options = options)
     time_2 = time()
     if rep_diagnostics
         println(
@@ -745,7 +750,7 @@ function optimise_design(
         )
     end
     # Generate the design
-    d = generate_design(code, tuple_set_data)
+    d = generate_design(c, tuple_set_data)
     covariance_log = calc_covariance_log(d)
     # Optimise the tuples in the design
     (d, covariance_log) = optimise_tuple_set(d, covariance_log; options = options)
@@ -775,10 +780,13 @@ function optimise_design(
 end
 
 #
-function optimise_design(code::Code; options::OptimOptions = OptimOptions())
+function optimise_design(
+    c::T;
+    options::OptimOptions = OptimOptions(),
+) where {T <: AbstractCircuit}
     # Generate the tuple set data
-    tuple_set_data = get_tuple_set_data(code)
+    tuple_set_data = get_tuple_set_data(c)
     # Optimise the design
-    d = optimise_design(code, tuple_set_data; options = options)
+    d = optimise_design(c, tuple_set_data; options = options)
     return d::Design
 end

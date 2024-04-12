@@ -47,8 +47,8 @@ end
 @struct_hash_equal_isequal Mapping
 
 struct Design
-    # The code circuit the design aims to characterise
-    code::Code
+    # The circuit the design aims to characterise
+    c::AbstractCircuit
     # Whether to generate the full covariance or just the terms on the diagonal
     full_covariance::Bool
     # The M x N design matrix (M circuit eigenvalues, N gate eigenvalues)
@@ -86,7 +86,7 @@ struct Design
     ls_type::Symbol
     # Default constructor
     function Design(
-        code::Code,
+        c::T,
         full_covariance::Bool,
         matrix::SparseMatrixCSC{Int32, Int32},
         tuple_set::Vector{Vector{Int}},
@@ -104,27 +104,27 @@ struct Design
         overall_time::Float64,
         optimisation_time::Float64,
         ls_type::Symbol,
-    )
+    ) where {T <: AbstractCircuit}
         # Check parameters
-        T = length(tuple_set)
+        tuple_number = length(tuple_set)
         @assert tuple_set == unique(tuple_set) "The tuple set contains repeated tuples."
         @assert tuple_set == get_tuple_set(tuple_set_data) "The tuple set doesn't align with the tuple set data."
-        @assert length(mapping_ensemble) == T "The size of the mapping ensemble does not match the tuple set."
-        @assert length(experiment_ensemble) == T "The size of the experiment ensemble does not match the tuple set."
-        @assert length(covariance_dict_ensemble) == T "The size of the covariance dictionary ensemble does not match the tuple set."
-        @assert length(prep_ensemble) == T "The size of the preparation ensemble does not match the tuple set."
-        @assert length(meas_ensemble) == T "The size of the measurement ensemble does not match the tuple set."
-        @assert length(tuple_times) == T "The number of tuple times does not match the tuple set."
-        @assert length(shot_weights) == T "The number of shot weights does not match the tuple set."
+        @assert length(mapping_ensemble) == tuple_number "The size of the mapping ensemble does not match the tuple set."
+        @assert length(experiment_ensemble) == tuple_number "The size of the experiment ensemble does not match the tuple set."
+        @assert length(covariance_dict_ensemble) == tuple_number "The size of the covariance dictionary ensemble does not match the tuple set."
+        @assert length(prep_ensemble) == tuple_number "The size of the preparation ensemble does not match the tuple set."
+        @assert length(meas_ensemble) == tuple_number "The size of the measurement ensemble does not match the tuple set."
+        @assert length(tuple_times) == tuple_number "The number of tuple times does not match the tuple set."
+        @assert length(shot_weights) == tuple_number "The number of shot weights does not match the tuple set."
         @assert sum(shot_weights) ≈ 1.0 "The shot weights are not appropriately normalised."
         @assert all(shot_weights .> 0.0) "The shot weights are not all positive."
-        @assert length(experiment_numbers) == T "The number of experiment numbers does not match the tuple set."
+        @assert length(experiment_numbers) == tuple_number "The number of experiment numbers does not match the tuple set."
         @assert experiment_number == sum(experiment_numbers) "The experiment number $(experiment_number) does not match the sum of the experiment numbers $(sum(experiment_numbers))."
-        @assert size(calculation_times) == (T, 5) "The calculation times do not match the tuple set."
+        @assert size(calculation_times) == (tuple_number, 5) "The calculation times do not match the tuple set."
         @assert ls_type ∈ [:none, :gls, :wls, :ols] "The least squares type $(ls_type) is not supported."
         # Return the design
         return new(
-            code,
+            c,
             full_covariance,
             matrix,
             tuple_set,
@@ -146,7 +146,7 @@ struct Design
     end
     # Constructor
     function Design(
-        code::Code,
+        c::T,
         full_covariance::Bool,
         matrix::SparseMatrixCSC{Int32, Int32},
         tuple_set::Vector{Vector{Int}},
@@ -159,9 +159,9 @@ struct Design
         shot_weights::Vector{Float64},
         calculation_times::Matrix{Float64},
         overall_time::Float64,
-    )
+    ) where {T <: AbstractCircuit}
         # Initialise parameters
-        T = length(tuple_set)
+        tuple_number = length(tuple_set)
         tuple_set_data = TupleSetData(tuple_set, Vector{Int}[], Int[], Int[])
         experiment_numbers =
             length.([vcat(prep_layer_set...) for prep_layer_set in prep_ensemble])
@@ -170,22 +170,22 @@ struct Design
         ls_type = :none
         # Check parameters
         @assert tuple_set == unique(tuple_set) "The tuple set contains repeated tuples."
-        @assert length(mapping_ensemble) == T "The size of the mapping ensemble does not match the tuple set."
-        @assert length(experiment_ensemble) == T "The size of the experiment ensemble does not match the tuple set."
-        @assert length(covariance_dict_ensemble) == T "The size of the covariance dictionary ensemble does not match the tuple set."
-        @assert length(prep_ensemble) == T "The size of the preparation ensemble does not match the tuple set."
-        @assert length(meas_ensemble) == T "The size of the measurement ensemble does not match the tuple set."
-        @assert length(tuple_times) == T "The number of tuple times does not match the tuple set."
-        @assert length(shot_weights) == T "The number of shot weights does not match the tuple set."
+        @assert length(mapping_ensemble) == tuple_number "The size of the mapping ensemble does not match the tuple set."
+        @assert length(experiment_ensemble) == tuple_number "The size of the experiment ensemble does not match the tuple set."
+        @assert length(covariance_dict_ensemble) == tuple_number "The size of the covariance dictionary ensemble does not match the tuple set."
+        @assert length(prep_ensemble) == tuple_number "The size of the preparation ensemble does not match the tuple set."
+        @assert length(meas_ensemble) == tuple_number "The size of the measurement ensemble does not match the tuple set."
+        @assert length(tuple_times) == tuple_number "The number of tuple times does not match the tuple set."
+        @assert length(shot_weights) == tuple_number "The number of shot weights does not match the tuple set."
         @assert sum(shot_weights) ≈ 1.0 "The shot weights are not appropriately normalised."
         @assert all(shot_weights .> 0.0) "The shot weights are not all positive."
-        @assert length(experiment_numbers) == T "The number of experiment numbers does not match the tuple set."
+        @assert length(experiment_numbers) == tuple_number "The number of experiment numbers does not match the tuple set."
         @assert experiment_number == sum(experiment_numbers) "The experiment number $(experiment_number) does not match the sum of the experiment numbers $(sum(experiment_numbers))."
-        @assert size(calculation_times) == (T, 5) "The calculation times do not match the tuple set."
+        @assert size(calculation_times) == (tuple_number, 5) "The calculation times do not match the tuple set."
         @assert ls_type ∈ [:none, :gls, :wls, :ols] "The least squares type $(ls_type) is not supported."
         # Return the design
         return new(
-            code,
+            c,
             full_covariance,
             matrix,
             tuple_set,
@@ -210,27 +210,23 @@ end
 function Base.show(io::IO, d::Design)
     return print(
         io,
-        "Design for a $(d.code.circuit_param.code_name) code with $(length(d.tuple_set)) tuples and $(d.experiment_number) experiments.",
+        "Design for a $(d.c.circuit_param.circuit_name) circuit with $(length(d.tuple_set)) tuples and $(d.experiment_number) experiments.",
     )
 end
 
 @struct_hash_equal_isequal Design
 
 #
-function update_noise(d::Design, noise_param::AbstractNoiseParameters)
+function update_noise(d::Design, noise_param::T) where {T <: AbstractNoiseParameters}
     # Generate the noise
-    gate_probabilities = get_gate_probabilities(d.code.total_gates, noise_param)
-    gate_eigenvalues = get_gate_eigenvalues(
-        gate_probabilities,
-        d.code.total_gates,
-        d.code.gate_index,
-        d.code.N,
-    )
+    gate_probabilities = get_gate_probabilities(d.c.total_gates, noise_param)
+    gate_eigenvalues =
+        get_gate_eigenvalues(gate_probabilities, d.c.total_gates, d.c.gate_index, d.c.N)
     # Update the circuit
     d_update = deepcopy(d)
-    @reset d_update.code.noise_param = noise_param
-    @reset d_update.code.gate_probabilities = gate_probabilities
-    @reset d_update.code.gate_eigenvalues = gate_eigenvalues
+    @reset d_update.c.noise_param = noise_param
+    @reset d_update.c.gate_probabilities = gate_probabilities
+    @reset d_update.c.gate_eigenvalues = gate_eigenvalues
     return d_update::Design
 end
 
@@ -765,17 +761,17 @@ function calc_covariance_dict(
 end
 
 """
-    get_experiment_layers(code::Code, mapping_set::Vector{Mapping}, experiment_set::Vector{Vector{Int}})
+    get_experiment_layers(c::T, mapping_set::Vector{Mapping}, experiment_set::Vector{Vector{Int}})
 
 Returns sets of circuit layers which prepare and measure the initial-final Pauli pairs, respectively, as dictated by the expeirment and mapping sets.
 """
 function get_experiment_layers(
-    code::T,
+    c::T,
     mapping_set::Vector{Mapping},
     experiment_set::Vector{Vector{Int}},
 ) where {T <: AbstractCircuit}
     # Generate an appropriate set of circuits based on the experiment set
-    n = code.qubit_num
+    n = c.qubit_num
     tuple_circuit_number = length(experiment_set)
     prep_layer_set = Vector{Vector{Layer}}(undef, tuple_circuit_number)
     meas_layer_set = Vector{Layer}(undef, tuple_circuit_number)
@@ -803,6 +799,7 @@ function get_experiment_layers(
         # Store the measurement layer
         meas_layer_set[j] = Layer(meas, n)
         # Set up the eigenstate sign combinations
+        # TODO!
         if T == Code
             max_prep_support = maximum(length.(initial_support_set))
             if max_prep_support == 1
@@ -824,11 +821,11 @@ function get_experiment_layers(
                     negative_type = replace(gate.type, "+" => "-")
                     negative_gate = Gate(negative_type, gate.index, gate.targets)
                     @assert gate.type != negative_type "The preparation gate $(gate) is unsigned."
-                    if gate.targets[1] ∈ code.ancilla_indices
+                    if gate.targets[1] ∈ c.ancilla_indices
                         push!(prep_2, negative_gate)
                         push!(prep_3, gate)
                         push!(prep_4, negative_gate)
-                    elseif gate.targets[1] ∈ code.data_indices
+                    elseif gate.targets[1] ∈ c.data_indices
                         push!(prep_2, gate)
                         push!(prep_3, negative_gate)
                         push!(prep_4, negative_gate)
@@ -859,26 +856,26 @@ function get_experiment_layers(
 end
 
 """
-    generate_design(code::Code, tuple_set::Vector{Vector{Int}}; shot_weights::Union{Vector{Float64}, Nothing} = nothing, full_covariance::Bool = true, save_data::Bool = false, diagnostics::Bool = false)
+    generate_design(c::T, tuple_set::Vector{Vector{Int}}; shot_weights::Union{Vector{Float64}, Nothing} = nothing, full_covariance::Bool = true, save_data::Bool = false, diagnostics::Bool = false)
 
 Generates a design matrix as well as the collection of circuits required to measure all the requisite initial-final Pauli pairs using the supplied tuple set.
 """
 function generate_design(
-    code::Code,
+    c::T,
     tuple_set::Vector{Vector{Int}};
     shot_weights::Union{Vector{Float64}, Nothing} = nothing,
     full_covariance::Bool = true,
     diagnostics::Bool = false,
     save_data::Bool = false,
     suppress_warnings::Bool = false,
-)
+) where {T <: AbstractCircuit}
     # Set some parameters
     start_time = time()
-    T = length(tuple_set)
-    N = code.N
+    tuple_number = length(tuple_set)
+    N = c.N
     @assert tuple_set == unique(tuple_set) "The tuple set contains repeated tuples."
     if shot_weights !== nothing
-        @assert length(shot_weights) == T "The number of shot weights does not match the tuple set."
+        @assert length(shot_weights) == tuple_number "The number of shot weights does not match the tuple set."
         @assert sum(shot_weights) ≈ 1.0 "The shot weights are not appropriately normalised."
         @assert all(shot_weights .> 0.0) "The shot weights are not all positive."
     end
@@ -896,29 +893,29 @@ function generate_design(
     end
     # Initialise the variables
     design_matrix = convert(SparseMatrixCSC{Int32, Int32}, spzeros(Int32, 0, N))
-    mapping_ensemble = Vector{Vector{Mapping}}(undef, T)
-    experiment_ensemble = Vector{Vector{Vector{Int}}}(undef, T)
+    mapping_ensemble = Vector{Vector{Mapping}}(undef, tuple_number)
+    experiment_ensemble = Vector{Vector{Vector{Int}}}(undef, tuple_number)
     covariance_dict_ensemble =
-        Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}(undef, T)
-    prep_ensemble = Vector{Vector{Vector{Layer}}}(undef, T)
-    meas_ensemble = Vector{Vector{Layer}}(undef, T)
-    calculation_times = Matrix{Float64}(undef, T, 5)
-    for t in 1:T
+        Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}(undef, tuple_number)
+    prep_ensemble = Vector{Vector{Vector{Layer}}}(undef, tuple_number)
+    meas_ensemble = Vector{Vector{Layer}}(undef, tuple_number)
+    calculation_times = Matrix{Float64}(undef, tuple_number, 5)
+    for idx in 1:tuple_number
         # Determine the design data for the tuple
-        circuit_tuple = tuple_set[t]
-        code_tuple = apply_tuple(code, circuit_tuple)
+        circuit_tuple = tuple_set[idx]
+        c_tuple = apply_tuple(c, circuit_tuple)
         time_1 = time()
-        (mapping_set, mapping_matrix) = calc_mapping_set(code_tuple)
+        (mapping_set, mapping_matrix) = calc_mapping_set(c_tuple)
         time_2 = time()
         consistency_set = calc_consistency_set(mapping_set)
         time_3 = time()
         experiment_set = calc_experiment_set(mapping_set, consistency_set)
         time_4 = time()
         covariance_dict =
-            calc_covariance_dict(code_tuple, mapping_set, experiment_set, full_covariance)
+            calc_covariance_dict(c_tuple, mapping_set, experiment_set, full_covariance)
         time_5 = time()
         (prep_layer_set, meas_layer_set) =
-            get_experiment_layers(code_tuple, mapping_set, experiment_set)
+            get_experiment_layers(c_tuple, mapping_set, experiment_set)
         time_6 = time()
         # Track the times taken
         mapping_time = time_2 - time_1
@@ -928,18 +925,18 @@ function generate_design(
         circuit_time = time_6 - time_5
         if diagnostics
             println(
-                "For tuple $(t), the mappings took $(round(mapping_time, digits = 3)) s, the consistency sets took $(round(consistency_time, digits = 3)) s, packing the Paulis took $(round(pauli_time, digits = 3)) s, the covariance dictionary took $(round(covariance_time, digits = 3)) s, and the circuits took $(round(circuit_time, digits = 3)) s. Since starting, $(round(time_5 - start_time, digits = 3)) s have elapsed.",
+                "For tuple $(idx), the mappings took $(round(mapping_time, digits = 3)) s, the consistency sets took $(round(consistency_time, digits = 3)) s, packing the Paulis took $(round(pauli_time, digits = 3)) s, the covariance dictionary took $(round(covariance_time, digits = 3)) s, and the circuits took $(round(circuit_time, digits = 3)) s. Since starting, $(round(time_5 - start_time, digits = 3)) s have elapsed.",
             )
         end
         # Store the data
-        tuple_set[t] = circuit_tuple
+        tuple_set[idx] = circuit_tuple
         design_matrix = vcat(design_matrix, mapping_matrix)
-        mapping_ensemble[t] = mapping_set
-        experiment_ensemble[t] = experiment_set
-        covariance_dict_ensemble[t] = covariance_dict
-        prep_ensemble[t] = prep_layer_set
-        meas_ensemble[t] = meas_layer_set
-        calculation_times[t, :] = [
+        mapping_ensemble[idx] = mapping_set
+        experiment_ensemble[idx] = experiment_set
+        covariance_dict_ensemble[idx] = covariance_dict
+        prep_ensemble[idx] = prep_layer_set
+        meas_ensemble[idx] = meas_layer_set
+        calculation_times[idx, :] = [
             mapping_time
             consistency_time
             pauli_time
@@ -951,14 +948,14 @@ function generate_design(
     experiment_numbers =
         length.([vcat(prep_layer_set...) for prep_layer_set in prep_ensemble])
     (tuple_times, tuple_shot_weights) =
-        get_tuple_set_params(code, tuple_set, experiment_numbers)
+        get_tuple_set_params(c, tuple_set, experiment_numbers)
     if shot_weights === nothing
         shot_weights = tuple_shot_weights
     end
     # Save and return the results
     overall_time = time() - start_time
     d = Design(
-        code,
+        c,
         full_covariance,
         design_matrix,
         tuple_set,
@@ -977,7 +974,7 @@ function generate_design(
     end
     if diagnostics
         println(
-            "Generated the design for all $(T) tuples in $(round(overall_time, digits = 3)) s.",
+            "Generated the design for all $(tuple_number) tuples in $(round(overall_time, digits = 3)) s.",
         )
     end
     return d::Design
@@ -985,16 +982,16 @@ end
 
 #
 function generate_design(
-    code::Code,
+    c::T,
     tuple_set_data::TupleSetData;
     shot_weights::Union{Vector{Float64}, Nothing} = nothing,
     full_covariance::Bool = true,
     diagnostics::Bool = false,
     save_data::Bool = false,
-)
+) where {T <: AbstractCircuit}
     # Save the results
     suppress_warnings = false
-    if code.N >= 10^4
+    if c.N >= 10^4
         suppress_warnings = true
         if full_covariance
             @warn "This design is for a very large circuit: generating the full covariance matrix is unadvised."
@@ -1009,7 +1006,7 @@ function generate_design(
     # Generate the design
     tuple_set = get_tuple_set(tuple_set_data)
     d = generate_design(
-        code,
+        c,
         tuple_set;
         shot_weights = shot_weights,
         full_covariance = full_covariance,
@@ -1039,20 +1036,20 @@ function complete_design(d::Design; diagnostics::Bool = false)
         # Set some parameters
         start_time = time()
         full_covariance = true
-        T = length(d.tuple_set)
+        tuple_number = length(d.tuple_set)
         # Regenerate the covariance dictionary set with a full covariance matrix
         covariance_dict_ensemble =
-            Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}(undef, T)
-        covariance_times = Vector{Float64}(undef, T)
-        for t in 1:T
-            circuit_tuple = d.tuple_set[t]
-            code_tuple = apply_tuple(d.code, circuit_tuple)
-            mapping_set_tuple = d.mapping_ensemble[t]
-            experiment_set_tuple = d.experiment_ensemble[t]
+            Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}(undef, tuple_number)
+        covariance_times = Vector{Float64}(undef, tuple_number)
+        for idx in 1:tuple_number
+            circuit_tuple = d.tuple_set[idx]
+            c_tuple = apply_tuple(d.c, circuit_tuple)
+            mapping_set_tuple = d.mapping_ensemble[idx]
+            experiment_set_tuple = d.experiment_ensemble[idx]
             # Calculate the covariance dictionary
             time_4 = time()
             covariance_dict_tuple = calc_covariance_dict(
-                code_tuple,
+                c_tuple,
                 mapping_set_tuple,
                 experiment_set_tuple,
                 full_covariance,
@@ -1062,12 +1059,12 @@ function complete_design(d::Design; diagnostics::Bool = false)
             covariance_time = time_5 - time_4
             if diagnostics
                 println(
-                    "For tuple $(t), generating the covariance dictionary took $(round(covariance_time, digits = 3)) s. Since starting, $(round(time_5 - start_time, digits = 3)) s have elapsed.",
+                    "For tuple $(idx), generating the covariance dictionary took $(round(covariance_time, digits = 3)) s. Since starting, $(round(time_5 - start_time, digits = 3)) s have elapsed.",
                 )
             end
             # Store the data
-            covariance_dict_ensemble[t] = covariance_dict_tuple
-            covariance_times[t] = covariance_time
+            covariance_dict_ensemble[idx] = covariance_dict_tuple
+            covariance_times[idx] = covariance_time
         end
         overall_time = time() - start_time
         # Set the new variables 
@@ -1079,7 +1076,7 @@ function complete_design(d::Design; diagnostics::Bool = false)
         @reset d_complete.calculation_times[:, 4] = covariance_times
         if diagnostics
             println(
-                "Generated the full covariance dictionaries for all $(T) tuples in $(round(overall_time, digits = 3)) s.",
+                "Generated the full covariance dictionaries for all $(tuple_number) tuples in $(round(overall_time, digits = 3)) s.",
             )
         end
         return d_complete::Design

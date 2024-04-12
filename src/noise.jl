@@ -11,14 +11,21 @@ struct DepolarisingParameters <: AbstractNoiseParameters
     # Measurement entanglement infidelity
     # This is the measurement error probability
     r_m::Float64
+    # Name of the noise for saving data
+    noise_name::String
     # Default constructor
-    function DepolarisingParameters(r_1::Float64, r_2::Float64, r_m::Float64)
+    function DepolarisingParameters(
+        r_1::Float64,
+        r_2::Float64,
+        r_m::Float64;
+        noise_name::String = "depolarising",
+    )
         # Check the nosie parameters
         @assert (r_1 >= 0) && (r_1 <= 3 / 4) "The single-qubit gate entanglement infidelity $(r_1) is out of bounds."
         @assert (r_2 >= 0) && (r_2 <= 15 / 16) "The two-qubit gate entanglement infidelity $(r_2) is out of bounds."
         @assert (r_m >= 0) && (r_m <= 1 / 2) "The measurement entanglement infidelity $(r_m) is out of bounds."
         # Return parameters
-        return new(r_1, r_2, r_m)::DepolarisingParameters
+        return new(r_1, r_2, r_m, noise_name)::DepolarisingParameters
     end
 end
 
@@ -64,6 +71,8 @@ struct LognormalParameters <: AbstractNoiseParameters
     total_std_log::Float64
     # Random seed
     seed::UInt64
+    # Name of the noise for saving data
+    noise_name::String
     # Constructor
     function LognormalParameters(
         r_1::Float64,
@@ -71,6 +80,7 @@ struct LognormalParameters <: AbstractNoiseParameters
         r_m::Float64,
         total_std_log::Float64;
         seed::Union{UInt64, Nothing} = nothing,
+        noise_name::String = "lognormal",
     )
         # Check the nosie parameters
         @assert (r_1 >= 0) && (r_1 <= 3 / 4) "The single-qubit gate entanglement infidelity $(r_1) is out of bounds."
@@ -81,13 +91,7 @@ struct LognormalParameters <: AbstractNoiseParameters
             seed = rand(UInt64)
         end
         # Return parameters
-        return new(
-            r_1::Float64,
-            r_2::Float64,
-            r_m::Float64,
-            total_std_log::Float64,
-            seed::UInt64,
-        )::LognormalParameters
+        return new(r_1, r_2, r_m, total_std_log, seed, noise_name)::LognormalParameters
     end
 end
 

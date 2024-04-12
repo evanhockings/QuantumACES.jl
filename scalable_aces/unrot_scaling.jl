@@ -115,7 +115,7 @@ jldsave(
 )
 # Load the design and calculate the depolarising and log-normal noise scaling data
 # Optimised WLS design
-@assert d_wls.code.noise_param == dep_param
+@assert d_wls.c.noise_param == dep_param
 dep_scaling_data_wls =
     calc_depolarising_scaling_data(d_wls, dist_max; ls_type = :wls, save_data = true)
 d_wls_log = update_noise(d_wls, log_param)
@@ -128,19 +128,19 @@ log_scaling_data_wls = calc_lognormal_scaling_data(
 )
 # Load the design and calculate the depolarising noise scaling data
 # Optimised GLS design
-@assert d_gls.code.noise_param == dep_param
+@assert d_gls.c.noise_param == dep_param
 dep_scaling_data_gls =
     calc_depolarising_scaling_data(d_gls, dist_max; ls_type = :gls, save_data = true)
 # Optimised OLS design
-@assert d_ols.code.noise_param == dep_param
+@assert d_ols.c.noise_param == dep_param
 dep_scaling_data_ols =
     calc_depolarising_scaling_data(d_ols, dist_max; ls_type = :ols, save_data = true)
 # Badly optimised WLS design
 d_wls_worst = update_noise(d_wls_worst, dep_param)
-@assert d_wls_worst.code.noise_param == dep_param
+@assert d_wls_worst.c.noise_param == dep_param
 dep_scaling_data_wls_worst =
     calc_depolarising_scaling_data(d_wls_worst, dist_max; ls_type = :wls, save_data = true)
 # Trivial design
-@assert d_basic.code.noise_param == dep_param
+@assert d_basic.c.noise_param == dep_param
 dep_scaling_data_basic =
     calc_depolarising_scaling_data(d_basic, dist_max; ls_type = :wls, save_data = true)
