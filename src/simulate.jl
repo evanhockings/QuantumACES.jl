@@ -416,7 +416,7 @@ function estimate_eigenvalues(
             end
             if detailed_diagnostics
                 println(
-                    "Simulated sampling experiment $(j) of $(tuple_circuit_number) for tuple $(i) of $(T). The time elapsed since simulation started is $(round(time() - start_time, digits = 3)) s.",
+                    "Simulated sampling experiment $(j) of $(tuple_circuit_number) for tuple $(i) of $(tuple_number). The time elapsed since simulation started is $(round(time() - start_time, digits = 3)) s.",
                 )
             end
         end
@@ -431,13 +431,19 @@ function estimate_eigenvalues(
         end
         # Estimate and save the eigenvalues
         for s in 1:shots_count
-            @assert shots_pos[s] == shots_neg[s] "The number of positive and negative shots is not equal."
-            shots[s] = shots_pos[s] + shots_neg[s]
-            eigenvalues[s] =
-                (
-                    (eigenvalues_pos[s] ./ shots_pos[s]) .-
-                    (eigenvalues_neg[s] ./ shots_neg[s])
-                ) / 2
+            if hasproperty(d.c, :partition)
+                @assert shots_pos[s] == shots_neg[s] "The number of positive and negative shots is not equal."
+                shots[s] = shots_pos[s] + shots_neg[s]
+                eigenvalues[s] =
+                    (
+                        (eigenvalues_pos[s] ./ shots_pos[s]) .-
+                        (eigenvalues_neg[s] ./ shots_neg[s])
+                    ) / 2
+            else
+                @assert all(shots_neg[s] .== 0) "There are negative shots when negative sign configurations should not have been prepared."
+                shots[s] = shots_pos[s]
+                eigenvalues[s] = eigenvalues_pos[s] ./ shots_pos[s]
+            end
             eigenvalues_coll[s][i] = eigenvalues[s]
         end
     end

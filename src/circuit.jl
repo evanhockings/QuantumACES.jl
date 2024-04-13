@@ -1,6 +1,6 @@
 
 """
-    For an AbstractCircuit type, we need a large list of subfields
+    For an AbstractCircuit type, we expect a large list of subfields
 
 circuit_param
 circuit
@@ -18,6 +18,8 @@ gate_probabilities
 gate_eigenvalues
 add_prep
 add_meas
+
+To ensure that sign configurations are handled properly, we also need a `partition` field.
 """
 
 struct Circuit <: AbstractCircuit
@@ -36,9 +38,9 @@ struct Circuit <: AbstractCircuit
     layer_types::Vector{Symbol}
     # Time taken to perform each layer, including measurement and reset at the end
     layer_times::Vector{Float64}
-    # Gates in the circuit
+    # Gates in the circuit tuple
     gates::Vector{Gate}
-    # Total gates in the circuit
+    # Total gates in the original circuit
     # Includes preparations if add_prep and measurements if add_meas
     total_gates::Vector{Gate}
     # Gate index labelling the ordering of the gate eigenvalues
@@ -165,6 +167,8 @@ struct Code <: AbstractCircuit
     gate_probabilities::Dict{Gate, Vector{Float64}}
     # Gate eigenvalues
     gate_eigenvalues::Vector{Float64}
+    #
+    partition::Tuple{Vector{Float64}, Vector{Float64}}
     # Default constructor
     function Code(
         circuit_param::AbstractCircuitParameters,
@@ -190,6 +194,7 @@ struct Code <: AbstractCircuit
         noise_param::AbstractNoiseParameters,
         gate_probabilities::Dict{Gate, Vector{Float64}},
         gate_eigenvalues::Vector{Float64},
+        partition::Tuple{Vector{Float64}, Vector{Float64}},
     )
         # Return the code
         return new(
@@ -216,6 +221,7 @@ struct Code <: AbstractCircuit
             noise_param,
             gate_probabilities,
             gate_eigenvalues,
+            partition,
         )::Code
     end
     # Constructor
@@ -240,6 +246,7 @@ struct Code <: AbstractCircuit
             layer_times,
         ) = get_circuit(circuit_param)
         circuit_tuple = collect(1:length(circuit))
+        partition = (data_indices, ancilla_indices)
         # Check the parameters
         @assert length(layer_times) == length(circuit) + 1 "The layer times correspond to the times taken for the circuit layers, alongside measurement and reset at the end."
         for (idx, type) in enumerate(layer_types)
@@ -290,6 +297,7 @@ struct Code <: AbstractCircuit
             noise_param,
             gate_probabilities,
             gate_eigenvalues,
+            partition,
         )::Code
     end
 end

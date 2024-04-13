@@ -659,7 +659,11 @@ function calc_covariance_dict(
             [get_support(initial_paulis[pauli]) for pauli in experiment]
         max_prep_support = maximum(length.(experiment_prep_supports))
         @assert max_prep_support ∈ [1; 2] "Currently only supports up to two-qubit Pauli preparations."
-        experiment_sign_factor = 2^max_prep_support
+        if hasproperty(c, :partition)
+            experiment_sign_factor = 2^max_prep_support
+        else
+            experiment_sign_factor = 1
+        end
         for index in experiment
             # Calculate the diagonal term
             diag_index = CartesianIndex(index, index)
@@ -690,7 +694,11 @@ function calc_covariance_dict(
                 [get_support(initial_paulis[pauli]) for pauli in experiment]
             max_prep_support = maximum(length.(experiment_prep_supports))
             @assert max_prep_support ∈ [1; 2] "Currently only supports up to two-qubit Pauli preparations."
-            experiment_sign_factor = 2^max_prep_support
+            if hasproperty(c, :partition)
+                experiment_sign_factor = 2^max_prep_support
+            else
+                experiment_sign_factor = 1
+            end
             @threads :static for s_1 in 1:S
                 # Get the first Pauli
                 index_1 = experiment[s_1]
@@ -799,8 +807,7 @@ function get_experiment_layers(
         # Store the measurement layer
         meas_layer_set[j] = Layer(meas, n)
         # Set up the eigenstate sign combinations
-        # TODO!
-        if T == Code
+        if hasproperty(c, :partition)
             max_prep_support = maximum(length.(initial_support_set))
             if max_prep_support == 1
                 prep_2 = Vector{Gate}(undef, 0)
@@ -821,13 +828,13 @@ function get_experiment_layers(
                     negative_type = replace(gate.type, "+" => "-")
                     negative_gate = Gate(negative_type, gate.index, gate.targets)
                     @assert gate.type != negative_type "The preparation gate $(gate) is unsigned."
-                    if gate.targets[1] ∈ c.ancilla_indices
-                        push!(prep_2, negative_gate)
-                        push!(prep_3, gate)
-                        push!(prep_4, negative_gate)
-                    elseif gate.targets[1] ∈ c.data_indices
+                    if gate.targets[1] ∈ c.partition[1]
                         push!(prep_2, gate)
                         push!(prep_3, negative_gate)
+                        push!(prep_4, negative_gate)
+                    elseif gate.targets[1] ∈ c.partition[2]
+                        push!(prep_2, negative_gate)
+                        push!(prep_3, gate)
                         push!(prep_4, negative_gate)
                     else
                         throw(
@@ -849,7 +856,10 @@ function get_experiment_layers(
                 throw(error("Currently only supports up to two-qubit Pauli preparations."))
             end
         else
-            throw(error("Only supports Code types."))
+            # If the circuit cannot partition two qubit gates such that they always act 
+            # between two sets of qubits, such as with data (partition[1]) and ancilla
+            # (partition[2]) qubits, then we don't bother with the sign configurations.
+            prep_layer_set[j] = [Layer(prep, n)]
         end
     end
     return (prep_layer_set::Vector{Vector{Layer}}, meas_layer_set::Vector{Layer})
@@ -988,21 +998,8 @@ function generate_design(
     full_covariance::Bool = true,
     diagnostics::Bool = false,
     save_data::Bool = false,
+    suppress_warnings::Bool = false,
 ) where {T <: AbstractCircuit}
-    # Save the results
-    suppress_warnings = false
-    if c.N >= 10^4
-        suppress_warnings = true
-        if full_covariance
-            @warn "This design is for a very large circuit: generating the full covariance matrix is unadvised."
-        end
-        if !diagnostics
-            @warn "This design is for a very large circuit: turning on diagnostics is advised."
-        end
-        if !save_data
-            @warn "This design is for a very large circuit: saving the data is advised."
-        end
-    end
     # Generate the design
     tuple_set = get_tuple_set(tuple_set_data)
     d = generate_design(
@@ -1011,6 +1008,7 @@ function generate_design(
         shot_weights = shot_weights,
         full_covariance = full_covariance,
         diagnostics = diagnostics,
+        save_data = false,
         suppress_warnings = suppress_warnings,
     )
     @reset d.tuple_set_data = tuple_set_data
@@ -1018,6 +1016,29 @@ function generate_design(
     if save_data
         save_design(d)
     end
+    return d::Design
+end
+
+function generate_design(
+    c::T;
+    shot_weights::Union{Vector{Float64}, Nothing} = nothing,
+    full_covariance::Bool = true,
+    diagnostics::Bool = false,
+    save_data::Bool = false,
+    suppress_warnings::Bool = false,
+) where {T <: AbstractCircuit}
+    # Generate the design
+    tuple_set_data = get_tuple_set_data(c)
+    d = generate_design(
+        c,
+        tuple_set_data;
+        shot_weights = shot_weights,
+        full_covariance = full_covariance,
+        diagnostics = diagnostics,
+        save_data = save_data,
+        suppress_warnings = suppress_warnings,
+    )
+    # Return the results
     return d::Design
 end
 

@@ -188,8 +188,13 @@ end
         min_repetitions = min_repetitions,
     )
     # Simulate the design
-    aces_data_unrot_log =
-        simulate_aces(d_unrot_opt_log, shots_set; repetitions = repetitions, seed = seed)
+    aces_data_unrot_log = simulate_aces(
+        d_unrot_opt_log,
+        shots_set;
+        repetitions = repetitions,
+        seed = seed,
+        detailed_diagnostics = true,
+    )
     pretty_print(aces_data_unrot_log, unrot_merit_set)
     # Test that the simulations agree sufficiently with the predicted distributions
     unrot_log_gls_z_scores =

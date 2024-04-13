@@ -35,6 +35,8 @@ end
 #
 function get_basic_experiment_numbers(c::T) where {T <: AbstractCircuit}
     # Determine the experiment numbers for the trivial tuple set
+    sign_factor = 2
+    pauli_types = 3
     basic_max_targets = Int[
         [
             maximum(length(gate.targets) for gate in c.circuit[i].layer) for
@@ -42,10 +44,11 @@ function get_basic_experiment_numbers(c::T) where {T <: AbstractCircuit}
         ]
         1
     ]
-    # Calculate the experiment numbers for the trivial tuple set
-    sign_factor = 2
-    pauli_types = 3
-    basic_experiment_numbers = (sign_factor * pauli_types) .^ basic_max_targets
+    if hasproperty(c, :partition)
+        basic_experiment_numbers = (sign_factor * pauli_types) .^ basic_max_targets
+    else
+        basic_experiment_numbers = (pauli_types) .^ basic_max_targets
+    end
     return basic_experiment_numbers::Vector{Int}
 end
 

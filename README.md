@@ -33,14 +33,23 @@ code = Code(rotated_param, dep_param)
 Now optimise an experimental design for these parameters using the supplied least squares estimator
 
 ```
-d = OptimiseDesign(code; ls_type = :wls)
+d = optimise_design(code)
+```
+
+Use the optimised design to create a design for a larger code circuit
+
+```
+dist_big = 9
+rotated_param_big = RotatedPlanarParameters(dist_big)
+code_big = Code(rotated_param_big, dep_param)
+d_big = generate_design(code_big, d.tuple_set_data)
 ```
 
 Finally, simulate ACES noise characterisation using the specified number of measurement shots with 
 
 ```
 shots_set = [10^6; 10^7; 10^8]
-aces_data = SimulateACES(d, shots_set)
+aces_data_big = simulate_aces(d_big, shots_set)
 ```
 
 ## Installation
