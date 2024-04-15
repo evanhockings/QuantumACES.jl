@@ -158,7 +158,8 @@ struct Design
         tuple_times::Vector{Float64},
         shot_weights::Vector{Float64},
         calculation_times::Matrix{Float64},
-        overall_time::Float64,
+        overall_time::Float64;
+        ls_type::Symbol = :none,
     ) where {T <: AbstractCircuit}
         # Initialise parameters
         tuple_number = length(tuple_set)
@@ -167,7 +168,6 @@ struct Design
             length.([vcat(prep_layer_set...) for prep_layer_set in prep_ensemble])
         experiment_number = length(vcat(vcat(prep_ensemble...)...))
         optimisation_time = 0.0
-        ls_type = :none
         # Check parameters
         @assert tuple_set == unique(tuple_set) "The tuple set contains repeated tuples."
         @assert length(mapping_ensemble) == tuple_number "The size of the mapping ensemble does not match the tuple set."

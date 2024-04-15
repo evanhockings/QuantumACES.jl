@@ -27,13 +27,13 @@ Generate the syndrome extraction circuit of a rotated planar code with
 ```
 dist = 3
 rotated_param = RotatedPlanarParameters(dist)
-code = Code(rotated_param, dep_param)
+rotated_planar = get_circuit(rotated_param, dep_param)
 ```
 
 Now optimise an experimental design for these parameters using the supplied least squares estimator
 
 ```
-d = optimise_design(code)
+d = optimise_design(rotated_planar)
 ```
 
 Use the optimised design to create a design for a larger code circuit
@@ -41,8 +41,8 @@ Use the optimised design to create a design for a larger code circuit
 ```
 dist_big = 9
 rotated_param_big = RotatedPlanarParameters(dist_big)
-code_big = Code(rotated_param_big, dep_param)
-d_big = generate_design(code_big, d.tuple_set_data)
+rotated_planar_big = get_circuit(rotated_param_big, dep_param)
+d_big = generate_design(rotated_planar_big, d.tuple_set_data)
 ```
 
 Finally, simulate ACES noise characterisation using the specified number of measurement shots with 

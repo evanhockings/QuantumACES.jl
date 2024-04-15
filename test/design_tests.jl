@@ -16,9 +16,9 @@ unrotated_param = UnrotatedPlanarParameters(dist)
 big_rotated_param = RotatedPlanarParameters(vertical_dist, horizontal_dist)
 dep_param = DepolarisingParameters(r_1, r_2, r_m)
 log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
-rotated_planar = Code(rotated_param, dep_param)
-unrotated_planar = Code(unrotated_param, dep_param)
-big_rotated_planar = Code(big_rotated_param, log_param)
+rotated_planar = get_circuit(rotated_param, dep_param)
+unrotated_planar = get_circuit(unrotated_param, dep_param)
+big_rotated_planar = get_circuit(big_rotated_param, log_param)
 # Set up optimisation parameters
 rot_ls_type = :wls
 unrot_ls_type = :gls
@@ -50,6 +50,7 @@ z_score_cutoff = 4.0
         length(d_rot_basic.tuple_set),
         d_rot_basic.tuple_set_data.repeat_numbers,
         d_rot_basic.full_covariance,
+        d_rot_basic.ls_type,
     )
     @test d_rot_basic_load == d_rot_basic
     delete_design(d_rot_basic)
@@ -77,6 +78,7 @@ z_score_cutoff = 4.0
         length(d_rot_opt.tuple_set),
         d_rot_opt.tuple_set_data.repeat_numbers,
         d_rot_opt.full_covariance,
+        d_rot_opt.ls_type,
     )
     @test d_rot_opt_load == d_rot_opt
     delete_design(d_rot_opt)
@@ -127,6 +129,7 @@ z_score_cutoff = 4.0
         repetitions = repetitions,
         seed = seed,
         max_samples = max_samples,
+        detailed_diagnostics = true,
         save_data = false,
     )
     pretty_print(aces_data_rot_big, rot_merit_set)
@@ -188,13 +191,8 @@ end
         min_repetitions = min_repetitions,
     )
     # Simulate the design
-    aces_data_unrot_log = simulate_aces(
-        d_unrot_opt_log,
-        shots_set;
-        repetitions = repetitions,
-        seed = seed,
-        detailed_diagnostics = true,
-    )
+    aces_data_unrot_log =
+        simulate_aces(d_unrot_opt_log, shots_set; repetitions = repetitions, seed = seed)
     pretty_print(aces_data_unrot_log, unrot_merit_set)
     # Test that the simulations agree sufficiently with the predicted distributions
     unrot_log_gls_z_scores =

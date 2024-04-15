@@ -8,13 +8,14 @@ r_2 = 0.5 / 100
 r_m = 2.0 / 100
 total_std_log = sqrt(log(10 / 9))
 seed = UInt(0)
+ls_type = :wls
 shots_set = [10^6; 10^7; 10^8; 10^9]
 rotated_param = RotatedPlanarParameters(dist)
 rotated_param_big = RotatedPlanarParameters(dist_big)
 dep_param = DepolarisingParameters(r_1, r_2, r_m)
 log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
 # Load the design
-metadata_dict = load("data/design_metadata_$(circuit_filename(rotated_param)).jld2")
+metadata_dict = load("data/design_metadata_$(rotated_param.circuit_name).jld2")
 @assert rotated_param == metadata_dict["rotated_param"]
 @assert dep_param == metadata_dict["dep_param"]
 dep_param_set = metadata_dict["dep_param_set"]
@@ -24,19 +25,33 @@ dep_idx = 14
 @assert dep_param == dep_param_set[dep_idx]
 tuple_number = tuple_number_set[dep_idx]
 repeat_numbers = repeat_numbers_set[dep_idx]
-d = load_design(rotated_param, dep_param, tuple_number, repeat_numbers, true)
+d = load_design(rotated_param, dep_param, tuple_number, repeat_numbers, true, ls_type)
 @assert d.c.noise_param == dep_param
 # Generate the design at a large code distance
 if isfile(
     pwd() *
     "/data/" *
-    design_filename(rotated_param_big, dep_param, tuple_number, repeat_numbers, false),
+    design_filename(
+        rotated_param_big,
+        dep_param,
+        tuple_number,
+        repeat_numbers,
+        false,
+        ls_type,
+    ),
 )
     println("Loading the design.")
-    d_big = load_design(rotated_param_big, dep_param, tuple_number, repeat_numbers, false)
+    d_big = load_design(
+        rotated_param_big,
+        dep_param,
+        tuple_number,
+        repeat_numbers,
+        false,
+        ls_type,
+    )
 else
     println("Calculating the design.")
-    c_big = Code(rotated_param_big, dep_param)
+    c_big = get_circuit(rotated_param_big, dep_param)
     d_big = generate_design(
         c_big,
         d.tuple_set_data;

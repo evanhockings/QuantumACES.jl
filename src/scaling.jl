@@ -113,8 +113,13 @@ function calc_depolarising_scaling_data(
 )
     # Check the parameters
     @assert typeof(d.c.noise_param) == DepolarisingParameters "This function requires depolarising noise."
-    @assert typeof(d.c.circuit_param) == RotatedPlanarParameters ||
-            typeof(d.c.circuit_param) == UnrotatedPlanarParameters "This function requires planar codes."
+    @assert (
+        typeof(d.c.circuit_param) == RotatedPlanarParameters &&
+        typeof(d.c) == RotatedPlanarCircuit
+    ) || (
+        typeof(d.c.circuit_param) == UnrotatedPlanarParameters &&
+        typeof(d.c) == UnrotatedPlanarCircuit
+    ) "This function requires planar codes."
     @assert minimum(dist_range) >= 3 "The supplied distances must all be at least 3."
     # Set some variables
     circuit_param = d.c.circuit_param
@@ -135,18 +140,32 @@ function calc_depolarising_scaling_data(
     start_time = time()
     calculation_times = Matrix{Float64}(undef, length(dist_range), 2)
     for (idx, dist) in enumerate(dist_range)
-        # Initialise the code
-        circuit_param_dist = deepcopy(circuit_param)
-        if typeof(circuit_param_dist) == RotatedPlanarParameters
-            @reset circuit_param_dist.vertical_dist = dist
-            @reset circuit_param_dist.horizontal_dist = dist
-        elseif typeof(circuit_param_dist) == UnrotatedPlanarParameters
-            @reset circuit_param_dist.vertical_dist = dist
-            @reset circuit_param_dist.horizontal_dist = dist
+        # Initialise the circuit
+        if typeof(circuit_param) == RotatedPlanarParameters
+            circuit_param_dist = RotatedPlanarParameters(
+                dist;
+                check_type = circuit_param.check_type,
+                gate_type = circuit_param.gate_type,
+                dynamically_decouple = circuit_param.dynamically_decouple,
+                pad_identity = circuit_param.pad_identity,
+                single_qubit_time = circuit_param.single_qubit_time,
+                two_qubit_time = circuit_param.two_qubit_time,
+                dynamical_decoupling_time = circuit_param.dynamical_decoupling_time,
+                meas_reset_time = circuit_param.meas_reset_time,
+            )
+        elseif typeof(circuit_param) == UnrotatedPlanarParameters
+            circuit_param_dist = UnrotatedPlanarParameters(
+                dist;
+                gate_type = circuit_param.gate_type,
+                pad_identity = circuit_param.pad_identity,
+                single_qubit_time = circuit_param.single_qubit_time,
+                two_qubit_time = circuit_param.two_qubit_time,
+                meas_reset_time = circuit_param.meas_reset_time,
+            )
         else
-            throw(error("Unsupported code type $(code_type)."))
+            throw(error("Unsupported circuit type $(typeof(circuit_param))."))
         end
-        c = Code(circuit_param_dist, noise_param)
+        c = get_circuit(circuit_param_dist, noise_param)
         # Generate the design
         time_1 = time()
         d_dist = generate_design(c, tuple_set_data; shot_weights = shot_weights)
@@ -272,7 +291,7 @@ function calc_depolarising_scaling_data(
     elseif typeof(d.c.circuit_param) == UnrotatedPlanarParameters
         dist_range = collect(3:dist_max)
     else
-        throw(error("Unsupported code type $(code_type)."))
+        throw(error("Unsupported circuit type $(typeof(d.c.circuit_param))."))
     end
     # Calculate the scaling data
     dep_scaling_data = calc_depolarising_scaling_data(
@@ -304,6 +323,13 @@ function calc_lognormal_scaling_data(
 )
     # Check the parameters
     @assert typeof(d.c.noise_param) == LognormalParameters "This function requires log-normal Pauli noise."
+    @assert (
+        typeof(d.c.circuit_param) == RotatedPlanarParameters &&
+        typeof(d.c) == RotatedPlanarCircuit
+    ) || (
+        typeof(d.c.circuit_param) == UnrotatedPlanarParameters &&
+        typeof(d.c) == UnrotatedPlanarCircuit
+    ) "This function requires planar codes."
     @assert minimum(dist_range) >= 3 "The supplied distances must all be at least 3."
     @assert precision > 0 "The precision must be positive."
     @assert max_repetitions > 0 "The maximum number of repetitions must be positive."
@@ -347,18 +373,32 @@ function calc_lognormal_scaling_data(
     start_time = time()
     calculation_times = Matrix{Float64}(undef, length(dist_range), 3)
     for (idx, dist) in enumerate(dist_range)
-        # Initialise the code
-        circuit_param_dist = deepcopy(circuit_param)
-        if typeof(circuit_param_dist) == RotatedPlanarParameters
-            @reset circuit_param_dist.vertical_dist = dist
-            @reset circuit_param_dist.horizontal_dist = dist
-        elseif typeof(circuit_param_dist) == UnrotatedPlanarParameters
-            @reset circuit_param_dist.vertical_dist = dist
-            @reset circuit_param_dist.horizontal_dist = dist
+        # Initialise the circuit
+        if typeof(circuit_param) == RotatedPlanarParameters
+            circuit_param_dist = RotatedPlanarParameters(
+                dist;
+                check_type = circuit_param.check_type,
+                gate_type = circuit_param.gate_type,
+                dynamically_decouple = circuit_param.dynamically_decouple,
+                pad_identity = circuit_param.pad_identity,
+                single_qubit_time = circuit_param.single_qubit_time,
+                two_qubit_time = circuit_param.two_qubit_time,
+                dynamical_decoupling_time = circuit_param.dynamical_decoupling_time,
+                meas_reset_time = circuit_param.meas_reset_time,
+            )
+        elseif typeof(circuit_param) == UnrotatedPlanarParameters
+            circuit_param_dist = UnrotatedPlanarParameters(
+                dist;
+                gate_type = circuit_param.gate_type,
+                pad_identity = circuit_param.pad_identity,
+                single_qubit_time = circuit_param.single_qubit_time,
+                two_qubit_time = circuit_param.two_qubit_time,
+                meas_reset_time = circuit_param.meas_reset_time,
+            )
         else
-            throw(error("Unsupported code type $(code_type)."))
+            throw(error("Unsupported circuit type $(typeof(circuit_param))."))
         end
-        c = Code(circuit_param_dist, noise_param)
+        c = get_circuit(circuit_param_dist, noise_param)
         N_scaling[idx] = c.N
         # Generate the design
         time_1 = time()
@@ -525,7 +565,7 @@ function calc_lognormal_scaling_data(
     elseif typeof(d.c.circuit_param) == UnrotatedPlanarParameters
         dist_range = collect(3:dist_max)
     else
-        throw(error("Unsupported code type $(code_type)."))
+        throw(error("Unsupported circuit type $(typeof(d.c.circuit_param))."))
     end
     # Calculate the scaling data
     log_scaling_data = calc_lognormal_scaling_data(

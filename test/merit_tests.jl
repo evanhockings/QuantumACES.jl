@@ -11,8 +11,8 @@ rotated_param = RotatedPlanarParameters(dist)
 unrotated_param = UnrotatedPlanarParameters(dist)
 dep_param = DepolarisingParameters(r_1, r_2, r_m)
 log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
-rotated_planar = Code(rotated_param, log_param)
-unrotated_planar = Code(unrotated_param, dep_param)
+rotated_planar = get_circuit(rotated_param, log_param)
+unrotated_planar = get_circuit(unrotated_param, dep_param)
 # Set up designs
 rot_basic = get_basic_tuple_set(rotated_planar)
 rot_tuple_set = [[rotated_planar.circuit_tuple]; rot_basic]
@@ -37,7 +37,7 @@ test_param_1 = RotatedPlanarParameters(
     dynamical_decoupling_time = 1.0,
     meas_reset_time = 20.0,
 )
-test_code_1 = Code(test_param_1, log_param)
+test_code_1 = get_circuit(test_param_1, log_param)
 test_param_2 = RotatedPlanarParameters(
     dist,
     dist + 1;
@@ -46,7 +46,7 @@ test_param_2 = RotatedPlanarParameters(
     dynamically_decouple = false,
     pad_identity = false,
 )
-test_code_2 = Code(test_param_2, log_param)
+test_code_2 = get_circuit(test_param_2, log_param)
 test_param_3 = UnrotatedPlanarParameters(
     dist,
     dist + 1;
@@ -55,7 +55,7 @@ test_param_3 = UnrotatedPlanarParameters(
     two_qubit_time = 2.0,
     meas_reset_time = 20.0,
 )
-test_code_3 = Code(test_param_3, dep_param)
+test_code_3 = get_circuit(test_param_3, dep_param)
 # Set up gradient descent parameters
 max_steps = 3
 rot_covariance_log = calc_covariance_log(d_rot)

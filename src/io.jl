@@ -25,29 +25,6 @@ function exit_folder(folder::String)
 end
 
 #
-function circuit_filename(circuit_param::T) where {T <: AbstractCircuitParameters}
-    filename = circuit_param.circuit_name
-    if typeof(circuit_param) == RotatedPlanarParameters ||
-       typeof(circuit_param) == UnrotatedPlanarParameters
-        filename *= "_$(circuit_param.vertical_dist)_$(circuit_param.horizontal_dist)"
-    else
-        throw(error("Unsupported circuit type $(typeof(circuit_param))."))
-    end
-    return filename::String
-end
-
-#
-function noise_filename(noise_param::T) where {T <: AbstractNoiseParameters}
-    filename = noise_param.noise_name
-    for field_name in fieldnames(typeof(noise_param))
-        if field_name != :noise_name
-            filename *= "_$(round(getfield(noise_param, field_name); sigdigits = 4))"
-        end
-    end
-    return filename::String
-end
-
-#
 function tuples_filename(tuple_number::Int, repeat_numbers::Vector{Int})
     if length(repeat_numbers) > 0
         filename = "$(tuple_number)_$(join(repeat_numbers, "_"))"
@@ -64,8 +41,14 @@ function design_filename(
     tuple_number::Int,
     repeat_numbers::Vector{Int},
     full_covariance::Bool,
+    ls_type::Symbol,
 ) where {T <: AbstractCircuitParameters, U <: AbstractNoiseParameters}
-    filename = "design_$(circuit_filename(circuit_param))_$(noise_filename(noise_param))_$(tuples_filename(tuple_number, repeat_numbers))_$(full_covariance).jld2"
+    filename = "design_$(circuit_param.circuit_name)_$(noise_param.noise_name)_$(tuples_filename(tuple_number, repeat_numbers))_$(full_covariance)"
+    if ls_type == :none
+        filename *= ".jld2"
+    else
+        filename *= "_$(ls_type).jld2"
+    end
     return filename::String
 end
 
@@ -77,6 +60,7 @@ function design_filename(d::Design)
         length(d.tuple_set),
         d.tuple_set_data.repeat_numbers,
         d.full_covariance,
+        d.ls_type,
     )
     return filename::String
 end
@@ -89,7 +73,12 @@ function scaling_filename(
     repeat_numbers::Vector{Int},
     ls_type::Symbol,
 ) where {T <: AbstractCircuitParameters, U <: AbstractNoiseParameters}
-    filename = "$(noise_param.noise_name)_scaling_$(circuit_filename(circuit_param))_$(noise_filename(noise_param))_$(tuples_filename(tuple_number, repeat_numbers))_$(ls_type).jld2"
+    filename = "scaling_$(circuit_param.circuit_name)_$(noise_param.noise_name)_$(tuples_filename(tuple_number, repeat_numbers))"
+    if ls_type == :none
+        filename *= ".jld2"
+    else
+        filename *= "_$(ls_type).jld2"
+    end
     return filename::String
 end
 
@@ -124,9 +113,15 @@ function aces_data_filename(
     tuple_number::Int,
     repeat_numbers::Vector{Int},
     full_covariance::Bool,
+    ls_type::Symbol,
     shots_set::Vector{Int},
 ) where {T <: AbstractCircuitParameters, U <: AbstractNoiseParameters}
-    filename = "aces_data_$(circuit_filename(circuit_param))_$(noise_filename(noise_param))_$(tuples_filename(tuple_number, repeat_numbers))_$(full_covariance)_$(join(round.(shots_set, sigdigits=4), "_")).jld2"
+    filename = "aces_data_$(circuit_param.circuit_name)_$(noise_param.noise_name)_$(tuples_filename(tuple_number, repeat_numbers))_$(full_covariance)_$(join(round.(shots_set, sigdigits=4), "_"))"
+    if ls_type == :none
+        filename *= ".jld2"
+    else
+        filename *= "_$(ls_type).jld2"
+    end
     return filename::String
 end
 
@@ -138,6 +133,7 @@ function aces_data_filename(d::Design, shots_set::Vector{Int})
         length(d.tuple_set),
         d.tuple_set_data.repeat_numbers,
         d.full_covariance,
+        d.ls_type,
         shots_set,
     )
     return filename::String
@@ -176,6 +172,7 @@ function load_design(
     tuple_number::Int,
     repeat_numbers::Vector{Int},
     full_covariance::Bool,
+    ls_type::Symbol,
 ) where {T <: AbstractCircuitParameters, U <: AbstractNoiseParameters}
     # Load the design
     filename = design_filename(
@@ -184,6 +181,7 @@ function load_design(
         tuple_number,
         repeat_numbers,
         full_covariance,
+        ls_type,
     )
     d = load_object(pwd() * "/data/" * filename)
     return d::Design
@@ -279,6 +277,7 @@ function load_aces(
     tuple_number::Int,
     repeat_numbers::Vector{Int},
     full_covariance::Bool,
+    ls_type::Symbol,
     shots_set::Vector{Int},
 ) where {T <: AbstractCircuitParameters, U <: AbstractNoiseParameters}
     # Load the ACES data
@@ -288,6 +287,7 @@ function load_aces(
         tuple_number,
         repeat_numbers,
         full_covariance,
+        ls_type,
         shots_set,
     )
     aces_data = load_object(pwd() * "/data/" * filename)

@@ -8,12 +8,13 @@ r_2 = 0.5 / 100
 r_m = 2.0 / 100
 total_std_log = sqrt(log(10 / 9))
 seed = UInt(0)
+ls_type = :wls
 rotated_param = RotatedPlanarParameters(dist)
 dep_param = DepolarisingParameters(r_1, r_2, r_m)
 log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
-rotated_planar = Code(rotated_param, dep_param)
+rotated_planar = get_circuit(rotated_param, dep_param)
 # Load the designs
-metadata_dict = load("data/design_metadata_$(code_filename(rotated_param)).jld2")
+metadata_dict = load("data/design_metadata_$(rotated_param.circuit_name).jld2")
 @assert rotated_param == metadata_dict["rotated_param"]
 @assert dep_param == metadata_dict["dep_param"]
 dep_param_set = metadata_dict["dep_param_set"]
@@ -28,13 +29,15 @@ dep_idx = 14
 @assert dep_param == dep_param_set[dep_idx]
 dep_worst_idx = 3
 repetitions = 400
-d_gls = load_design(rotated_param, dep_param, gls_tuple_number, gls_repeat_numbers, true)
+d_gls =
+    load_design(rotated_param, dep_param, gls_tuple_number, gls_repeat_numbers, true, :gls)
 d_wls = load_design(
     rotated_param,
     dep_param_set[dep_idx],
     tuple_number_set[dep_idx],
     repeat_numbers_set[dep_idx],
     true,
+    ls_type,
 )
 d_wls_worst = load_design(
     rotated_param,
@@ -42,8 +45,10 @@ d_wls_worst = load_design(
     tuple_number_set[dep_worst_idx],
     repeat_numbers_set[dep_worst_idx],
     true,
+    ls_type,
 )
-d_ols = load_design(rotated_param, dep_param, ols_tuple_number, ols_repeat_numbers, true)
+d_ols =
+    load_design(rotated_param, dep_param, ols_tuple_number, ols_repeat_numbers, true, :ols)
 d_basic = generate_design(rotated_planar, get_basic_tuple_set(rotated_planar))
 # Calculate the merits over a range of random instances of log-normal noise
 expectation_array = Matrix{Float64}(undef, dep_param_num, repetitions)
@@ -64,6 +69,7 @@ for idx in 1:dep_param_num
         tuple_number_set[idx],
         repeat_numbers_set[idx],
         true,
+        ls_type,
     )
     for rep in 1:repetitions
         log_param_rep = LognormalParameters(
@@ -105,7 +111,7 @@ end
 # Save the merit data
 jldsave(
     pwd() *
-    "/data/design_merit_data_$(code_filename(rotated_param))_$(noise_filename(log_param)).jld2";
+    "/data/design_merit_data_$(rotated_param.circuit_name)_$(log_param.noise_name).jld2";
     expectation_array,
     variance_array,
     gls_expectation_set,

@@ -104,7 +104,11 @@ function get_tuple_set_params(
     return (tuple_times::Vector{Float64}, shot_weights::Vector{Float64})
 end
 
-#
+"""
+    get_tuple_set_data(c::T)
+
+The initialisation and parameterisation of this function is specialised to the rotated and unrotated planar code syndrome extraction circuits.
+"""
 function get_tuple_set_data(c::T) where {T <: AbstractCircuit}
     # Initialise parameters
     r_1 = c.noise_param.r_1

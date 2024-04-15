@@ -80,11 +80,6 @@ function step_repetitions(
             else
                 step_sign = -1
             end
-            if diagnostics
-                println(
-                    "Repetition number $(coordinate_idx) is a local maximum in the figure of merit; stepping towards $(step_sign == 1 ? "more" : "fewer") repetitions.",
-                )
-            end
         end
     end
     # Determine the step size

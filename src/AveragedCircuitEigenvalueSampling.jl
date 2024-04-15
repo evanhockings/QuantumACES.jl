@@ -91,9 +91,6 @@ export
     get_gate_eigenvalues,
     # circuit.jl functions
     update_noise,
-    get_layer_times,
-    rotated_planar_circuit,
-    unrotated_planar_circuit,
     get_circuit,
     # tuples.jl functions
     get_basic_tuple_set,
@@ -184,9 +181,6 @@ export
     # io.jl functions
     enter_folder,
     exit_folder,
-    circuit_filename,
-    noise_filename,
-    tuples_filename,
     design_filename,
     scaling_filename,
     aces_data_filename,
