@@ -74,8 +74,14 @@ function get_merit_grad(
     return merit_grad::Vector{Float64}
 end
 
+function get_shot_weights_log_matrix(shot_weights::Vector{Float64})
+    # Matrix transforms the shot weight gradients to gradients of the shot weight logarithms
+    shot_weights_log_matrix = shot_weights * shot_weights' - Diagonal(shot_weights)
+    return shot_weights_log_matrix::Matrix{Float64}
+end
+
 #
-function calc_gls_merit_grad(
+function calc_gls_merit_grad_log(
     d::Design,
     shot_weights::Vector{Float64},
     covariance_log_unweighted_inv::SparseMatrixCSC{Float64, Int},
@@ -116,9 +122,12 @@ function calc_gls_merit_grad(
     sigma_sq_tr_grad =
         sum(sigma_sq_tr_partial ./ shot_weights) * d.tuple_times +
         sigma_sq_tr_partial .* shot_weights_local_grad
-    # Calculate the gradient of the figure of merit
+    # Calculate the gradient of the figure of merit with respect to the shot weights
     merit_grad = get_merit_grad(sigma_tr, sigma_tr_grad, sigma_sq_tr, sigma_sq_tr_grad, N)
-    return (merit_grad::Vector{Float64}, merit::Float64)
+    # Calculate the gradient of the figure of merit with respect to the log shot weights
+    shot_weights_log_matrix = get_shot_weights_log_matrix(shot_weights)
+    merit_grad_log = shot_weights_log_matrix * merit_grad
+    return (merit_grad_log::Vector{Float64}, merit::Float64)
 end
 
 #
@@ -128,6 +137,7 @@ function gls_optimise_weights(
     options::OptimOptions = OptimOptions(),
 )
     # Get the keyword arguments
+    @assert options.ls_type == :gls "Inappropriate least squares optimisation type $(options.ls_type) supplied."
     learning_rate = options.learning_rate
     momentum = options.momentum
     learning_rate_scale_factor = options.learning_rate_scale_factor
@@ -150,7 +160,7 @@ function gls_optimise_weights(
     stepping = true
     step = 1
     recently_pruned = 0
-    recently_zeroed = false
+    recently_zeroed = 0
     scaled_learning_rate = learning_rate
     unprunable = Int[]
     old_shot_weights = deepcopy(shot_weights)
@@ -158,40 +168,35 @@ function gls_optimise_weights(
     merit_descent = Vector{Float64}(undef, 0)
     while stepping
         # Calculate the gradient of the figure of merit
-        (merit_grad, merit) =
-            calc_gls_merit_grad(d, shot_weights, covariance_log_unweighted_inv)
+        nesterov_log_shot_weights = -log.(shot_weights) + momentum * velocity
+        nesterov_shot_weights =
+            exp.(-nesterov_log_shot_weights) / sum(exp.(-nesterov_log_shot_weights))
+        (merit_grad_log, merit) =
+            calc_gls_merit_grad_log(d, nesterov_shot_weights, covariance_log_unweighted_inv)
         push!(merit_descent, merit)
         # Update the shot weights, ensuring both they and the gradient are appropriately normalised
-        velocity = momentum * velocity - scaled_learning_rate * merit_grad .* shot_weights
-        shot_weights_update = project_simplex(shot_weights + velocity)
-        update_zeroes = findall(shot_weights_update .== 0.0)
+        velocity = momentum * velocity - scaled_learning_rate * merit_grad_log
+        log_shot_weights_update = -log.(shot_weights) + velocity
+        shot_weights_update =
+            exp.(-log_shot_weights_update) / sum(exp.(-log_shot_weights_update))
         if (length(merit_descent) >= 2) && (merit_descent[end] > merit_descent[end - 1])
             shot_weights = old_shot_weights
             velocity = zeros(tuple_number)
-            if diagnostics
-                println(
-                    "The updated shot weights worsened the figure of merit in step $(step); the velocity and shot weights have been reset.",
-                )
-            end
-            recently_pruned += 1
-        elseif length(update_zeroes) > 0
-            if recently_zeroed
+            if recently_zeroed > 0
                 scaled_learning_rate /= learning_rate_scale_factor
             end
-            velocity = zeros(tuple_number)
             if diagnostics
                 println(
-                    "The updated shot weights had zeros in step $(step); the velocity has been reset$(recently_zeroed ? "and the learning rate has been reduced" : "").",
+                    "The updated shot weights worsened the figure of merit in step $(step); the velocity and shot weights have been reset$(recently_zeroed > 0 ? " and the learning rate has been reduced." : ".")",
                 )
             end
-            recently_zeroed = true
             recently_pruned += 1
+            recently_zeroed = convergence_steps
         else
-            recently_zeroed = false
-            old_shot_weights = deepcopy(shot_weights)
+            old_shot_weights = deepcopy(nesterov_shot_weights)
             shot_weights = shot_weights_update
         end
-        # Prune a tuple from the design whose shot weight is below the minimum
+        # Prune a tuple from the design if one has a shot weight below the minimum
         weights_below_min = findall(shot_weights .< shot_weights_clip)
         if length(weights_below_min) > 0 && recently_pruned == 0
             min_weight_idx = findmin(shot_weights[weights_below_min])[2]
@@ -203,26 +208,44 @@ function gls_optimise_weights(
                     prune_idx;
                     update_weights = false,
                 )
-                # Provided that the design matrix remains full-rank
+                # The pruned design must still achieve full rank
                 if rank(Array(d_prune.matrix)) == N
-                    # Prune the quantities
                     prune_indices = setdiff(1:tuple_number, prune_idx)
-                    mapping_lengths = mapping_lengths[prune_indices]
-                    d = d_prune
-                    covariance_log_unweighted = covariance_log_unweighted_prune
-                    covariance_log_unweighted_inv =
-                        sparse_covariance_inv(covariance_log_unweighted, mapping_lengths)
-                    # Update the shot weights and reset the velocity
-                    tuple_number -= 1
-                    shot_weights =
-                        shot_weights[prune_indices] / sum(shot_weights[prune_indices])
-                    old_shot_weights = deepcopy(shot_weights)
-                    velocity = velocity[prune_indices]
-                    recently_pruned = convergence_steps
-                    if diagnostics
-                        println(
-                            "Pruned tuple $(prune_idx) of $(tuple_number + 1) in step $(step); the velocity has been reset.",
+                    prune_shot_weights_factor = get_shot_weights_factor(
+                        d_prune.shot_weights,
+                        d_prune.tuple_times,
+                        mapping_lengths[prune_indices],
+                    )
+                    covariance_log_prune =
+                        covariance_log_unweighted_prune * prune_shot_weights_factor
+                    prune_merit = calc_gls_moments(d_prune, covariance_log_prune)[1]
+                    prune_improve = all([
+                        prune_merit < merit_descent[idx] for
+                        idx in max(1, step - convergence_steps):step
+                    ])
+                    # Prune the tuple only if doing so improves the figure of merit
+                    if prune_improve
+                        # Prune the quantities
+                        prune_indices = setdiff(1:tuple_number, prune_idx)
+                        mapping_lengths = mapping_lengths[prune_indices]
+                        d = d_prune
+                        covariance_log_unweighted = covariance_log_unweighted_prune
+                        covariance_log_unweighted_inv = sparse_covariance_inv(
+                            covariance_log_unweighted,
+                            mapping_lengths,
                         )
+                        # Update the shot weights and reset the velocity
+                        tuple_number -= 1
+                        shot_weights =
+                            shot_weights[prune_indices] / sum(shot_weights[prune_indices])
+                        old_shot_weights = deepcopy(shot_weights)
+                        velocity = velocity[prune_indices]
+                        recently_pruned = convergence_steps
+                        if diagnostics
+                            println(
+                                "Pruned tuple $(prune_idx) of $(tuple_number + 1) in step $(step); the velocity has been reset.",
+                            )
+                        end
                     end
                 else
                     push!(unprunable, prune_idx)
@@ -231,10 +254,14 @@ function gls_optimise_weights(
         end
         # Check the step count and convergence
         if step > convergence_steps
-            merit_converged = all([
-                abs(merit_descent[idx_1] - merit_descent[idx_2]) < convergence_threshold for idx_1 in (step - convergence_steps):step for
-                idx_2 in (step - convergence_steps):step
-            ])
+            merit_converged =
+                all([
+                    abs(merit_descent[idx_1] - merit_descent[idx_2]) <
+                    convergence_steps * convergence_threshold for
+                    idx_1 in (step - convergence_steps):step for
+                    idx_2 in (step - convergence_steps):step
+                ]) &&
+                (abs(merit_descent[end] - merit_descent[end - 1]) < convergence_threshold)
         else
             merit_converged = false
         end
@@ -261,6 +288,9 @@ function gls_optimise_weights(
             if recently_pruned > 0
                 recently_pruned -= 1
             end
+            if recently_zeroed > 0
+                recently_zeroed -= 1
+            end
         end
     end
     # Update the covariance matrix
@@ -278,7 +308,7 @@ function gls_optimise_weights(
 end
 
 # 
-function calc_wls_merit_grad(
+function calc_wls_merit_grad_log(
     d::Design,
     shot_weights::Vector{Float64},
     covariance_log_unweighted::SparseMatrixCSC{Float64, Int},
@@ -332,9 +362,12 @@ function calc_wls_merit_grad(
     sigma_sq_tr_grad =
         sum(sigma_sq_tr_partial ./ shot_weights) * d.tuple_times +
         sigma_sq_tr_partial .* shot_weights_local_grad
-    # Calculate the gradient of the figure of merit
+    # Calculate the gradient of the figure of merit with respect to the shot weights
     merit_grad = get_merit_grad(sigma_tr, sigma_tr_grad, sigma_sq_tr, sigma_sq_tr_grad, N)
-    return (merit_grad::Vector{Float64}, merit::Float64)
+    # Calculate the gradient of the figure of merit with respect to the log shot weights
+    shot_weights_log_matrix = get_shot_weights_log_matrix(shot_weights)
+    merit_grad_log = shot_weights_log_matrix * merit_grad
+    return (merit_grad_log::Vector{Float64}, merit::Float64)
 end
 
 #
@@ -344,6 +377,7 @@ function wls_optimise_weights(
     options::OptimOptions = OptimOptions(),
 )
     # Get the keyword arguments
+    @assert options.ls_type == :wls "Inappropriate least squares optimisation type $(options.ls_type) supplied."
     learning_rate = options.learning_rate
     momentum = options.momentum
     learning_rate_scale_factor = options.learning_rate_scale_factor
@@ -364,7 +398,7 @@ function wls_optimise_weights(
     stepping = true
     step = 1
     recently_pruned = 0
-    recently_zeroed = false
+    recently_zeroed = 0
     scaled_learning_rate = learning_rate
     unprunable = Int[]
     old_shot_weights = deepcopy(shot_weights)
@@ -372,40 +406,35 @@ function wls_optimise_weights(
     merit_descent = Vector{Float64}(undef, 0)
     while stepping
         # Calculate the gradient of the figure of merit
-        (merit_grad, merit) =
-            calc_wls_merit_grad(d, shot_weights, covariance_log_unweighted)
+        nesterov_log_shot_weights = -log.(shot_weights) + momentum * velocity
+        nesterov_shot_weights =
+            exp.(-nesterov_log_shot_weights) / sum(exp.(-nesterov_log_shot_weights))
+        (merit_grad_log, merit) =
+            calc_wls_merit_grad_log(d, nesterov_shot_weights, covariance_log_unweighted)
         push!(merit_descent, merit)
         # Update the shot weights, ensuring both they and the gradient are appropriately normalised
-        velocity = momentum * velocity - scaled_learning_rate * merit_grad .* shot_weights
-        shot_weights_update = project_simplex(shot_weights + velocity)
-        update_zeroes = findall(shot_weights_update .== 0.0)
+        velocity = momentum * velocity - scaled_learning_rate * merit_grad_log
+        log_shot_weights_update = -log.(shot_weights) + velocity
+        shot_weights_update =
+            exp.(-log_shot_weights_update) / sum(exp.(-log_shot_weights_update))
         if (length(merit_descent) >= 2) && (merit_descent[end] > merit_descent[end - 1])
             shot_weights = old_shot_weights
             velocity = zeros(tuple_number)
-            if diagnostics
-                println(
-                    "The updated shot weights worsened the figure of merit in step $(step); the velocity and shot weights have been reset.",
-                )
-            end
-            recently_pruned += 1
-        elseif length(update_zeroes) > 0
-            if recently_zeroed
+            if recently_zeroed > 0
                 scaled_learning_rate /= learning_rate_scale_factor
             end
-            velocity = zeros(tuple_number)
             if diagnostics
                 println(
-                    "The updated shot weights had zeros in step $(step); the velocity has been reset$(recently_zeroed ? "and the learning rate has been reduced" : "").",
+                    "The updated shot weights worsened the figure of merit in step $(step); the velocity and shot weights have been reset$(recently_zeroed > 0 ? " and the learning rate has been reduced." : ".")",
                 )
             end
-            recently_zeroed = true
             recently_pruned += 1
+            recently_zeroed = convergence_steps
         else
-            recently_zeroed = false
-            old_shot_weights = deepcopy(shot_weights)
+            old_shot_weights = deepcopy(nesterov_shot_weights)
             shot_weights = shot_weights_update
         end
-        # Prune a tuple from the design whose shot weight is below the minimum
+        # Prune a tuple from the design if one has a shot weight below the minimum
         weights_below_min = findall(shot_weights .< shot_weights_clip)
         if length(weights_below_min) > 0 && recently_pruned == 0
             min_weight_idx = findmin(shot_weights[weights_below_min])[2]
@@ -417,24 +446,39 @@ function wls_optimise_weights(
                     prune_idx;
                     update_weights = false,
                 )
-                # Provided that the design matrix remains full-rank
+                # The pruned design must still achieve full rank
                 if rank(Array(d_prune.matrix)) == N
-                    # Prune the quantities
                     prune_indices = setdiff(1:tuple_number, prune_idx)
-                    mapping_lengths = mapping_lengths[prune_indices]
-                    d = d_prune
-                    covariance_log_unweighted = covariance_log_unweighted_prune
-                    # Update the shot weights and reset the velocity
-                    tuple_number -= 1
-                    shot_weights =
-                        shot_weights[prune_indices] / sum(shot_weights[prune_indices])
-                    old_shot_weights = deepcopy(shot_weights)
-                    velocity = velocity[prune_indices]
-                    recently_pruned = convergence_steps
-                    if diagnostics
-                        println(
-                            "Pruned tuple $(prune_idx) of $(tuple_number + 1) in step $(step); the velocity has been reset.",
-                        )
+                    prune_shot_weights_factor = get_shot_weights_factor(
+                        d_prune.shot_weights,
+                        d_prune.tuple_times,
+                        mapping_lengths[prune_indices],
+                    )
+                    covariance_log_prune =
+                        covariance_log_unweighted_prune * prune_shot_weights_factor
+                    prune_merit = calc_wls_moments(d_prune, covariance_log_prune)[1]
+                    prune_improve = all([
+                        prune_merit < merit_descent[idx] for
+                        idx in max(1, step - convergence_steps):step
+                    ])
+                    # Prune the tuple only if doing so improves the figure of merit
+                    if prune_improve
+                        # Prune the quantities
+                        mapping_lengths = mapping_lengths[prune_indices]
+                        d = d_prune
+                        covariance_log_unweighted = covariance_log_unweighted_prune
+                        # Update the shot weights and reset the velocity
+                        tuple_number -= 1
+                        shot_weights =
+                            shot_weights[prune_indices] / sum(shot_weights[prune_indices])
+                        old_shot_weights = deepcopy(shot_weights)
+                        velocity = velocity[prune_indices]
+                        recently_pruned = convergence_steps
+                        if diagnostics
+                            println(
+                                "Pruned tuple $(prune_idx) of $(tuple_number + 1) in step $(step); the velocity has been reset.",
+                            )
+                        end
                     end
                 else
                     push!(unprunable, prune_idx)
@@ -443,10 +487,14 @@ function wls_optimise_weights(
         end
         # Check the step count and convergence
         if step > convergence_steps
-            merit_converged = all([
-                abs(merit_descent[idx_1] - merit_descent[idx_2]) < convergence_threshold for idx_1 in (step - convergence_steps):step for
-                idx_2 in (step - convergence_steps):step
-            ])
+            merit_converged =
+                all([
+                    abs(merit_descent[idx_1] - merit_descent[idx_2]) <
+                    convergence_steps * convergence_threshold for
+                    idx_1 in (step - convergence_steps):step for
+                    idx_2 in (step - convergence_steps):step
+                ]) &&
+                (abs(merit_descent[end] - merit_descent[end - 1]) < convergence_threshold)
         else
             merit_converged = false
         end
@@ -473,6 +521,9 @@ function wls_optimise_weights(
             if recently_pruned > 0
                 recently_pruned -= 1
             end
+            if recently_zeroed > 0
+                recently_zeroed -= 1
+            end
         end
     end
     # Update the covariance matrix
@@ -490,7 +541,7 @@ function wls_optimise_weights(
 end
 
 #
-function calc_ols_merit_grad(
+function calc_ols_merit_grad_log(
     d::Design,
     shot_weights::Vector{Float64},
     ols_estimator::Matrix{Float64},
@@ -525,9 +576,12 @@ function calc_ols_merit_grad(
     sigma_sq_tr_grad =
         sum(sigma_sq_tr_partial ./ shot_weights) * d.tuple_times +
         sigma_sq_tr_partial .* shot_weights_local_grad
-    # Calculate the gradient of the figure of merit
+    # Calculate the gradient of the figure of merit with respect to the shot weights
     merit_grad = get_merit_grad(sigma_tr, sigma_tr_grad, sigma_sq_tr, sigma_sq_tr_grad, N)
-    return (merit_grad::Vector{Float64}, merit::Float64)
+    # Calculate the gradient of the figure of merit with respect to the log shot weights
+    shot_weights_log_matrix = get_shot_weights_log_matrix(shot_weights)
+    merit_grad_log = shot_weights_log_matrix * merit_grad
+    return (merit_grad_log::Vector{Float64}, merit::Float64)
 end
 
 #
@@ -537,6 +591,7 @@ function ols_optimise_weights(
     options::OptimOptions = OptimOptions(),
 )
     # Get the keyword arguments
+    @assert options.ls_type == :ols "Inappropriate least squares optimisation type $(options.ls_type) supplied."
     learning_rate = options.learning_rate
     momentum = options.momentum
     learning_rate_scale_factor = options.learning_rate_scale_factor
@@ -565,7 +620,7 @@ function ols_optimise_weights(
     stepping = true
     step = 1
     recently_pruned = 0
-    recently_zeroed = false
+    recently_zeroed = 0
     scaled_learning_rate = learning_rate
     unprunable = Int[]
     old_shot_weights = deepcopy(shot_weights)
@@ -573,45 +628,40 @@ function ols_optimise_weights(
     merit_descent = Vector{Float64}(undef, 0)
     while stepping
         # Calculate the gradient of the figure of merit
-        (merit_grad, merit) = calc_ols_merit_grad(
+        nesterov_log_shot_weights = -log.(shot_weights) + momentum * velocity
+        nesterov_shot_weights =
+            exp.(-nesterov_log_shot_weights) / sum(exp.(-nesterov_log_shot_weights))
+        (merit_grad_log, merit) = calc_ols_merit_grad_log(
             d,
-            shot_weights,
+            nesterov_shot_weights,
             ols_estimator,
             ols_estimator_covariance,
             ols_gram_covariance,
         )
         push!(merit_descent, merit)
         # Update the shot weights, ensuring both they and the gradient are appropriately normalised
-        velocity = momentum * velocity - scaled_learning_rate * merit_grad .* shot_weights
-        shot_weights_update = project_simplex(shot_weights + velocity)
-        update_zeroes = findall(shot_weights_update .== 0.0)
+        velocity = momentum * velocity - scaled_learning_rate * merit_grad_log
+        log_shot_weights_update = -log.(shot_weights) + velocity
+        shot_weights_update =
+            exp.(-log_shot_weights_update) / sum(exp.(-log_shot_weights_update))
         if (length(merit_descent) >= 2) && (merit_descent[end] > merit_descent[end - 1])
             shot_weights = old_shot_weights
             velocity = zeros(tuple_number)
-            if diagnostics
-                println(
-                    "The updated shot weights worsened the figure of merit in step $(step); the velocity and shot weights have been reset.",
-                )
-            end
-            recently_pruned += 1
-        elseif length(update_zeroes) > 0
-            if recently_zeroed
+            if recently_zeroed > 0
                 scaled_learning_rate /= learning_rate_scale_factor
             end
-            velocity = zeros(tuple_number)
             if diagnostics
                 println(
-                    "The updated shot weights had zeros in step $(step); the velocity has been reset$(recently_zeroed ? "and the learning rate has been reduced" : "").",
+                    "The updated shot weights worsened the figure of merit in step $(step); the velocity and shot weights have been reset$(recently_zeroed > 0 ? " and the learning rate has been reduced." : ".")",
                 )
             end
-            recently_zeroed = true
             recently_pruned += 1
+            recently_zeroed = convergence_steps
         else
-            recently_zeroed = false
-            old_shot_weights = deepcopy(shot_weights)
+            old_shot_weights = deepcopy(nesterov_shot_weights)
             shot_weights = shot_weights_update
         end
-        # Prune a tuple from the design whose shot weight is below the minimum
+        # Prune a tuple from the design if one has a shot weight below the minimum
         weights_below_min = findall(shot_weights .< shot_weights_clip)
         if length(weights_below_min) > 0 && recently_pruned == 0
             min_weight_idx = findmin(shot_weights[weights_below_min])[2]
@@ -623,30 +673,45 @@ function ols_optimise_weights(
                     prune_idx;
                     update_weights = false,
                 )
-                # Provided that the design matrix remains full-rank
+                # The pruned design must still achieve full rank
                 if rank(Array(d_prune.matrix)) == N
-                    # Prune the quantities
                     prune_indices = setdiff(1:tuple_number, prune_idx)
-                    mapping_lengths = mapping_lengths[prune_indices]
-                    d = d_prune
-                    covariance_log_unweighted = covariance_log_unweighted_prune
-                    ols_estimator =
-                        gate_eigenvalues_diag *
-                        inv(bunchkaufman(Symmetric(Array(d.matrix' * d.matrix)))) *
-                        d.matrix'
-                    ols_estimator_covariance = ols_estimator * covariance_log_unweighted
-                    ols_gram_covariance = ols_estimator' * ols_estimator_covariance
-                    # Update the shot weights and reset the velocity
-                    tuple_number -= 1
-                    shot_weights =
-                        shot_weights[prune_indices] / sum(shot_weights[prune_indices])
-                    old_shot_weights = deepcopy(shot_weights)
-                    velocity = velocity[prune_indices]
-                    recently_pruned = convergence_steps
-                    if diagnostics
-                        println(
-                            "prune_designd tuple $(prune_idx) of $(tuple_number + 1) in step $(step); the velocity has been reset.",
-                        )
+                    prune_shot_weights_factor = get_shot_weights_factor(
+                        d_prune.shot_weights,
+                        d_prune.tuple_times,
+                        mapping_lengths[prune_indices],
+                    )
+                    covariance_log_prune =
+                        covariance_log_unweighted_prune * prune_shot_weights_factor
+                    prune_merit = calc_ols_moments(d_prune, covariance_log_prune)[1]
+                    prune_improve = all([
+                        prune_merit < merit_descent[idx] for
+                        idx in max(1, step - convergence_steps):step
+                    ])
+                    # Prune the tuple only if doing so improves the figure of merit
+                    if prune_improve
+                        # Prune the quantities
+                        mapping_lengths = mapping_lengths[prune_indices]
+                        d = d_prune
+                        covariance_log_unweighted = covariance_log_unweighted_prune
+                        ols_estimator =
+                            gate_eigenvalues_diag *
+                            inv(bunchkaufman(Symmetric(Array(d.matrix' * d.matrix)))) *
+                            d.matrix'
+                        ols_estimator_covariance = ols_estimator * covariance_log_unweighted
+                        ols_gram_covariance = ols_estimator' * ols_estimator_covariance
+                        # Update the shot weights and reset the velocity
+                        tuple_number -= 1
+                        shot_weights =
+                            shot_weights[prune_indices] / sum(shot_weights[prune_indices])
+                        old_shot_weights = deepcopy(shot_weights)
+                        velocity = velocity[prune_indices]
+                        recently_pruned = convergence_steps
+                        if diagnostics
+                            println(
+                                "Pruned tuple $(prune_idx) of $(tuple_number + 1) in step $(step); the velocity has been reset.",
+                            )
+                        end
                     end
                 else
                     push!(unprunable, prune_idx)
@@ -655,10 +720,14 @@ function ols_optimise_weights(
         end
         # Check the step count and convergence
         if step > convergence_steps
-            merit_converged = all([
-                abs(merit_descent[idx_1] - merit_descent[idx_2]) < convergence_threshold for idx_1 in (step - convergence_steps):step for
-                idx_2 in (step - convergence_steps):step
-            ])
+            merit_converged =
+                all([
+                    abs(merit_descent[idx_1] - merit_descent[idx_2]) <
+                    convergence_steps * convergence_threshold for
+                    idx_1 in (step - convergence_steps):step for
+                    idx_2 in (step - convergence_steps):step
+                ]) &&
+                (abs(merit_descent[end] - merit_descent[end - 1]) < convergence_threshold)
         else
             merit_converged = false
         end
@@ -684,6 +753,9 @@ function ols_optimise_weights(
             step += 1
             if recently_pruned > 0
                 recently_pruned -= 1
+            end
+            if recently_zeroed > 0
+                recently_zeroed -= 1
             end
         end
     end
@@ -736,15 +808,17 @@ end
 function compare_ls_optimise_weights(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int};
-    options::OptimOptions = OptimOptions(),
+    gls_options::OptimOptions = OptimOptions(; ls_type = :gls),
+    wls_options::OptimOptions = OptimOptions(; ls_type = :wls),
+    ols_options::OptimOptions = OptimOptions(; ls_type = :ols),
 )
     # Perform gradient descent for all LS estimators
     (d_gls, covariance_log_gls, merit_descent_gls) =
-        gls_optimise_weights(d, covariance_log; options = options)
+        gls_optimise_weights(d, covariance_log; options = gls_options)
     (d_wls, covariance_log_wls, merit_descent_wls) =
-        wls_optimise_weights(d, covariance_log; options = options)
+        wls_optimise_weights(d, covariance_log; options = wls_options)
     (d_ols, covariance_log_ols, merit_descent_ols) =
-        ols_optimise_weights(d, covariance_log; options = options)
+        ols_optimise_weights(d, covariance_log; options = ols_options)
     d_set = (d_gls, d_wls, d_ols)
     covariance_log_set = (covariance_log_gls, covariance_log_wls, covariance_log_ols)
     merit_descent_set = (merit_descent_gls, merit_descent_wls, merit_descent_ols)

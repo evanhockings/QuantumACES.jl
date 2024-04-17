@@ -109,14 +109,13 @@ end
 
 The initialisation and parameterisation of this function is specialised to the rotated and unrotated planar code syndrome extraction circuits.
 """
-function get_tuple_set_data(c::T) where {T <: AbstractCircuit}
+function get_tuple_set_data(c::T; init_scaling::Float64 = 0.2) where {T <: AbstractCircuit}
     # Initialise parameters
     r_1 = c.noise_param.r_1
     r_2 = c.noise_param.r_2
     types = unique(c.layer_types)
     type_num = length(types)
     repeat_numbers = zeros(type_num)
-    initial_scale = 0.2
     # Generate the repeated tuple set data
     if hasproperty(c.circuit_param, :dynamically_decouple) &&
        c.circuit_param.dynamically_decouple
@@ -148,10 +147,9 @@ function get_tuple_set_data(c::T) where {T <: AbstractCircuit}
         # Initialise the repeat numbers
         for (idx, type) in enumerate(types)
             if type == :single_qubit || type == :dynamical
-                repeat_numbers[idx] = initial_scale * (1 / ((4 / 3) * r_1))
+                repeat_numbers[idx] = init_scaling * (1 / ((4 / 3) * r_1))
             elseif type == :two_qubit
-                repeat_numbers[idx] =
-                    initial_scale * (1 / ((4 / 3) * r_1 + (16 / 15) * r_2))
+                repeat_numbers[idx] = init_scaling * (1 / ((4 / 3) * r_1 + (16 / 15) * r_2))
             else
                 throw(error("Unsupported gate type $(type)."))
             end
@@ -164,9 +162,9 @@ function get_tuple_set_data(c::T) where {T <: AbstractCircuit}
         # Initialise the repeat numbers
         for (idx, type) in enumerate(types)
             if type == :single_qubit
-                repeat_numbers[idx] = initial_scale * (1 / ((4 / 3) * r_1))
+                repeat_numbers[idx] = init_scaling * (1 / ((4 / 3) * r_1))
             elseif type == :two_qubit
-                repeat_numbers[idx] = initial_scale * (1 / ((16 / 15) * r_2))
+                repeat_numbers[idx] = init_scaling * (1 / ((16 / 15) * r_2))
             else
                 throw(error("Unsupported gate type $(type)."))
             end

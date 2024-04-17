@@ -101,9 +101,9 @@ struct OptimOptions
     function OptimOptions(;
         ls_type::Symbol = :wls,
         save_data::Bool = false,
-        learning_rate::Float64 = 1e-1,
-        momentum::Float64 = 0.9,
-        learning_rate_scale_factor::Float64 = 2.0,
+        learning_rate::Float64 = (ls_type == :ols ? 1.0 : (10.0)^(3 / 4)),
+        momentum::Float64 = 0.99,
+        learning_rate_scale_factor::Float64 = 10.0^(1 / 4),
         shot_weights_clip::Float64 = 1e-5,
         max_steps::Int = 200,
         convergence_threshold::Float64 = 1e-5,

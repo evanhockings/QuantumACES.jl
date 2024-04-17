@@ -57,7 +57,7 @@ test_param_3 = UnrotatedPlanarParameters(
 )
 test_code_3 = get_circuit(test_param_3, dep_param)
 # Set up gradient descent parameters
-max_steps = 3
+max_steps = 10
 rot_covariance_log = calc_covariance_log(d_rot)
 N_rot = rotated_planar.N
 C_rot = length(d_rot.tuple_set)
@@ -74,7 +74,7 @@ unrot_gate_eigenvalues_diag = Diagonal(d_unrot.c.gate_eigenvalues)
     (d_rot_gls, rot_covariance_log_gls, rot_merit_descent_gls) = gls_optimise_weights(
         d_rot,
         rot_covariance_log;
-        options = OptimOptions(; max_steps = max_steps),
+        options = OptimOptions(; ls_type = :gls, max_steps = max_steps),
     )
     @test d_rot_gls.shot_weights != d_rot.shot_weights
     @test rot_covariance_log_gls != rot_covariance_log
@@ -101,15 +101,16 @@ unrot_gate_eigenvalues_diag = Diagonal(d_unrot.c.gate_eigenvalues)
         rot_covariance_log_gls * rot_gls_shot_weights_factor_inv
     rot_covariance_log_gls_unweighted_inv =
         sparse_covariance_inv(rot_covariance_log_gls_unweighted, rot_mapping_lengths)
-    (gls_expectation_grad, gls_expectation) = calc_gls_merit_grad(
+    (gls_expectation_grad_log, gls_expectation) = calc_gls_merit_grad_log(
         d_rot_gls,
         rot_gls_shot_weights,
         rot_covariance_log_gls_unweighted_inv,
     )
     gls_2 = time()
     # Compare against ForwardDiff
-    function DifferentiableGLSExpectation(shot_weights)
+    function DifferentiableGLSExpectation(log_shot_weights)
         # Scale the covariance matrix by the shot weights
+        shot_weights = exp.(-log_shot_weights) / sum(exp.(-log_shot_weights))
         tuple_times_factor = sum(shot_weights .* d_rot_gls.tuple_times)
         rot_shot_weights_factor_inv =
             (1 / tuple_times_factor) * Diagonal(
@@ -140,11 +141,13 @@ unrot_gate_eigenvalues_diag = Diagonal(d_unrot.c.gate_eigenvalues)
         expectation = sqrt(cov_trace) * (1 - cov_sq_trace / (4 * cov_trace^2)) / sqrt(N_rot)
         return expectation
     end
-    gls_expectation_grad_test =
-        ForwardDiff.gradient(DifferentiableGLSExpectation, rot_gls_shot_weights)
+    rot_gls_log_shot_weights = -log.(rot_gls_shot_weights)
+    rot_gls_log_shot_weights .-= minimum(rot_gls_log_shot_weights)
+    gls_expectation_grad_log_test =
+        ForwardDiff.gradient(DifferentiableGLSExpectation, rot_gls_log_shot_weights)
     gls_3 = time()
     @test gls_3 - gls_2 > gls_2 - gls_1
-    @test gls_expectation_grad ≈ gls_expectation_grad_test
+    @test gls_expectation_grad_log ≈ gls_expectation_grad_log_test
     println(
         "The GLS gradient took $(round(gls_2 - gls_1, digits=3)) s to compute, whereas ForwardDiff took $(round(gls_3 - gls_2, digits=3)) s.",
     )
@@ -158,7 +161,7 @@ end
     (d_rot_wls, rot_covariance_log_wls, rot_merit_descent_wls) = wls_optimise_weights(
         d_rot,
         rot_covariance_log;
-        options = OptimOptions(; max_steps = max_steps),
+        options = OptimOptions(; ls_type = :wls, max_steps = max_steps),
     )
     @test d_rot_wls.shot_weights != d_rot.shot_weights
     @test rot_covariance_log_wls != rot_covariance_log
@@ -183,15 +186,16 @@ end
     )
     rot_covariance_log_wls_unweighted =
         rot_covariance_log_wls * rot_wls_shot_weights_factor_inv
-    (wls_expectation_grad, wls_expectation) = calc_wls_merit_grad(
+    (wls_expectation_grad_log, wls_expectation) = calc_wls_merit_grad_log(
         d_rot_wls,
         rot_wls_shot_weights,
         rot_covariance_log_wls_unweighted,
     )
     wls_2 = time()
     # Compare against ForwardDiff
-    function DifferentiableWLSExpectation(shot_weights)
+    function DifferentiableWLSExpectation(log_shot_weights)
         # Scale the covariance matrix by the shot weights
+        shot_weights = exp.(-log_shot_weights) / sum(exp.(-log_shot_weights))
         tuple_times_factor = sum(shot_weights .* d_rot_wls.tuple_times)
         rot_shot_weights_factor =
             tuple_times_factor * Diagonal(
@@ -225,11 +229,13 @@ end
         expectation = sqrt(cov_trace) * (1 - cov_sq_trace / (4 * cov_trace^2)) / sqrt(N_rot)
         return expectation
     end
-    wls_expectation_grad_test =
-        ForwardDiff.gradient(DifferentiableWLSExpectation, rot_wls_shot_weights)
+    rot_wls_log_shot_weights = -log.(rot_wls_shot_weights)
+    rot_wls_log_shot_weights .-= minimum(rot_wls_log_shot_weights)
+    wls_expectation_grad_log_test =
+        ForwardDiff.gradient(DifferentiableWLSExpectation, rot_wls_log_shot_weights)
     wls_3 = time()
     @test wls_3 - wls_2 > wls_2 - wls_1
-    @test wls_expectation_grad ≈ wls_expectation_grad_test
+    @test wls_expectation_grad_log ≈ wls_expectation_grad_log_test
     println(
         "The WLS gradient took $(round(wls_2 - wls_1, digits=3)) s to compute, whereas ForwardDiff took $(round(wls_3 - wls_2, digits=3)) s.",
     )
@@ -243,7 +249,7 @@ end
     (d_unrot_ols, unrot_covariance_log_ols, unrot_merit_descent_ols) = ols_optimise_weights(
         d_unrot,
         unrot_covariance_log;
-        options = OptimOptions(; max_steps = max_steps),
+        options = OptimOptions(; ls_type = :ols, max_steps = max_steps),
     )
     @test d_unrot_ols.shot_weights != d_unrot.shot_weights
     @test unrot_covariance_log_ols != unrot_covariance_log
@@ -276,7 +282,7 @@ end
     unrot_ols_estimator_covariance =
         unrot_ols_estimator * unrot_covariance_log_ols_unweighted
     unrot_ols_gram_covariance = unrot_ols_estimator' * unrot_ols_estimator_covariance
-    (ols_expectation_grad, ols_expectation) = calc_ols_merit_grad(
+    (ols_expectation_grad_log, ols_expectation) = calc_ols_merit_grad_log(
         d_unrot_ols,
         unrot_ols_shot_weights,
         unrot_ols_estimator,
@@ -285,8 +291,9 @@ end
     )
     ols_2 = time()
     # Compare against ForwardDiff
-    function DifferentiableOLSExpectation(shot_weights)
+    function DifferentiableOLSExpectation(log_shot_weights)
         # Scale the covariance matrix by the shot weights
+        shot_weights = exp.(-log_shot_weights) / sum(exp.(-log_shot_weights))
         tuple_times_factor = sum(shot_weights .* d_unrot_ols.tuple_times)
         unrot_shot_weights_factor =
             tuple_times_factor * Diagonal(
@@ -310,11 +317,13 @@ end
             sqrt(cov_trace) * (1 - cov_sq_trace / (4 * cov_trace^2)) / sqrt(N_unrot)
         return expectation
     end
-    ols_expectation_grad_test =
-        ForwardDiff.gradient(DifferentiableOLSExpectation, unrot_ols_shot_weights)
+    unrot_ols_log_shot_weights = -log.(unrot_ols_shot_weights)
+    unrot_ols_log_shot_weights .-= minimum(unrot_ols_log_shot_weights)
+    ols_expectation_grad_log_test =
+        ForwardDiff.gradient(DifferentiableOLSExpectation, unrot_ols_log_shot_weights)
     ols_3 = time()
     @test ols_3 - ols_2 > ols_2 - ols_1
-    @test ols_expectation_grad ≈ ols_expectation_grad_test
+    @test ols_expectation_grad_log ≈ ols_expectation_grad_log_test
     println(
         "The OLS gradient took $(round(ols_2 - ols_1, digits=3)) s to compute, whereas ForwardDiff took $(round(ols_3 - ols_2, digits=3)) s.",
     )
@@ -330,12 +339,12 @@ end
     # Plot the loss curves
     rot_merit_descent_plot = scatter(
         rot_merit_descent_set[1];
-        yticks = 2.4:0.2:3.6,
-        ylims = (2.4, 3.6),
+        yticks = 2.0:0.5:4.5,
+        ylims = (2.0, 4.5),
         ylabel = L"\mathcal{F}",
         xlabel = "Steps",
         xticks = 0:5:30,
-        xlims = (0, 31),
+        xlims = (0, 32),
         grid = false,
         markersize = 3.0,
         label = "gls",

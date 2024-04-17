@@ -22,7 +22,7 @@ big_rotated_planar = get_circuit(big_rotated_param, log_param)
 # Set up optimisation parameters
 rot_ls_type = :wls
 unrot_ls_type = :gls
-rot_max_steps = 5
+rot_max_steps = 10
 rot_max_cycles = 0
 unrot_max_cycles = 1
 excursion_number = 2

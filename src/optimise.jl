@@ -35,8 +35,6 @@ function step_repetitions(
     c::T;
     options::OptimOptions = OptimOptions(),
 ) where {T <: AbstractCircuit}
-    # Get the keyword arguments
-    diagnostics = options.rep_diagnostics
     # Calculate the figure of merit for the current repetition numbers
     (expectation, expectation_dict) =
         optimal_expectation(tuple_set_data, expectation_dict, c; options = options)
