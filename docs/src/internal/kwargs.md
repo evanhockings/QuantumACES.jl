@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Kwargs
 
 ```@autodocs
-Modules = [AveragedCircuitEigenvalueSampling]
+Modules = [ACES]
 Pages = ["kwargs.jl"]
 ```

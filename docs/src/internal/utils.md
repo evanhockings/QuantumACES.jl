@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Utils
 
 ```@autodocs
-Modules = [AveragedCircuitEigenvalueSampling]
+Modules = [ACES]
 Pages = ["utils.jl"]
 ```

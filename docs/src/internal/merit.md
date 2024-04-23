@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Merit
 
 ```@autodocs
-Modules = [AveragedCircuitEigenvalueSampling]
+Modules = [ACES]
 Pages = ["merit.jl"]
 ```

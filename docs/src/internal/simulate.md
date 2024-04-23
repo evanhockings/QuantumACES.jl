@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Simulate
 
 ```@autodocs
-Modules = [AveragedCircuitEigenvalueSampling]
+Modules = [ACES]
 Pages = ["simulate.jl"]
 ```

@@ -2,9 +2,9 @@
 CollapsedDocStrings = true
 ```
 
-# AveragedCircuitEigenvalueSampling
+# ACES
 
 ```@autodocs
-Modules = [AveragedCircuitEigenvalueSampling]
-Pages = ["AveragedCircuitEigenvalueSampling.jl"]
+Modules = [ACES]
+Pages = ["ACES.jl"]
 ```

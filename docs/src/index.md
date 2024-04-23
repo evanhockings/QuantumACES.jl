@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = AveragedCircuitEigenvalueSampling
+CurrentModule = ACES
 ```
 
-# AveragedCircuitEigenvalueSampling.jl
+# ACES.jl
 
-Documentation for [AveragedCircuitEigenvalueSampling.jl](https://github.com/evanhockings/AveragedCircuitEigenvalueSampling.jl).
+Documentation for [ACES.jl](https://github.com/evanhockings/ACES.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [AveragedCircuitEigenvalueSampling]
+Modules = [ACES]
 ```

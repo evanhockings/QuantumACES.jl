@@ -33,5 +33,6 @@ Manifest.toml
 # Ignore the data folders, as they can contain large files
 */data/
 
-# VS Code workspace
+# VS Code
 *.code-workspace
+.vscode

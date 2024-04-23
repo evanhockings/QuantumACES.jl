@@ -1,4 +1,4 @@
-using AveragedCircuitEigenvalueSampling,
+using ACES,
     LinearAlgebra, ForwardDiff, Random, Distributions, Plots, StatsPlots, LaTeXStrings, Test
 # Set up codes
 dist = 3
@@ -25,9 +25,9 @@ d_unrot = generate_design(unrotated_planar, unrot_tuple_set)
     d_rot_basic = generate_design(rotated_planar, rot_basic)
     d_unrot_basic = generate_design(unrotated_planar, unrot_basic)
     @test d_rot_basic.experiment_numbers ==
-          AveragedCircuitEigenvalueSampling.get_basic_experiment_numbers(rotated_planar)
+          ACES.get_basic_experiment_numbers(rotated_planar)
     @test d_unrot_basic.experiment_numbers ==
-          AveragedCircuitEigenvalueSampling.get_basic_experiment_numbers(unrotated_planar)
+          ACES.get_basic_experiment_numbers(unrotated_planar)
 end
 # Test that we can generate codes with a range of different parameters
 test_param_1 = get_rotated_param(

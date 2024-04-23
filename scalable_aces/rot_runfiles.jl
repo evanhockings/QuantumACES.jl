@@ -1,4 +1,4 @@
-using AveragedCircuitEigenvalueSampling
+using ACES
 enter_folder("scalable_aces")
 include(pwd() * "/rot_optimise.jl")
 include(pwd() * "/rot_scaling.jl")

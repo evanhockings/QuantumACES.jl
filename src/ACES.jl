@@ -1,8 +1,8 @@
 """
-`AveragedCircuitEigenvalueSampling.jl` is a Julia package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits.
+`ACES.jl` is a Julia package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits.
 It is particularly interested in characterising the noise associated with fault-tolerant gadgets in the context of topological quantum error correcting codes, such as surface code syndrome extraction circuits.
 """
-module AveragedCircuitEigenvalueSampling
+module ACES
 
 # Imports
 using PythonCall,

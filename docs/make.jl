@@ -5,24 +5,24 @@ script_dir = @__DIR__
 Pkg.activate(script_dir)
 parent_dir = dirname(script_dir)
 Pkg.develop(PackageSpec(; path = parent_dir))
-using Documenter, AveragedCircuitEigenvalueSampling
+using Documenter, ACES
 #
 DocMeta.setdocmeta!(
-    AveragedCircuitEigenvalueSampling,
+    ACES,
     :DocTestSetup,
-    :(using AveragedCircuitEigenvalueSampling);
+    :(using ACES);
     recursive = true,
 )
 
 makedocs(;
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", nothing) == "true",
-        # canonical = "https://evanhockings.github.io/AveragedCircuitEigenvalueSampling.jl",
+        # canonical = "https://evanhockings.github.io/ACES.jl",
     ),
-    modules = [AveragedCircuitEigenvalueSampling],
-    sitename = "AveragedCircuitEigenvalueSampling.jl",
+    modules = [ACES],
+    sitename = "ACES.jl",
     authors = "Evan Hockings",
-    repo = "https://github.com/evanhockings/AveragedCircuitEigenvalueSampling.jl/blob/{commit}{path}#{line}",
+    repo = "https://github.com/evanhockings/ACES.jl/blob/{commit}{path}#{line}",
     pages = [
         "Home" => "index.md",
         "Manual" => "manual.md",
@@ -39,20 +39,20 @@ makedocs(;
 #=
 
 makedocs(;
-    modules = [AveragedCircuitEigenvalueSampling],
+    modules = [ACES],
     authors = "Evan Hockings",
-    repo = "https://github.com/evanhockings/AveragedCircuitEigenvalueSampling.jl/blob/{commit}{path}#{line}",
-    sitename = "AveragedCircuitEigenvalueSampling.jl",
+    repo = "https://github.com/evanhockings/ACES.jl/blob/{commit}{path}#{line}",
+    sitename = "ACES.jl",
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://evanhockings.github.io/AveragedCircuitEigenvalueSampling.jl",
+        canonical = "https://evanhockings.github.io/ACES.jl",
         assets = String[],
     ),
     pages = ["Home" => "index.md"],
 )
 
 deploydocs(;
-    repo = "github.com/evanhockings/AveragedCircuitEigenvalueSampling.jl",
+    repo = "github.com/evanhockings/ACES.jl",
     devbranch = "main",
 )
 =#

@@ -1,4 +1,4 @@
-using AveragedCircuitEigenvalueSampling, Test
+using ACES, Test
 # Make sure to delete the data folder even if previous tests failed
 enter_folder("test")
 rm("data"; force = true, recursive = true)

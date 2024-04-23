@@ -1,6 +1,6 @@
-using AveragedCircuitEigenvalueSampling, Test
+using ACES, Test
 
-@testset "AveragedCircuitEigenvalueSampling.jl" begin
+@testset "ACES.jl" begin
     @testset "Design merits and gradients" begin
         include("merit_tests.jl")
     end

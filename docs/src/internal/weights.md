@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Weights
 
 ```@autodocs
-Modules = [AveragedCircuitEigenvalueSampling]
+Modules = [ACES]
 Pages = ["weights.jl"]
 ```

@@ -1,11 +1,11 @@
-# AveragedCircuitEigenvalueSampling.jl
+# ACES.jl
 
 **WARNING**: This package is currently in a prerelease state.
 The API is NOT STABLE or appropriately documented.
 The next release will change the entire API.
 Please wait for it before building on this package.
 
-`AveragedCircuitEigenvalueSampling.jl` is a package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits.
+`ACES.jl` is a package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits.
 It is particularly interested in characterising the noise associated with fault-tolerant gadgets in the context of topological quantum error-correcting codes, such as syndrome extraction circuits.
 
 The methods used in this package are detailed in [arXiv:2404.06545](https://arxiv.org/abs/2404.06545), building on the original method laid out in [arXiv:2108.05803](https://arxiv.org/abs/2108.05803).
@@ -72,4 +72,4 @@ Alternatively, install the package manually with
 pkg> conda pip_add stim
 ```
 
-Note that the entire module can be brought into scope with `import AveragedCircuitEigenvalueSampling as ACES`.
+Note that the entire module can be brought into scope with `import ACES as ACES`.

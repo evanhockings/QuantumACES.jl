@@ -1,6 +1,6 @@
 # Public documentation
 
-Documentation for the public interface of `AveragedCircuitEigenvalueSampling.jl`.
+Documentation for the public interface of `ACES.jl`.
 
 ## Index
 
@@ -11,7 +11,7 @@ Pages = ["public.md"]
 ## Public interface
 
 ```
-AveragedCircuitEigenvalueSampling
+ACES
 generate_design
 optimise_design
 simulate_aces

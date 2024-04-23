@@ -1,4 +1,4 @@
-using AveragedCircuitEigenvalueSampling, JLD2
+using ACES, JLD2
 enter_folder("scalable_aces")
 # Set up the parameters
 dist = 3
