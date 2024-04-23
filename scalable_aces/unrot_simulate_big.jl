@@ -10,10 +10,10 @@ total_std_log = sqrt(log(10 / 9))
 seed = UInt(0)
 ls_type = :wls
 shots_set = [10^6; 10^7; 10^8; 10^9]
-unrotated_param = UnrotatedPlanarParameters(dist)
-unrotated_param_big = UnrotatedPlanarParameters(dist_big)
-dep_param = DepolarisingParameters(r_1, r_2, r_m)
-log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
+unrotated_param = get_unrotated_param(dist)
+unrotated_param_big = get_unrotated_param(dist_big)
+dep_param = get_dep_param(r_1, r_2, r_m)
+log_param = get_log_param(r_1, r_2, r_m, total_std_log; seed = seed)
 # Load the design
 metadata_dict = load("data/design_metadata_$(unrotated_param.circuit_name).jld2")
 @assert unrotated_param == metadata_dict["unrotated_param"]

@@ -7,10 +7,10 @@ r_2 = 0.5 / 100
 r_m = 2.0 / 100
 total_std_log = sqrt(log(10 / 9))
 seed = UInt(0)
-rotated_param = RotatedPlanarParameters(dist)
-unrotated_param = UnrotatedPlanarParameters(dist)
-dep_param = DepolarisingParameters(r_1, r_2, r_m)
-log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
+rotated_param = get_rotated_param(dist)
+unrotated_param = get_unrotated_param(dist)
+dep_param = get_dep_param(r_1, r_2, r_m)
+log_param = get_log_param(r_1, r_2, r_m, total_std_log; seed = seed)
 rotated_planar = get_circuit(rotated_param, log_param)
 unrotated_planar = get_circuit(unrotated_param, dep_param)
 # Set up designs
@@ -20,15 +20,17 @@ d_rot = generate_design(rotated_planar, rot_tuple_set)
 unrot_basic = get_basic_tuple_set(unrotated_planar)
 unrot_tuple_set = [[unrotated_planar.circuit_tuple]; unrot_basic]
 d_unrot = generate_design(unrotated_planar, unrot_tuple_set)
-# Test that the trivial experiment numbers are correctly generated
-@testset "Trivial experiment numbers" begin
+# Test that the basic experiment numbers are correctly generated
+@testset "Basic experiment numbers" begin
     d_rot_basic = generate_design(rotated_planar, rot_basic)
     d_unrot_basic = generate_design(unrotated_planar, unrot_basic)
-    @test d_rot_basic.experiment_numbers == get_basic_experiment_numbers(rotated_planar)
-    @test d_unrot_basic.experiment_numbers == get_basic_experiment_numbers(unrotated_planar)
+    @test d_rot_basic.experiment_numbers ==
+          AveragedCircuitEigenvalueSampling.get_basic_experiment_numbers(rotated_planar)
+    @test d_unrot_basic.experiment_numbers ==
+          AveragedCircuitEigenvalueSampling.get_basic_experiment_numbers(unrotated_planar)
 end
 # Test that we can generate codes with a range of different parameters
-test_param_1 = RotatedPlanarParameters(
+test_param_1 = get_rotated_param(
     dist + 2,
     dist;
     dynamically_decouple = false,
@@ -38,7 +40,7 @@ test_param_1 = RotatedPlanarParameters(
     meas_reset_time = 20.0,
 )
 test_code_1 = get_circuit(test_param_1, log_param)
-test_param_2 = RotatedPlanarParameters(
+test_param_2 = get_rotated_param(
     dist,
     dist + 1;
     check_type = :standard,
@@ -47,7 +49,7 @@ test_param_2 = RotatedPlanarParameters(
     pad_identity = false,
 )
 test_code_2 = get_circuit(test_param_2, log_param)
-test_param_3 = UnrotatedPlanarParameters(
+test_param_3 = get_unrotated_param(
     dist,
     dist + 1;
     pad_identity = false,
@@ -339,8 +341,8 @@ end
     # Plot the loss curves
     rot_merit_descent_plot = scatter(
         rot_merit_descent_set[1];
-        yticks = 2.0:0.5:4.5,
-        ylims = (2.0, 4.5),
+        yticks = 2.4:0.4:4.0,
+        ylims = (2.4, 4.0),
         ylabel = L"\mathcal{F}",
         xlabel = "Steps",
         xticks = 0:5:30,

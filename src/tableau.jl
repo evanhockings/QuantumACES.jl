@@ -1,12 +1,19 @@
-# Stabiliser circuit simulation following `Improved Simulation of Stabilizer Circuits` by S. Aaronson and D. Gottesman (2004)
-# arXiv:quant-ph/0406196
+"""
+    Tableau
 
+A tableau representation of a stabiliser state.
+
+Stabiliser circuit simulations follow `Improved simulation of stabilizer circuits` by Scott Aaronson and Daniel Gottesman.
+
+# Fields
+
+  - `tableau::Matrix{Bool}`: The tableau representation of the stabiliser state.
+  - `qubit_num::Int16`: The number of qubits in the stabiliser state.
+"""
 mutable struct Tableau
-    # Tableau
     tableau::Matrix{Bool}
-    # Qubit number
     qubit_num::Int16
-    # Defaunt constructor
+    # Constructor
     function Tableau(n::Integer)
         tableau = zeros(Bool, 2n + 1, 2n + 1)
         for i in 1:(2n)
@@ -24,17 +31,49 @@ end
 
 @struct_hash_equal_isequal Tableau
 
+"""
+    Gate
+
+A gate in a stabiliser circuit.
+
+# Fields
+
+  - `type::String`: String describing the gate type.
+  - `index::Int32`: The index labelling the unique layer occurrences of the gate in a circuit.
+  - `targets::Vector{Int16}`: The qubit targets of the gate.
+
+# Supported gates
+
+  - `H`: Hadamard gate.
+  - `S`: Phase gate.
+  - `CX` or `CNOT`: Controlled-X gate.
+  - `CZ`: Controlled-Z gate.
+  - `I`: Identity gate.
+  - `Z`: Pauli Z gate.
+  - `X`: Pauli X gate.
+  - `Y`: Pauli Y gate.
+  - `II`: Two-qubit identity gate.
+  - `AB`: Two-qubit Pauli gate, where `A` and `B` are Paulis `Z`, `X`, or `Y`.
+  - `SQRT_AB`: Two-qubit Pauli rotation, where `A` and `B` are Paulis `Z`, `X`, or `Y`.
+  - `SQRT_AB_DAG` : Two-qubit Pauli rotation, where `A` and `B` are Paulis `Z`, `X`, or `Y`.
+  - `PZ+`: Prepare the Pauli +Z eigenstate.
+  - `PZ-`: Prepare the Pauli -Z eigenstate.
+  - `PX+`: Prepare the Pauli +X eigenstate.
+  - `PX-`: Prepare the Pauli -X eigenstate.
+  - `PY+`: Prepare the Pauli +Y eigenstate.
+  - `PY-`: Prepare the Pauli -Y eigenstate.
+  - `M` or `MZ`: Measure in the computational Pauli Z basis.
+  - `MX`: Measure in the Pauli X basis.
+  - `MY`: Measure in the Pauli Y basis.
+  - `R`: Reset to the computational Z basis.
+"""
 struct Gate
-    # Gate type
     type::String
-    # Index labelling the unique occurrences of the gate in a circuit
-    # Two gates are considered unique if they occur in non-identical layers
     index::Int32
-    # Gate targets
     targets::Vector{Int16}
 end
 
-Base.show(io::IO, g::Gate) = print(io, "($(g.type)-$(Int(g.index)):$(Int.(g.targets)))")
+Base.show(io::IO, g::Gate) = print(io, "($(g.type):$(Int(g.index)):$(Int.(g.targets)))")
 
 function Base.isless(g₁::Gate, g₂::Gate)
     return isless([g₁.type; g₁.index; g₁.targets], [g₂.type; g₂.index; g₂.targets])
@@ -42,12 +81,21 @@ end
 
 @struct_hash_equal_isequal Gate
 
+"""
+    Layer
+
+A layer of gates in a stabiliser circuit.
+Gates in a layer are simultaneously implemented by the device, and act on disjoint sets of qubits such that they trivially commute with each other.
+
+# Fields
+
+  - `layer::Vector{Gate}`: The gates in the layer.
+  - `qubit_num::Int16`: The number of qubits in the circuit.
+"""
 struct Layer
-    # Layer of gates
     layer::Vector{Gate}
-    # Qubit number
     qubit_num::Int16
-    # Default constructor
+    # Constructor
     function Layer(layer::Vector{Gate}, qubit_num::Integer)
         # Parameter checks
         target_set = sort(vcat([gate.targets for gate in layer]...))
@@ -62,9 +110,49 @@ Base.show(io::IO, l::Layer) = print(io, [gate for gate in l.layer])
 @struct_hash_equal_isequal Layer
 
 """
-    cx!(t::Tableau,control::Integer,target::Integer)
+    hadamard!(t::Tableau,target::Integer)
 
-Perform a CNOT on the tableau with the specified control and target qubits.
+Perform a Hadamard gate on the tableau `t` with target qubit `target`.
+"""
+function hadamard!(t::Tableau, target::Integer)
+    tableau = t.tableau
+    n = t.qubit_num
+    @assert (target >= 1) && (target <= n) "The target $(target) on $(n) qubits is out of bounds."
+    for i in 1:(2n)
+        # Set the phase variables
+        tableau[i, 2n + 1] =
+            (tableau[i, 2n + 1] + (tableau[i, target] * tableau[i, n + target])) % 2
+        # Swap the x and z variables
+        temp_tableau_var = tableau[i, target]
+        tableau[i, target] = tableau[i, n + target]
+        tableau[i, n + target] = temp_tableau_var
+    end
+    return nothing
+end
+
+"""
+phase!(t::Tableau,target::Integer)
+
+Perform a phase gate on the tableau `t` with target qubit `target`.
+"""
+function phase!(t::Tableau, target::Integer)
+    tableau = t.tableau
+    n = t.qubit_num
+    @assert (target >= 1) && (target <= n) "The target $(target) on $(n) qubits is out of bounds."
+    for i in 1:(2n)
+        # Set the phase variables
+        tableau[i, 2n + 1] =
+            (tableau[i, 2n + 1] + (tableau[i, target] * tableau[i, n + target])) % 2
+        # Set the z variables
+        tableau[i, n + target] = (tableau[i, n + target] + tableau[i, target]) % 2
+    end
+    return nothing
+end
+
+"""
+    cx!(t::Tableau, control::Integer, target::Integer)
+
+Perform a controlled-X gate on the tableau `t` with control qubit `control` and target qubit `target`.
 """
 function cx!(t::Tableau, control::Integer, target::Integer)
     tableau = t.tableau
@@ -89,49 +177,22 @@ function cx!(t::Tableau, control::Integer, target::Integer)
 end
 
 """
-    hadamard!(t::Tableau,target::Integer)
+    cz!(t::Tableau, control::Integer, target::Integer)
 
-Perform a Hadamard gate on the tableau with the specified target qubit.
+Perform a controlled-Z gate on the tableau `t` with control qubit `control` and target qubit `target`.
+The gate is symmetric, so the control and target qubits can be swapped.
 """
-function hadamard!(t::Tableau, target::Integer)
-    tableau = t.tableau
-    n = t.qubit_num
-    @assert (target >= 1) && (target <= n) "The target $(target) on $(n) qubits is out of bounds."
-    for i in 1:(2n)
-        # Set the phase variables
-        tableau[i, 2n + 1] =
-            (tableau[i, 2n + 1] + (tableau[i, target] * tableau[i, n + target])) % 2
-        # Swap the x and z variables
-        temp_tableau_var = tableau[i, target]
-        tableau[i, target] = tableau[i, n + target]
-        tableau[i, n + target] = temp_tableau_var
-    end
-    return nothing
-end
-
-"""
-    phase!(t::Tableau,target::Integer)
-
-Perform a phase gate on the tableau with the specified target qubit.
-"""
-function phase!(t::Tableau, target::Integer)
-    tableau = t.tableau
-    n = t.qubit_num
-    @assert (target >= 1) && (target <= n) "The target $(target) on $(n) qubits is out of bounds."
-    for i in 1:(2n)
-        # Set the phase variables
-        tableau[i, 2n + 1] =
-            (tableau[i, 2n + 1] + (tableau[i, target] * tableau[i, n + target])) % 2
-        # Set the z variables
-        tableau[i, n + target] = (tableau[i, n + target] + tableau[i, target]) % 2
-    end
+function cz!(t::Tableau, control::Integer, target::Integer)
+    hadamard!(t, target)
+    cx!(t, control, target)
+    hadamard!(t, target)
     return nothing
 end
 
 """
     x!(t::Tableau,target::Integer)
 
-Perform a Pauli X gate on the tableau with the specified target qubit, noting that ``X=HS^2H``.
+Perform a Pauli X gate on the tableau `t` with target qubit `target`, noting that ``X = H S^2 H``.
 """
 function x!(t::Tableau, target::Integer)
     tableau = t.tableau
@@ -147,7 +208,7 @@ end
 """
     z!(t::Tableau,target::Integer)
 
-Perform a Pauli Z gate on the tableau with the specified target qubit, noting that ``Z=S^2``.
+Perform a Pauli Z gate on the tableau `t` with target qubit `target`, noting that ``Z = S^2``.
 """
 function z!(t::Tableau, target::Integer)
     tableau = t.tableau
@@ -162,7 +223,7 @@ end
 """
     y!(t::Tableau,target::Integer)
 
-Perform a Pauli Y gate on the tableau with the specified target qubit, noting that ``Y=SHS^2HS^3``.
+Perform a Pauli Z gate on the tableau `t` with target qubit `target`, noting that ``Y = S H S^2 H S^3``.
 """
 function y!(t::Tableau, target::Integer)
     tableau = t.tableau
@@ -176,15 +237,12 @@ function y!(t::Tableau, target::Integer)
     return nothing
 end
 
-#
-function cz!(t::Tableau, control::Integer, target::Integer)
-    hadamard!(t, target)
-    cx!(t, control, target)
-    hadamard!(t, target)
-    return nothing
-end
+"""
+    sqrt_zz!(t::Tableau, control::Integer, target::Integer)
 
-#
+Perform a π/2 ZZ Pauli rotation gate on the tableau `t` with control qubit `control` and target qubit `target`.
+The gate is symmetric, so the control and target qubits can be swapped.
+"""
 function sqrt_zz!(t::Tableau, control::Integer, target::Integer)
     cz!(t, control, target)
     phase!(t, control)
@@ -192,7 +250,12 @@ function sqrt_zz!(t::Tableau, control::Integer, target::Integer)
     return nothing
 end
 
-#
+"""
+    sqrt_zz_dag!(t::Tableau, control::Integer, target::Integer)
+
+Perform a -π/2 ZZ Pauli rotation gate on the tableau `t` with control qubit `control` and target qubit `target`.
+The gate is symmetric, so the control and target qubits can be swapped.
+"""
 function sqrt_zz_dag!(t::Tableau, control::Integer, target::Integer)
     sqrt_zz!(t, control, target)
     z!(t, control)
@@ -201,9 +264,9 @@ function sqrt_zz_dag!(t::Tableau, control::Integer, target::Integer)
 end
 
 """
-    row_phase(x₁::Bool,z₁::Bool,x₂::Bool,z₂::Bool)
+    row_phase(x₁::Bool, z₁::Bool, x₂::Bool, z₂::Bool)
 
-Calculate a phase for RowSum.
+Calculate a phase for [`row_sum!`](@ref).
 """
 function row_phase(x₁::Bool, z₁::Bool, x₂::Bool, z₂::Bool)
     # Returns the exponent to which i is raised if we multiply x₁z₁ by x₂z₂
@@ -222,9 +285,9 @@ function row_phase(x₁::Bool, z₁::Bool, x₂::Bool, z₂::Bool)
 end
 
 """
-    row_sum!(t::Tableau,target::Integer,control::Integer)
+    row_sum!(t::Tableau, target::Integer, control::Integer)
 
-Add the control row to the target row, keeping track of the phase bit of the target row.
+In the tableau `t`, add the control row `control` to the target row `target`, while tracking the phase bit of the target row.
 """
 function row_sum!(t::Tableau, target::Integer, control::Integer)
     tableau = t.tableau
@@ -259,9 +322,9 @@ function row_sum!(t::Tableau, target::Integer, control::Integer)
 end
 
 """
-    measure!(t::Tableau,target::Integer)
+    measure!(t::Tableau, target::Integer)
 
-Perform a measurement on the tableau with the specified target qubit, and return the measurement outcome.
+Measure the tableau `t` at the target qubit `target`, and return the measurement outcome.
 """
 function measure!(t::Tableau, target::Integer)
     tableau = t.tableau
@@ -302,9 +365,9 @@ function measure!(t::Tableau, target::Integer)
 end
 
 """
-    reset!(t::Tableau,target::Integer)
+    reset!(t::Tableau, target::Integer)
 
-Reset the specified target qubit into the ``|0\\rangle`` state by measuring in the Z basis and flipping it if it is in the ``|1\\rangle`` state.
+Reset the tableau `t` at the target qubit `target` by measuring in the computational basis and flipping the phase if the measurement outcome is -1.
 """
 function reset!(t::Tableau, target::Integer)
     measurement = measure!(t, target)
@@ -317,31 +380,12 @@ end
 """
     apply!(t::Tableau, l::Layer; return_measurements::Bool = false)
 
-Perform all the gates in the layer on the tableau and return the list of measurement outcomes if return_measurements.
+Perform on the tableau `t` all gates in the layer `l`, and return the list of measurement outcomes if `return_measurements` is `true`.
 """
 function apply!(t::Tableau, l::Layer; return_measurements::Bool = false)
-    sqrt_rot = [
-        "SQRT_XX"
-        "SQRT_XZ"
-        "SQRT_XY"
-        "SQRT_ZX"
-        "SQRT_ZZ"
-        "SQRT_ZY"
-        "SQRT_YX"
-        "SQRT_YZ"
-        "SQRT_YY"
-    ]
-    sqrt_rot_dag = [
-        "SQRT_XX_DAG"
-        "SQRT_XZ_DAG"
-        "SQRT_XY_DAG"
-        "SQRT_ZX_DAG"
-        "SQRT_ZZ_DAG"
-        "SQRT_ZY_DAG"
-        "SQRT_YX_DAG"
-        "SQRT_YZ_DAG"
-        "SQRT_YY_DAG"
-    ]
+    pauli_rot = ["XX"; "XZ"; "XY"; "ZX"; "ZZ"; "ZY"; "YX"; "YZ"; "YY"]
+    sqrt_rot = ["SQRT_" * pauli for pauli in pauli_rot]
+    sqrt_rot_dag = ["SQRT_" * pauli * "_DAG" for pauli in pauli_rot]
     measurements = Vector{Tuple{Int, Int}}(undef, 0)
     for g in l.layer
         # Perform the relevant operation
@@ -379,87 +423,6 @@ function apply!(t::Tableau, l::Layer; return_measurements::Bool = false)
             x!(t, g.targets[1])
             hadamard!(t, g.targets[1])
             phase!(t, g.targets[1])
-        elseif g.type == "II"
-            continue
-        elseif g.type ∈ sqrt_rot || g.type ∈ sqrt_rot_dag
-            # Set up variables
-            pauli_1 = g.type[6]
-            pauli_2 = g.type[7]
-            # Rotate into the correct Pauli basis
-            if pauli_1 == 'X'
-                hadamard!(t, g.targets[1])
-            elseif pauli_1 == 'Y'
-                phase!(t, g.targets[1])
-                z!(t, g.targets[1])
-                hadamard!(t, g.targets[1])
-            elseif pauli_1 == 'Z'
-            else
-                throw(error("There's a problem with $(g)."))
-            end
-            if pauli_2 == 'X'
-                hadamard!(t, g.targets[2])
-            elseif pauli_2 == 'Y'
-                phase!(t, g.targets[2])
-                z!(t, g.targets[2])
-                hadamard!(t, g.targets[2])
-            elseif pauli_2 == 'Z'
-            else
-                throw(error("There's a problem with $(g)."))
-            end
-            # Apply the Pauli rotation
-            if g.type ∈ sqrt_rot && g.type ∉ sqrt_rot_dag
-                sqrt_zz!(t, g.targets[1], g.targets[2])
-            elseif g.type ∈ sqrt_rot_dag && g.type ∉ sqrt_rot
-                sqrt_zz_dag!(t, g.targets[1], g.targets[2])
-            else
-                throw(error("There's a problem with $(g)."))
-            end
-            # Rotate back into the correct Pauli basis
-            if pauli_1 == 'X'
-                hadamard!(t, g.targets[1])
-            elseif pauli_1 == 'Y'
-                hadamard!(t, g.targets[1])
-                phase!(t, g.targets[1])
-            elseif pauli_1 == 'Z'
-            else
-                throw(error("There's a problem with $(g)."))
-            end
-            if pauli_2 == 'X'
-                hadamard!(t, g.targets[2])
-            elseif pauli_2 == 'Y'
-                hadamard!(t, g.targets[2])
-                phase!(t, g.targets[2])
-            elseif pauli_2 == 'Z'
-            else
-                throw(error("There's a problem with $(g)."))
-            end
-        elseif g.type == "XX"
-            x!(t, g.targets[1])
-            x!(t, g.targets[2])
-        elseif g.type == "XZ"
-            x!(t, g.targets[1])
-            z!(t, g.targets[2])
-        elseif g.type == "XY"
-            x!(t, g.targets[1])
-            y!(t, g.targets[2])
-        elseif g.type == "ZX"
-            z!(t, g.targets[1])
-            x!(t, g.targets[2])
-        elseif g.type == "ZZ"
-            z!(t, g.targets[1])
-            z!(t, g.targets[2])
-        elseif g.type == "ZY"
-            z!(t, g.targets[1])
-            y!(t, g.targets[2])
-        elseif g.type == "YX"
-            y!(t, g.targets[1])
-            x!(t, g.targets[2])
-        elseif g.type == "YZ"
-            y!(t, g.targets[1])
-            z!(t, g.targets[2])
-        elseif g.type == "YY"
-            y!(t, g.targets[1])
-            y!(t, g.targets[2])
         elseif g.type == "MZ" || g.type == "M"
             measurement = measure!(t, g.targets[1])
             push!(measurements, ((-1)^measurement, g.targets[1]))
@@ -478,6 +441,86 @@ function apply!(t::Tableau, l::Layer; return_measurements::Bool = false)
             push!(measurements, ((-1)^measurement, g.targets[1]))
         elseif g.type == "R"
             reset!(t, g.targets[1])
+        elseif g.type == "II"
+            continue
+        elseif g.type ∈ pauli_rot
+            # Set up variables
+            pauli_1 = g.type[1]
+            pauli_2 = g.type[2]
+            if pauli_1 == 'X'
+                x!(t, g.targets[1])
+            elseif pauli_1 == 'Y'
+                y!(t, g.targets[1])
+            elseif pauli_1 == 'Z'
+                z!(t, g.targets[1])
+            else
+                throw(error("There's a problem with $(g)."))
+            end
+            if pauli_2 == 'X'
+                x!(t, g.targets[2])
+            elseif pauli_2 == 'Y'
+                y!(t, g.targets[2])
+            elseif pauli_2 == 'Z'
+                z!(t, g.targets[2])
+            else
+                throw(error("There's a problem with $(g)."))
+            end
+        elseif g.type ∈ sqrt_rot || g.type ∈ sqrt_rot_dag
+            # Set up variables
+            pauli_1 = g.type[6]
+            pauli_2 = g.type[7]
+            # Rotate into the correct Pauli basis
+            if pauli_1 == 'X'
+                hadamard!(t, g.targets[1])
+            elseif pauli_1 == 'Y'
+                phase!(t, g.targets[1])
+                z!(t, g.targets[1])
+                hadamard!(t, g.targets[1])
+            elseif pauli_1 == 'Z'
+                continue
+            else
+                throw(error("There's a problem with $(g)."))
+            end
+            if pauli_2 == 'X'
+                hadamard!(t, g.targets[2])
+            elseif pauli_2 == 'Y'
+                phase!(t, g.targets[2])
+                z!(t, g.targets[2])
+                hadamard!(t, g.targets[2])
+            elseif pauli_2 == 'Z'
+                continue
+            else
+                throw(error("There's a problem with $(g)."))
+            end
+            # Apply the Pauli rotation
+            if g.type ∈ sqrt_rot && g.type ∉ sqrt_rot_dag
+                sqrt_zz!(t, g.targets[1], g.targets[2])
+            elseif g.type ∈ sqrt_rot_dag && g.type ∉ sqrt_rot
+                sqrt_zz_dag!(t, g.targets[1], g.targets[2])
+            else
+                throw(error("There's a problem with $(g)."))
+            end
+            # Rotate back into the correct Pauli basis
+            if pauli_1 == 'X'
+                hadamard!(t, g.targets[1])
+            elseif pauli_1 == 'Y'
+                hadamard!(t, g.targets[1])
+                phase!(t, g.targets[1])
+            elseif pauli_1 == 'Z'
+                continue
+            else
+                throw(error("There's a problem with $(g)."))
+            end
+            if pauli_2 == 'X'
+                hadamard!(t, g.targets[2])
+            elseif pauli_2 == 'Y'
+                hadamard!(t, g.targets[2])
+                phase!(t, g.targets[2])
+            elseif pauli_2 == 'Z'
+                continue
+            else
+                throw(error("There's a problem with $(g)."))
+            end
         else
             throw(error("The layer has an unsupported operation $(g)."))
         end
@@ -492,7 +535,7 @@ end
 """
     make_layer(gate_type::String, range_set::Vector{Vector{Int}}, n::Int)
 
-Creates a layer of potentially multi-qubit gates, each acting on the qubits in the range set.
+Returns a layer of `gate_type` gates, each acting on the qubits in `range_set`, where the layer acts on `n` qubits.
 """
 function make_layer(gate_type::String, range_set::Vector{Vector{Int}}, n::Int)
     l = Layer([Gate(gate_type, 0, range) for range in range_set], n)
@@ -502,7 +545,7 @@ end
 """
     make_layer(gate_type::String, range::Vector{Int}, n::Int)
 
-Creates a layer of single-qubit gates acting on each of the qubits in the range.
+Returns a layer of single-qubit `gate_type` gates acting on the qubits in `range`, where the layer acts on `n` qubits.
 """
 function make_layer(gate_type::String, range::Vector{Int}, n::Int)
     l = Layer([Gate(gate_type, 0, [qubit]) for qubit in range], n)
@@ -512,7 +555,7 @@ end
 """
     make_layer(gate_types::Vector{String}, ranges::Vector{Vector{Int}}, n::Int)
 
-Creates a layer of single-qubit gates of different types, with each acting on each of the qubits in the corresponding range.
+Returns a layer of single-qubit gates, with gate types specified by `gate_types` and the qubits upon which they act specified by `ranges`, where the layer acts on `n` qubits.
 """
 function make_layer(gate_types::Vector{String}, ranges::Vector{Vector{Int}}, n::Int)
     @assert length(gate_types) == length(ranges) "The number of gate types and ranges must be the same."
@@ -529,7 +572,11 @@ function make_layer(gate_types::Vector{String}, ranges::Vector{Vector{Int}}, n::
     return l::Layer
 end
 
-#
+"""
+    pad_layer(l::Layer)
+
+Returns a copy of the layer `l` padded by single-qubit identity gates that act on each of the qubits not already acted upon by some gate in the layer.
+"""
 function pad_layer(l::Layer)
     target_set = sort(vcat([gate.targets for gate in l.layer]...))
     complement_set = setdiff(collect(1:(l.qubit_num)), target_set)
@@ -539,166 +586,4 @@ function pad_layer(l::Layer)
     end
     l_padded = Layer(layer_padded, l.qubit_num)
     return l_padded::Layer
-end
-
-"""
-    unwrap_circuit(c::Vector{Layer})
-
-unwrap_circuits a circuit into the vector of vector of gates format.
-"""
-function unwrap_circuit(c::Vector{Layer})
-    circuit = [[gate for gate in l.layer] for l in c]
-    return circuit::Vector{Vector{Gate}}
-end
-
-"""
-    get_gates(circuit::Vector{Vector{Gate}})
-
-Returns the unique gates in the circuit.
-"""
-function get_gates(circuit::Vector{Vector{Gate}})
-    gates = sort(unique([gate for layer in circuit for gate in layer]))
-    return gates::Vector{Gate}
-end
-
-"""
-    get_gates(circuit::Vector{Vector{Gate}})
-
-Returns the unique gates in the circuit.
-"""
-function get_gates(circuit::Vector{Layer})
-    gates = sort(unique([gate for l in circuit for gate in l.layer]))
-    return gates::Vector{Gate}
-end
-
-"""
-    label_circuit(circuit::Vector{Vector{Gate}})
-
-When a gate on a particular set of qubits appears multiple in different environments, that is, non-identical layers, the different occurrences of the gate are numerically labelled in order to distinguish them.
-"""
-function label_circuit(circuit::Vector{Vector{Gate}})
-    # Remove any previous labels
-    unlabelled_circuit =
-        [sort!([Gate(gate.type, 0, gate.targets) for gate in layer]) for layer in circuit]
-    # Determine the gates
-    gates = get_gates(unlabelled_circuit)
-    # Construct a version of the circuit pruned of all non-unique layers
-    L = length(circuit)
-    unique_circuit = Vector{Vector{Gate}}(undef, 0)
-    unique_layer_indices = Vector{Int}(undef, 0)
-    for l in 1:L
-        if unlabelled_circuit[l] ∉ unique_circuit
-            push!(unique_circuit, unlabelled_circuit[l])
-            push!(unique_layer_indices, l)
-        end
-    end
-    # For each of the unique layers in the circuit, determine which layers they correspond to in the original circuit
-    U = length(unique_circuit)
-    layer_indices = Vector{Vector{Int}}(undef, U)
-    for u in 1:U
-        indices = Vector{Int}(undef, 0)
-        for l in 1:L
-            if unique_circuit[u] == unlabelled_circuit[l]
-                push!(indices, l)
-            end
-        end
-        layer_indices[u] = indices
-    end
-    # Find the unique layers in which each gate appears and relabel if appropriate
-    for gate in gates
-        appears_index = findall(gate ∈ unique_circuit[u] for u in 1:U)
-        for a in eachindex(appears_index)
-            for i in layer_indices[appears_index[a]]
-                for j in eachindex(circuit[i])
-                    if gate == circuit[i][j]
-                        # Append the appearance number to the gate label vector
-                        circuit[i][j] = Gate(gate.type, a, gate.targets)
-                    end
-                end
-            end
-        end
-    end
-    return (circuit::Vector{Vector{Gate}}, unique_layer_indices::Vector{Int})
-end
-
-"""
-    label_circuit(circuit::Vector{Layer}, n::Int)
-
-When a gate on a particular set of qubits appears multiple in different environments, that is, non-identical layers, the different occurrences of the gate are numerically labelled in order to distinguish them.
-"""
-function label_circuit(circuit::Vector{Layer}, n::Int)
-    unwrapped_circuit = unwrap_circuit(circuit)
-    (unwrapped_circuit, unique_layer_indices) = label_circuit(unwrapped_circuit)
-    circuit = [Layer(layer, n) for layer in unwrapped_circuit]
-    return (circuit::Vector{Layer}, unique_layer_indices::Vector{Int})
-end
-
-"""
-    index_gates(gates::Vector{Gate},n::Integer,add_prep::Bool,add_meas::Bool)
-
-Returns the index for the gates and the total number of Paulis for the gates, and modifies the gates to include any additional preparation or measurement gates.
-"""
-function index_gates(gates::Vector{Gate}, n::Integer, add_prep::Bool, add_meas::Bool)
-    # Append preparations to the gate list if appropriate
-    total_gates = deepcopy(gates)
-    if add_prep
-        append!(total_gates, make_layer("PZ-", collect(1:n), n).layer)
-        append!(total_gates, make_layer("PX+", collect(1:n), n).layer)
-        append!(total_gates, make_layer("PZ+", collect(1:n), n).layer)
-        append!(total_gates, make_layer("PX-", collect(1:n), n).layer)
-        append!(total_gates, make_layer("PY+", collect(1:n), n).layer)
-        append!(total_gates, make_layer("PY-", collect(1:n), n).layer)
-    end
-    # Append measurements to the gate list if appropriate
-    if add_meas
-        append!(total_gates, make_layer("MZ", collect(1:n), n).layer)
-        append!(total_gates, make_layer("MX", collect(1:n), n).layer)
-        append!(total_gates, make_layer("MY", collect(1:n), n).layer)
-    end
-    # Determine the gate indices
-    gate_index = Dict{Gate, Int}()
-    N = 0
-    for gate in total_gates
-        not_prep = (gate.type ∉ ["PZ+", "PZ-", "PX+", "PX-", "PY+", "PY-"])
-        not_meas = (gate.type ∉ ["MZ", "MX", "MY"])
-        if not_prep && not_meas
-            gate_index[gate] = N
-            if length(gate.targets) == 1
-                N += 3
-            elseif length(gate.targets) == 2
-                N += 15
-            else
-                throw(error("The gate $(gate) does not operate on either 1 or 2 qubits."))
-            end
-        end
-        if (add_prep && (~not_prep))
-            gate_index[gate] = N
-            N += 1
-        end
-        if (add_meas && (~not_meas))
-            gate_index[gate] = N
-            N += 1
-        end
-    end
-    return (total_gates::Vector{Gate}, gate_index::Dict{Gate, Int}, N::Int)
-end
-
-"""
-    apply_tuple(c::T, circuit_tuple::Vector{Int}) where {T<:AbstractCircuit}
-
-Returns a new circuit struct whose circuit layers are the original circuit layers rearranged by a tuple, or arrangement with repetition.
-"""
-function apply_tuple(c::T, circuit_tuple::Vector{Int}) where {T <: AbstractCircuit}
-    tuple_circuit = c.circuit[circuit_tuple]
-    tuple_gates = get_gates(tuple_circuit)
-    # Applying a tuple to the circuit makes the unique layer indices meaningless
-    # Accordingly, we get rid of them to avoid confusion
-    tuple_unique_layer_indices = Int[]
-    # Update the parameters
-    c_tuple = deepcopy(c)
-    @reset c_tuple.circuit = tuple_circuit
-    @reset c_tuple.circuit_tuple = circuit_tuple
-    @reset c_tuple.unique_layer_indices = tuple_unique_layer_indices
-    @reset c_tuple.gates = tuple_gates
-    return c_tuple::T
 end

@@ -1,4 +1,4 @@
-struct DepolarisingScalingData <: AbstractScalingData
+struct DepolarisingPlanarScaling <: AbstractScalingData
     # Code distances
     dist_range::Vector{Int}
     # Merit of the design for a range of code distances
@@ -46,14 +46,14 @@ struct DepolarisingScalingData <: AbstractScalingData
     overall_time::Float64
 end
 
-function Base.show(io::IO, s::DepolarisingScalingData)
+function Base.show(io::IO, s::DepolarisingPlanarScaling)
     return print(
         io,
         "Merit scaling data with depolarising noise of a design for a $(s.circuit_param.circuit_name) code with $(length(s.tuple_set)) tuples.",
     )
 end
 
-struct LognormalScalingData <: AbstractScalingData
+struct LognormalPlanarScaling <: AbstractScalingData
     # Code distances
     dist_range::Vector{Int}
     # Gate eigenvalue number fit
@@ -92,7 +92,7 @@ struct LognormalScalingData <: AbstractScalingData
     overall_time::Float64
 end
 
-function Base.show(io::IO, s::LognormalScalingData)
+function Base.show(io::IO, s::LognormalPlanarScaling)
     return print(
         io,
         "Merit scaling data with log-normal random noise of a design for a $(s.circuit_param.circuit_name) code with $(length(s.tuple_set)) tuples.",
@@ -100,11 +100,11 @@ function Base.show(io::IO, s::LognormalScalingData)
 end
 
 """
-    calc_depolarising_scaling_data(d::Design, dist_range::Vector{Int}; ls_type::Symbol = :none, save_data::Bool = false, diagnostics::Bool = true)
+    calc_depolarising_planar_scaling(d::Design, dist_range::Vector{Int}; ls_type::Symbol = :none, save_data::Bool = false, diagnostics::Bool = true)
 
 Calculate the merit of the design for the supplied code distances to examine its scaling.
 """
-function calc_depolarising_scaling_data(
+function calc_depolarising_planar_scaling(
     d::Design,
     dist_range::Vector{Int};
     ls_type::Symbol = :none,
@@ -142,25 +142,25 @@ function calc_depolarising_scaling_data(
     for (idx, dist) in enumerate(dist_range)
         # Initialise the circuit
         if typeof(circuit_param) == RotatedPlanarParameters
-            circuit_param_dist = RotatedPlanarParameters(
+            circuit_param_dist = get_rotated_param(
                 dist;
                 check_type = circuit_param.check_type,
                 gate_type = circuit_param.gate_type,
                 dynamically_decouple = circuit_param.dynamically_decouple,
                 pad_identity = circuit_param.pad_identity,
-                single_qubit_time = circuit_param.single_qubit_time,
-                two_qubit_time = circuit_param.two_qubit_time,
-                dynamical_decoupling_time = circuit_param.dynamical_decoupling_time,
-                meas_reset_time = circuit_param.meas_reset_time,
+                single_qubit_time = circuit_param.layer_time_dict[:single_qubit],
+                two_qubit_time = circuit_param.layer_time_dict[:two_qubit],
+                dynamical_decoupling_time = circuit_param.layer_time_dict[:dynamical],
+                meas_reset_time = circuit_param.layer_time_dict[:meas_reset],
             )
         elseif typeof(circuit_param) == UnrotatedPlanarParameters
-            circuit_param_dist = UnrotatedPlanarParameters(
+            circuit_param_dist = get_unrotated_param(
                 dist;
                 gate_type = circuit_param.gate_type,
                 pad_identity = circuit_param.pad_identity,
-                single_qubit_time = circuit_param.single_qubit_time,
-                two_qubit_time = circuit_param.two_qubit_time,
-                meas_reset_time = circuit_param.meas_reset_time,
+                single_qubit_time = circuit_param.layer_time_dict[:single_qubit],
+                two_qubit_time = circuit_param.layer_time_dict[:two_qubit],
+                meas_reset_time = circuit_param.layer_time_dict[:meas_reset],
             )
         else
             throw(error("Unsupported circuit type $(typeof(circuit_param))."))
@@ -240,7 +240,7 @@ function calc_depolarising_scaling_data(
     end
     # Save and return the results
     overall_time = time() - start_time
-    dep_scaling_data = DepolarisingScalingData(
+    dep_planar_scaling = DepolarisingPlanarScaling(
         dist_range,
         merit_scaling,
         G_fit,
@@ -263,22 +263,22 @@ function calc_depolarising_scaling_data(
         overall_time,
     )
     if save_data
-        save_scaling(dep_scaling_data)
+        save_scaling(dep_planar_scaling)
     end
     if diagnostics
         println(
             "Finished calculating merit scaling with distance for depolarising noise. The time elapsed since calculations started is $(round(overall_time, digits = 3)) s.",
         )
     end
-    return dep_scaling_data::DepolarisingScalingData
+    return dep_planar_scaling::DepolarisingPlanarScaling
 end
 
 """
-    calc_depolarising_scaling_data(d::Design, dist_max::Int; ls_type::Symbol = :none, save_data::Bool = false, diagnostics::Bool = true)
+    calc_depolarising_planar_scaling(d::Design, dist_max::Int; ls_type::Symbol = :none, save_data::Bool = false, diagnostics::Bool = true)
 
 Calculate the merit of the design for code distances from 3 to the supplied maximum to examine its scaling.
 """
-function calc_depolarising_scaling_data(
+function calc_depolarising_planar_scaling(
     d::Design,
     dist_max::Int;
     ls_type::Symbol = :none,
@@ -294,22 +294,22 @@ function calc_depolarising_scaling_data(
         throw(error("Unsupported circuit type $(typeof(d.c.circuit_param))."))
     end
     # Calculate the scaling data
-    dep_scaling_data = calc_depolarising_scaling_data(
+    dep_planar_scaling = calc_depolarising_planar_scaling(
         d,
         dist_range;
         ls_type = ls_type,
         save_data = save_data,
         diagnostics = diagnostics,
     )
-    return dep_scaling_data::DepolarisingScalingData
+    return dep_planar_scaling::DepolarisingPlanarScaling
 end
 
 """
-    calc_lognormal_scaling_data(d::Design, dist_range::Vector{Int}; ls_type::Symbol = :none, precision::Float64 = 1e-3, max_repetitions::Int = 10000, min_repetitions::Int = 100, print_repetitions::Int = 100, seed::Union{UInt64, Nothing} = nothing, save_data::Bool = false, diagnostics::Bool = true)
+    calc_lognormal_planar_scaling(d::Design, dist_range::Vector{Int}; ls_type::Symbol = :none, precision::Float64 = 1e-3, max_repetitions::Int = 10000, min_repetitions::Int = 100, print_repetitions::Int = 100, seed::Union{UInt64, Nothing} = nothing, save_data::Bool = false, diagnostics::Bool = true)
 
 Calculate the merit of the design for the supplied code distances to examine its scaling.
 """
-function calc_lognormal_scaling_data(
+function calc_lognormal_planar_scaling(
     d::Design,
     dist_range::Vector{Int};
     ls_type::Symbol = :none,
@@ -343,7 +343,7 @@ function calc_lognormal_scaling_data(
     r_2 = noise_param.r_2
     r_m = noise_param.r_m
     total_std_log = noise_param.total_std_log
-    dep_noise_param = DepolarisingParameters(r_1, r_2, r_m)
+    dep_noise_param = get_dep_param(r_1, r_2, r_m)
     tuple_set_data = d.tuple_set_data
     tuple_set = get_tuple_set(tuple_set_data)
     shot_weights = d.shot_weights
@@ -375,25 +375,25 @@ function calc_lognormal_scaling_data(
     for (idx, dist) in enumerate(dist_range)
         # Initialise the circuit
         if typeof(circuit_param) == RotatedPlanarParameters
-            circuit_param_dist = RotatedPlanarParameters(
+            circuit_param_dist = get_rotated_param(
                 dist;
                 check_type = circuit_param.check_type,
                 gate_type = circuit_param.gate_type,
                 dynamically_decouple = circuit_param.dynamically_decouple,
                 pad_identity = circuit_param.pad_identity,
-                single_qubit_time = circuit_param.single_qubit_time,
-                two_qubit_time = circuit_param.two_qubit_time,
-                dynamical_decoupling_time = circuit_param.dynamical_decoupling_time,
-                meas_reset_time = circuit_param.meas_reset_time,
+                single_qubit_time = circuit_param.layer_time_dict[:single_qubit],
+                two_qubit_time = circuit_param.layer_time_dict[:two_qubit],
+                dynamical_decoupling_time = circuit_param.layer_time_dict[:dynamical],
+                meas_reset_time = circuit_param.layer_time_dict[:meas_reset],
             )
         elseif typeof(circuit_param) == UnrotatedPlanarParameters
-            circuit_param_dist = UnrotatedPlanarParameters(
+            circuit_param_dist = get_unrotated_param(
                 dist;
                 gate_type = circuit_param.gate_type,
                 pad_identity = circuit_param.pad_identity,
-                single_qubit_time = circuit_param.single_qubit_time,
-                two_qubit_time = circuit_param.two_qubit_time,
-                meas_reset_time = circuit_param.meas_reset_time,
+                single_qubit_time = circuit_param.layer_time_dict[:single_qubit],
+                two_qubit_time = circuit_param.layer_time_dict[:two_qubit],
+                meas_reset_time = circuit_param.layer_time_dict[:meas_reset],
             )
         else
             throw(error("Unsupported circuit type $(typeof(circuit_param))."))
@@ -418,8 +418,7 @@ function calc_lognormal_scaling_data(
         generating = true
         while generating
             # Generate the noise and design
-            noise_param_rep =
-                LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seeds[rep])
+            noise_param_rep = get_log_param(r_1, r_2, r_m, total_std_log; seed = seeds[rep])
             d_rep = update_noise(d_dist, noise_param_rep)
             # Calculate the variables
             covariance_log_rep = calc_covariance_log(d_rep)
@@ -518,7 +517,7 @@ function calc_lognormal_scaling_data(
     end
     # Save and return the results
     overall_time = time() - start_time
-    log_scaling_data = LognormalScalingData(
+    log_planar_scaling = LognormalPlanarScaling(
         dist_range,
         N_fit,
         N_params,
@@ -538,17 +537,17 @@ function calc_lognormal_scaling_data(
         overall_time,
     )
     if save_data
-        save_scaling(log_scaling_data)
+        save_scaling(log_planar_scaling)
     end
     if diagnostics
         println(
             "Finished calculating merit variable scaling with distance for log-normal Pauli noise. The time elapsed since calculations started is $(round(overall_time, digits = 3)) s.",
         )
     end
-    return log_scaling_data::LognormalScalingData
+    return log_planar_scaling::LognormalPlanarScaling
 end
 
-function calc_lognormal_scaling_data(
+function calc_lognormal_planar_scaling(
     d::Design,
     dist_max::Int;
     ls_type::Symbol = :none,
@@ -568,7 +567,7 @@ function calc_lognormal_scaling_data(
         throw(error("Unsupported circuit type $(typeof(d.c.circuit_param))."))
     end
     # Calculate the scaling data
-    log_scaling_data = calc_lognormal_scaling_data(
+    log_planar_scaling = calc_lognormal_planar_scaling(
         d,
         dist_range;
         ls_type = ls_type,
@@ -579,5 +578,5 @@ function calc_lognormal_scaling_data(
         save_data = save_data,
         diagnostics = diagnostics,
     )
-    return log_scaling_data::LognormalScalingData
+    return log_planar_scaling::LognormalPlanarScaling
 end

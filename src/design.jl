@@ -1,7 +1,15 @@
+"""
+    Pauli
+
+Boolean representation of a Pauli operator.
+
+# Fields
+
+  - `pauli::Vector{Bool}`: The Pauli operator stored as a Boolean vector. The first `qubit_num` elements represent Pauli X on each qubit, the next `qubit_num` elements represent Pauli Z on each qubit, and the final element represents the sign.
+  - `qubit_num::Int16`: The number of qubits on which the Pauli operator acts; the length of the vector is `2 * qubit_num + 1`.
+"""
 struct Pauli
-    # Boolean storage of a Pauli
     pauli::Vector{Bool}
-    # Qubit number
     qubit_num::Int16
     # Constructor
     function Pauli(pauli::Vector{Bool}, n::Integer)
@@ -19,14 +27,22 @@ end
 
 @struct_hash_equal_isequal Pauli
 
+"""
+    Mapping
+
+Mapping of a Pauli operator by some circuit.
+
+# Fields
+
+  - `initial::Pauli`: Initial Pauli operator before the action of the circuit.
+  - `final::Pauli`: Final Pauli operator after the action of the circuit.
+  - `design_row::SparseVector{Int32, Int32}`: Design matrix row for the circuit eigenvalue corresponding to the initial Pauli and the circuit used for the mapping.
+  - `spread_track::Vector{Vector{Int16}}`: Track of the support of the Pauli as it is acted upon by the layers of the circuit.
+"""
 struct Mapping
-    # Initial Pauli after preparation
     initial::Pauli
-    # Final Pauli after the action of the circuit but before measurement
     final::Pauli
-    # Row of the design matrix corresponding to the initial Pauli and the circuit which acts on the initial Pauli to produce the final Pauli
     design_row::SparseVector{Int32, Int32}
-    # Track the support of the Pauli as it is acted upon by the layers of the circuit
     spread_track::Vector{Vector{Int16}}
     # Constructor
     function Mapping(
@@ -46,43 +62,50 @@ end
 
 @struct_hash_equal_isequal Mapping
 
+"""
+    Design
+
+Experimental design for a noise characterisation experiment for a circuit.
+
+# Fields
+
+  - `c::AbstractCircuit`: Circuit characterised by the design.
+  - `full_covariance::Bool`: If `true`, generates parameters to construct the full covariance matrix in `covariance_dict_ensemble`, else if `false`, only generates parameters to construct the terms on the diagonal.
+  - `matrix::SparseMatrixCSC{Int32, Int32}`: The sparse M x N design matrix, corresponding to M circuit eigenvalues and N gate eigenvalues.
+  - `tuple_set::Vector{Vector{Int}}`: Set of tuples, which arrange the order of the circuit layers.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData](@ref) object that generates the tuple set.
+  - `mapping_ensemble::Vector{Vector{Mapping}}`: Vector of the [`Mapping`](@ref) objects for each of the circuit eigenvalue for the Paulis corresponding to that tuple, for each tuple in the set.
+  - `experiment_ensemble::Vector{Vector{Vector{Int}}}`: Vector of the experiments that index [`Mapping`](@ref) objects, which correspond to simultaneously preparable and measurable circuit eigenvalues, for each tuple in the set.
+  - `covariance_dict_ensemble::Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}`: Dictionary of [`Mapping`](@ref) objects describing the non-zero entries of the sparse circuit eigenvalue estimator covariance matrix, alongside the number of times the entry is estimated by the experiment set, for each tuple in the set.
+  - `prep_ensemble::Vector{Vector{Vector{Layer}}}`: Vector of [`Layer`](@ref) objects that prepare qubits in Pauli eigenstates for each experiment in the set, indeed a vector preparing the necessary sign configurations, for each tuple in the set.
+  - `meas_ensemble::Vector{Vector{Layer}}`: Vector of [`Layer`](@ref) objects that measure qubits in Pauli bases for each experiment in the set, for each tuple in the set.
+  - `tuple_times::Vector{Float64}`: Time taken to implement the circuit arranged by each tuple in the set, normalised according to the time factor for the basic tuple set.
+  - `shot_weights::Vector{Float64}`: Shot weights for each tuple in the set, which add to 1.
+  - `experiment_numbers::Vector{Int}`: Number of experiments for each tuple in the set.
+  - `experiment_number::Int`: Total number of experiments.
+  - `calculation_times::Matrix{Float64}`: Time taken to generate components of the design for each tuple, which correspond to generating: the mappings, the sets of tuple-consistent Pauli preparations, the experiment sets, the covariance matrix dictionary, and the circuits.
+  - `overall_time::Float64`: Overall time taken to generate the design.
+  - `optimisation_time::Float64`: Time taken to optimise the design.
+  - `ls_type::Symbol`: Type of least squares for which the shot weights were optimised.
+"""
 struct Design
-    # The circuit the design aims to characterise
     c::AbstractCircuit
-    # Whether to generate the full covariance or just the terms on the diagonal
     full_covariance::Bool
-    # The M x N design matrix (M circuit eigenvalues, N gate eigenvalues)
     matrix::SparseMatrixCSC{Int32, Int32}
-    # Circuit rearrangements used to generate the design matrix
     tuple_set::Vector{Vector{Int}}
-    # Data used to generate the tuple set
     tuple_set_data::TupleSetData
-    # For each tuple in the set, a mapping set or vector of Mapping objects for each Pauli supported on some gate in the rearranged circuit, corresponding to the circuit eigenvalues
     mapping_ensemble::Vector{Vector{Mapping}}
-    # For each tuple in the set, an experiment set or vector of experiments, which themselves contain indices of simultaneously preparable and measurable Mapping objects 
     experiment_ensemble::Vector{Vector{Vector{Int}}}
-    # For each tuple in the set, a dictionary describing the non-zero entries of the covariance matrix of the circuit eigenvalue estimators produced by the corresponding experiment set
     covariance_dict_ensemble::Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}
-    # For each tuple in the set, a vector Layers implementing the appropriate preparations in all necessary sign configurations for each experiment in the corresponding experiment set
     prep_ensemble::Vector{Vector{Vector{Layer}}}
-    # For each tuple in the set, a Layer implementing the appropriate measurement for each experiment in the corresponding experiment set
     meas_ensemble::Vector{Vector{Layer}}
-    # Time taken to implement each tuple's circuit, normalised according to the trivial tuple set
     tuple_times::Vector{Float64}
-    # Weighting of the shots allocated to each tuple
     shot_weights::Vector{Float64}
-    # The number of experiments for each tuple in the set
     experiment_numbers::Vector{Int}
-    # The total number of experiments
     experiment_number::Int
-    # The time taken to generate components of the design for each tuple
-    # (mapping_time, consistency_time, pauli_time, covariance_time, circuit_time)
     calculation_times::Matrix{Float64}
-    # The overall time taken to generate the design
     overall_time::Float64
-    # The time taken to optimise the design
     optimisation_time::Float64
-    # Type of least squares for which the shot weights were optimised
     ls_type::Symbol
     # Default constructor
     function Design(
@@ -216,24 +239,10 @@ end
 
 @struct_hash_equal_isequal Design
 
-#
-function update_noise(d::Design, noise_param::T) where {T <: AbstractNoiseParameters}
-    # Generate the noise
-    gate_probabilities = get_gate_probabilities(d.c.total_gates, noise_param)
-    gate_eigenvalues =
-        get_gate_eigenvalues(gate_probabilities, d.c.total_gates, d.c.gate_index, d.c.N)
-    # Update the circuit
-    d_update = deepcopy(d)
-    @reset d_update.c.noise_param = noise_param
-    @reset d_update.c.gate_probabilities = gate_probabilities
-    @reset d_update.c.gate_eigenvalues = gate_eigenvalues
-    return d_update::Design
-end
-
 """
-get_pauli_prep_set(gates::Vector{Gate}, n::Int)
+    get_pauli_prep_set(gates::Vector{Gate}, n::Int)
 
-Returns all weight-1 and weight-2 Paulis whose support coincides with the support of a gate in the provided circuit.
+Returns all weight-1 Paulis on all `n` qubits, as well as the weight-2 Paulis supported on some gate in `gates`.
 """
 function get_pauli_prep_set(gates::Vector{Gate}, n::Int)
     # Hard-coded weight-1 and weight-2 Pauli signatures
@@ -295,7 +304,7 @@ end
 """
     get_prep_layer(initial::Pauli, initial_support::Vector{Int})
 
-Returns a layer which prepares the provided Pauli on a tableau, flipping the sign if appropriate.
+Returns a layer which prepares the Pauli `initial`, supported on the qubits in `initial_support`.
 """
 function get_prep_layer(initial::Pauli, initial_support::Vector{Int})
     n = initial.qubit_num
@@ -323,7 +332,7 @@ end
 """
     get_meas_layer(final::Pauli, final_support::Vector{Int})
 
-Returns a circuit which measures the provided Pauli on a tableau.
+Returns a layer which measures the Pauli `final`, supported on the qubits in `final_support`.
 """
 function get_meas_layer(final::Pauli, final_support::Vector{Int})
     n = final.qubit_num
@@ -351,7 +360,7 @@ end
 """
     update_design_row!(design_row::Vector{Int}, pauli::Pauli, l::Layer, gate_index::Dict{Gate, Int})
 
-Updates the row of the design matrix according to the supplied Pauli for each of the gates in the layer.
+Updates the design matrix row `design_row` according to the Pauli `pauli` for each gate in the layer `l`, using the gate index `gate_index`.
 """
 function update_design_row!(
     design_row::Vector{Int},
@@ -407,9 +416,9 @@ function update_design_row!(
 end
 
 """
-    calc_mapping(initial::Pauli, c::T) where {T <: AbstractCircuit}
+    calc_mapping(initial::Pauli, c::AbstractCircuit)
 
-Returns a `Mapping` object describing how the initial Pauli is mapped by the circuit, and its corresponding row in the design matrix.
+Returns a [`Mapping`](@ref) object for the Pauli `initial` when mapped by the circuit `c`.
 """
 function calc_mapping(initial::Pauli, c::T) where {T <: AbstractCircuit}
     # Initialise variables
@@ -471,9 +480,9 @@ function calc_mapping(initial::Pauli, c::T) where {T <: AbstractCircuit}
 end
 
 """
-    calc_mapping_set(c<:AbstractCircuit)
+    calc_mapping_set(c::AbstractCircuit)
 
-Returns a vector of `Mapping` objects for each Pauli supported on some gate in the circuit which describes how that Pauli is mapped by the circuit, and its corresponding row in the design matrix.
+Returns a vector of [`Mapping`](@ref) objects for each single-qubit Pauli on the qubits in the circuit `c`, and each two-qubit Pauli supported on some gate in the circuit `c`.
 """
 function calc_mapping_set(c::T) where {T <: AbstractCircuit}
     # Determine the Paulis whose mapping set we will calculate
@@ -495,7 +504,7 @@ end
 """
     calc_consistency_set(mapping_set::Vector{Mapping})
 
-Returns a list, for each element of the mapping set, of the indices of all the other elements of the mapping set with which it is compatible.
+Returns a list for each mapping in `mapping_set` of all other mappings with which it is simultaneously preparable and measurable, and hence tuple-consistent.
 """
 function calc_consistency_set(mapping_set::Vector{Mapping})
     L = length(mapping_set)
@@ -559,7 +568,7 @@ end
 """
     calc_experiment_set(mapping_set::Vector{Mapping}, consistency_set::Vector{Vector{Int}})
 
-Returns a set of sets of simultaneously preparable and measurable initial-final Pauli pairs in the mapping set.
+Returns a set of experiments which simultaneously estimate the circuit eigenvalues corresponding to the mappings in `mapping_set`, whose tuple-consistency relations are described by `consistency_set`.
 """
 function calc_experiment_set(
     mapping_set::Vector{Mapping},
@@ -631,9 +640,10 @@ function calc_experiment_set(
 end
 
 """
-    calc_covariance_dict(c<:AbstractCircuit, mapping_set::Vector{Mapping}, experiment_set::Vector{Vector{Int}}, full_covariance::Bool)
+    calc_covariance_dict(c::AbstractCircuit, mapping_set::Vector{Mapping}, experiment_set::Vector{Vector{Int}}, full_covariance::Bool)
 
-Generates a dictionary with the requisite information to calculate the covariance matrix for the circuit eigenvalue estimators given the `experiment_set`, which describe the sets of simultaneously measured circuit eigenvalue estimators, corresponding to the `mapping_set`, under the specified circuit.
+Returns a dictionary with the requisite information to calculate the sparse circuit eigenvalue estimator covariance matrix for the arranged circuit `c`, with mappings `mapping_set`, when estimated by the experiments in `experiment_set`.
+If `full_covariance` is `true`, then this constructs the full covariance matrix, whereas if `full_covariance` is `false`, then this constructs only the diagonal terms of the covariance matrix.
 """
 function calc_covariance_dict(
     c::T,
@@ -769,9 +779,10 @@ function calc_covariance_dict(
 end
 
 """
-    get_experiment_layers(c::T, mapping_set::Vector{Mapping}, experiment_set::Vector{Vector{Int}})
+    get_experiment_layers(c::AbstractCircuit, mapping_set::Vector{Mapping}, experiment_set::Vector{Vector{Int}})
 
-Returns sets of circuit layers which prepare and measure the initial-final Pauli pairs, respectively, as dictated by the expeirment and mapping sets.
+Returns circuit layers that prepare and measure the initial and final Paulis as given by the mappings in `mapping_set`, for each experiment in `experiment set`.
+If `c` has a `partition` field, this is used to generate all necessary sign configurations for the preparation layers.
 """
 function get_experiment_layers(
     c::T,
@@ -808,6 +819,7 @@ function get_experiment_layers(
         meas_layer_set[j] = Layer(meas, n)
         # Set up the eigenstate sign combinations
         if hasproperty(c, :partition)
+            @assert length(unique([c.partition[1]; c.partition[2]])) == c.qubit_num "The partition does not contain the right number of qubits."
             max_prep_support = maximum(length.(initial_support_set))
             if max_prep_support == 1
                 prep_2 = Vector{Gate}(undef, 0)
@@ -866,9 +878,25 @@ function get_experiment_layers(
 end
 
 """
-    generate_design(c::T, tuple_set::Vector{Vector{Int}}; shot_weights::Union{Vector{Float64}, Nothing} = nothing, full_covariance::Bool = true, save_data::Bool = false, diagnostics::Bool = false)
+    generate_design(c::AbstractCircuit, tuple_set::Vector{Vector{Int}}; kwargs...)
+    generate_design(c::AbstractCircuit, tuple_set_data::TupleSetData; kwargs...)
+    generate_design(c::AbstractCircuit; kwargs...)
 
-Generates a design matrix as well as the collection of circuits required to measure all the requisite initial-final Pauli pairs using the supplied tuple set.
+Returns a [`Design`](@ref) object containing all relevant information describing the experimental design, including the design matrix.
+
+# Arguments
+
+  - `c::AbstractCircuit`: Circuit for which the design matrix is to be generated.
+  - `tuple_set::Vector{Vector{Int}}`: Tuple set arranging the circuit layers that is used to generate the experimental design.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData](@ref) object that generates the tuple set.
+
+# Keyword arguments
+
+  - `shot_weights::Union{Vector{Float64}, Nothing} = nothing`: Shot weights for each tuple in the set, which must add to 1. When `nothing`, automatically generates the default shot weights.
+  - `full_covariance::Bool = true`: If `true`, generates parameters to construct the full covariance matrix, else if `false`, only generates parameters to construct the terms on the diagonal. Defaults to `true`.
+  - `diagnostics::Bool = false`: If `true`, prints diagnostic information. Defaults to `false`.
+  - `save_data::Bool = false`: If `true`, saves the design data. Defaults to `false`.
+  - `suppress_warnings::Bool = false`: If `true`, suppresses warnings about keyword arguments when generating designs for large circuits. Defaults to `false`.
 """
 function generate_design(
     c::T,
@@ -990,7 +1018,6 @@ function generate_design(
     return d::Design
 end
 
-#
 function generate_design(
     c::T,
     tuple_set_data::TupleSetData;
@@ -1045,7 +1072,7 @@ end
 """
     complete_design(d::Design; diagnostics::Bool = false)
 
-Completes the covariance dictionary for the design if it does not already have a full covariance matrix.
+Returns a copy of the design `d` where the covariance matrix dictionary generates the full covariance matrix. Prints diagnostics if `diagnostics` is `true`.
 """
 function complete_design(d::Design; diagnostics::Bool = false)
     if d.full_covariance
@@ -1102,4 +1129,22 @@ function complete_design(d::Design; diagnostics::Bool = false)
         end
         return d_complete::Design
     end
+end
+
+"""
+    update_noise(d::Design, noise_param::AbstractNoiseParameters)
+
+Returns a copy of `design` where the circuit has been updated with noise generated according to `noise_param`.
+"""
+function update_noise(d::Design, noise_param::T) where {T <: AbstractNoiseParameters}
+    # Generate the noise
+    gate_probabilities = get_gate_probabilities(d.c.total_gates, noise_param)
+    gate_eigenvalues =
+        get_gate_eigenvalues(gate_probabilities, d.c.total_gates, d.c.gate_index, d.c.N)
+    # Update the circuit
+    d_update = deepcopy(d)
+    @reset d_update.c.noise_param = noise_param
+    @reset d_update.c.gate_probabilities = gate_probabilities
+    @reset d_update.c.gate_eigenvalues = gate_eigenvalues
+    return d_update::Design
 end

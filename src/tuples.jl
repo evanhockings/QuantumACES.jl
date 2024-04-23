@@ -1,13 +1,21 @@
-mutable struct TupleSetData
-    # The main tuple set
+"""
+    TupleSetData
+
+Data parameterising a tuple set.
+
+# Fields
+
+  - `tuple_set::Vector{Vector{Int}}`: The main tuple set, whose tuples are not repeated.
+  - `repeat_tuple_set::Vector{Vector{Int}}`: The repeated tuple set, whose tuples are repeated `repeat_numbers` times.
+  - `repeat_numbers::Vector{Int}`: The number of repetitions for each tuple in the repeated tuple set `repeat_tuple_set`.
+  - `repeat_indices::Vector{Int}`: Indexes the repetition number in `repeat_numbers` that describes the number of repetitions for each tuple in `repeat_tuple_set`.
+"""
+struct TupleSetData
     tuple_set::Vector{Vector{Int}}
-    # The tuple set whose tuples are repeated
     repeat_tuple_set::Vector{Vector{Int}}
-    # The number of repetitions for each tuple
     repeat_numbers::Vector{Int}
-    # Maps repeat numbers to tuples in the repeated tuple set
     repeat_indices::Vector{Int}
-    # Default constructor
+    # Constructor
     function TupleSetData(
         tuple_set::Vector{Vector{Int}},
         repeat_tuple_set::Vector{Vector{Int}},
@@ -26,15 +34,23 @@ end
 
 @struct_hash_equal_isequal TupleSetData
 
-#
+"""
+    get_basic_tuple_set(c::AbstractCircuit)
+
+Returns the basic tuple set for the circuit `c`.
+"""
 function get_basic_tuple_set(c::T) where {T <: AbstractCircuit}
     basic_tuple_set = Vector{Int}[[[i] for i in c.unique_layer_indices]; [[]]]
     return basic_tuple_set::Vector{Vector{Int}}
 end
 
-#
+"""
+    get_basic_experiment_numbers(c::AbstractCircuit)
+
+Returns the experiment numbers corresponding to the basic tuple set for the circuit `c`.
+"""
 function get_basic_experiment_numbers(c::T) where {T <: AbstractCircuit}
-    # Determine the experiment numbers for the trivial tuple set
+    # Determine the experiment numbers for the basic tuple set
     sign_factor = 2
     pauli_types = 3
     basic_max_targets = Int[
@@ -52,14 +68,18 @@ function get_basic_experiment_numbers(c::T) where {T <: AbstractCircuit}
     return basic_experiment_numbers::Vector{Int}
 end
 
-# 
+"""
+    get_basic_times_harm_mean(c::AbstractCircuit)
+
+Returns the harmonic mean of the experiment times corresponding to the basic tuple set for the circuit `c`.
+"""
 function get_basic_times_harm_mean(c::T) where {T <: AbstractCircuit}
     # Initialise times
     meas_reset_time = c.layer_times[end]
     layer_times = c.layer_times[1:(end - 1)]
-    # Initialise the trivial tuple set
+    # Initialise the basic tuple set
     basic_tuple_set = get_basic_tuple_set(c)
-    # Determine the times for each of the tuples in the trivial tuple set
+    # Determine the times for each of the tuples in the basic tuple set
     basic_tuple_times = Vector{Float64}(undef, length(basic_tuple_set))
     for (idx, tuple) in enumerate(basic_tuple_set)
         tuple_time = meas_reset_time
@@ -68,15 +88,19 @@ function get_basic_times_harm_mean(c::T) where {T <: AbstractCircuit}
         end
         basic_tuple_times[idx] = tuple_time
     end
-    # Determine the experiment numbers for the trivial tuple set
+    # Determine the experiment numbers for the basic tuple set
     basic_experiment_numbers = get_basic_experiment_numbers(c)
-    # Normalise the tuple set times by the haarmonic mean of the trivial tuple set experiment times
+    # Normalise the tuple set times by the haarmonic mean of the basic tuple set experiment times
     basic_times_harm_mean =
         sum(basic_experiment_numbers) / sum(basic_experiment_numbers ./ basic_tuple_times)
     return basic_times_harm_mean::Float64
 end
 
-# 
+"""
+    get_tuple_set_params(c::AbstractCircuit, tuple_set::Vector{Vector{Int}}, experiment_numbers::Vector{Int})
+
+Returns the time taken to implement each tuple `tuple_times` and the default shot weights for each tuple `shot_weights` corresponding to the circuit `c` with the tuple set `tuple_set` and the experiment numbers `experiment_numbers`.
+"""
 function get_tuple_set_params(
     c::T,
     tuple_set::Vector{Vector{Int}},
@@ -94,7 +118,7 @@ function get_tuple_set_params(
         end
         unnormalised_tuple_times[idx] = tuple_time
     end
-    # Normalise the tuple set times by the haarmonic mean of the trivial tuple set experiment times
+    # Normalise the tuple set times by the haarmonic mean of the basic tuple set experiment times
     basic_times_harm_mean = get_basic_times_harm_mean(c)
     tuple_times = unnormalised_tuple_times / basic_times_harm_mean
     # Determine the shot weights for the tuple set
@@ -105,9 +129,10 @@ function get_tuple_set_params(
 end
 
 """
-    get_tuple_set_data(c::T)
+    get_tuple_set_data(c::AbstractCircuit; init_scaling::Float64 = 0.2)
 
-The initialisation and parameterisation of this function is specialised to the rotated and unrotated planar code syndrome extraction circuits.
+Returns the default tuple set data corresponding to the circuit `c`.
+The repeat numbers are initialised to be inversely proportional to the average noise on the gates in the layers, implicitly assuming depolarising noise, scaled by a factor `init_scaling` which is empirically helpful.
 """
 function get_tuple_set_data(c::T; init_scaling::Float64 = 0.2) where {T <: AbstractCircuit}
     # Initialise parameters
@@ -180,12 +205,17 @@ function get_tuple_set_data(c::T; init_scaling::Float64 = 0.2) where {T <: Abstr
     return tuple_set_data
 end
 
-#
+"""
+    get_tuple_set(tuple_set_data::TupleSetData)
+
+Returns the tuple set corresponding to the data `tuple_set_data`.
+"""
 function get_tuple_set(tuple_set_data::TupleSetData)
     # Initialise data
     repeat_tuple_set = tuple_set_data.repeat_tuple_set
     repeat_numbers = tuple_set_data.repeat_numbers
     repeat_indices = tuple_set_data.repeat_indices
+    @assert length(repeat_tuple_set) == length(repeat_indices) "The number of repeat indices does not match the number of repeated tuples."
     # Generate the tuple set
     repeated_tuple_set = [
         repeat(repeat_tuple_set[idx], repeat_numbers[repeat_indices[idx]]) for

@@ -6,11 +6,11 @@ r_1 = 0.075 / 100
 r_2 = 0.5 / 100
 r_m = 2.0 / 100
 seed = UInt(0)
-rotated_param = RotatedPlanarParameters(dist)
-dep_param = DepolarisingParameters(r_1, r_2, r_m)
+rotated_param = get_rotated_param(dist)
+dep_param = get_dep_param(r_1, r_2, r_m)
 ratio_set = [1 / 2, 1, 2]
 dep_param_set = [
-    DepolarisingParameters(r_1 * f_1, r_2 * f_2, r_m * f_m) for f_1 in ratio_set for
+    get_dep_param(r_1 * f_1, r_2 * f_2, r_m * f_m) for f_1 in ratio_set for
     f_2 in ratio_set for f_m in ratio_set
 ]
 dep_param_num = length(dep_param_set)

@@ -120,7 +120,7 @@ function optimise_repetitions(
         cycle = 1
         type_num = length(tuple_set_data.repeat_numbers)
         if tuple_set_data.repeat_numbers == zeros(Int, type_num)
-            tuple_set_data.repeat_numbers = ones(Int, type_num)
+            @reset tuple_set_data.repeat_numbers = ones(Int, type_num)
         end
     else
         cycling = false
@@ -368,7 +368,7 @@ function grow_design(
     # Construct the new design
     grow_tuple_set = [d.tuple_set; [circuit_tuple]]
     grow_set_data = deepcopy(d.tuple_set_data)
-    grow_set_data.tuple_set = [grow_set_data.tuple_set; [circuit_tuple]]
+    @reset grow_set_data.tuple_set = [grow_set_data.tuple_set; [circuit_tuple]]
     grow_experiment = length(vcat(prep_layer_set...))
     grow_experiment_numbers = [d.experiment_numbers; grow_experiment]
     (grow_tuple_times, default_shot_weights) =
@@ -454,7 +454,7 @@ function prune_design(
     prune_tuple = d.tuple_set[prune_idx]
     prune_set_data = deepcopy(d.tuple_set_data)
     if prune_tuple ∈ d.tuple_set_data.tuple_set
-        prune_set_data.tuple_set = setdiff(d.tuple_set_data.tuple_set, [prune_tuple])
+        @reset prune_set_data.tuple_set = setdiff(d.tuple_set_data.tuple_set, [prune_tuple])
     elseif prune_tuple ∈ d.tuple_set
         repeat_prune_idx = findfirst(
             prune_tuple == tuple for
@@ -463,9 +463,9 @@ function prune_design(
         repeat_prune_indices =
             setdiff(1:length(d.tuple_set_data.repeat_tuple_set), repeat_prune_idx)
         # Note that if this rendered some repeat number unused, it is not pruned
-        prune_set_data.repeat_tuple_set =
+        @reset prune_set_data.repeat_tuple_set =
             d.tuple_set_data.repeat_tuple_set[repeat_prune_indices]
-        prune_set_data.repeat_indices =
+        @reset prune_set_data.repeat_indices =
             d.tuple_set_data.repeat_indices[repeat_prune_indices]
     else
         throw(error("The pruned tuple does not appear in the tuple set data."))

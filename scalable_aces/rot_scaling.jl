@@ -9,9 +9,9 @@ r_m = 2.0 / 100
 total_std_log = sqrt(log(10 / 9))
 seed = UInt(0)
 ls_type = :wls
-rotated_param = RotatedPlanarParameters(dist)
-dep_param = DepolarisingParameters(r_1, r_2, r_m)
-log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
+rotated_param = get_rotated_param(dist)
+dep_param = get_dep_param(r_1, r_2, r_m)
+log_param = get_log_param(r_1, r_2, r_m, total_std_log; seed = seed)
 rotated_planar = get_circuit(rotated_param, dep_param)
 # Load the designs
 metadata_dict = load("data/design_metadata_$(rotated_param.circuit_name).jld2")
@@ -72,7 +72,7 @@ for idx in 1:dep_param_num
         ls_type,
     )
     for rep in 1:repetitions
-        log_param_rep = LognormalParameters(
+        log_param_rep = get_log_param(
             log_param.r_1,
             log_param.r_2,
             log_param.r_m,
@@ -90,7 +90,7 @@ for idx in 1:dep_param_num
     )
 end
 for rep in 1:repetitions
-    log_param_rep = LognormalParameters(
+    log_param_rep = get_log_param(
         log_param.r_1,
         log_param.r_2,
         log_param.r_m,
@@ -122,10 +122,10 @@ jldsave(
 # Load the design and calculate the depolarising and log-normal noise scaling data
 # Optimised WLS design
 @assert d_wls.c.noise_param == dep_param
-dep_scaling_data_wls =
-    calc_depolarising_scaling_data(d_wls, dist_max; ls_type = :wls, save_data = true)
+dep_planar_scaling_wls =
+    calc_depolarising_planar_scaling(d_wls, dist_max; ls_type = :wls, save_data = true)
 d_wls_log = update_noise(d_wls, log_param)
-log_scaling_data_wls = calc_lognormal_scaling_data(
+log_planar_scaling_wls = calc_lognormal_planar_scaling(
     d_wls_log,
     dist_max;
     ls_type = :wls,
@@ -135,18 +135,22 @@ log_scaling_data_wls = calc_lognormal_scaling_data(
 # Load the design and calculate the depolarising noise scaling data
 # Optimised GLS design
 @assert d_gls.c.noise_param == dep_param
-dep_scaling_data_gls =
-    calc_depolarising_scaling_data(d_gls, dist_max; ls_type = :gls, save_data = true)
+dep_planar_scaling_gls =
+    calc_depolarising_planar_scaling(d_gls, dist_max; ls_type = :gls, save_data = true)
 # Optimised OLS design
 @assert d_ols.c.noise_param == dep_param
-dep_scaling_data_ols =
-    calc_depolarising_scaling_data(d_ols, dist_max; ls_type = :ols, save_data = true)
+dep_planar_scaling_ols =
+    calc_depolarising_planar_scaling(d_ols, dist_max; ls_type = :ols, save_data = true)
 # Badly optimised WLS design
 d_wls_worst = update_noise(d_wls_worst, dep_param)
 @assert d_wls_worst.c.noise_param == dep_param
-dep_scaling_data_wls_worst =
-    calc_depolarising_scaling_data(d_wls_worst, dist_max; ls_type = :wls, save_data = true)
+dep_planar_scaling_wls_worst = calc_depolarising_planar_scaling(
+    d_wls_worst,
+    dist_max;
+    ls_type = :wls,
+    save_data = true,
+)
 # Trivial design
 @assert d_basic.c.noise_param == dep_param
-dep_scaling_data_basic =
-    calc_depolarising_scaling_data(d_basic, dist_max; ls_type = :wls, save_data = true)
+dep_planar_scaling_basic =
+    calc_depolarising_planar_scaling(d_basic, dist_max; ls_type = :wls, save_data = true)

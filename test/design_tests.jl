@@ -11,11 +11,11 @@ r_2 = 0.5 / 100
 r_m = 2.0 / 100
 total_std_log = sqrt(log(10 / 9))
 seed = UInt(0)
-rotated_param = RotatedPlanarParameters(dist)
-unrotated_param = UnrotatedPlanarParameters(dist)
-big_rotated_param = RotatedPlanarParameters(vertical_dist, horizontal_dist)
-dep_param = DepolarisingParameters(r_1, r_2, r_m)
-log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
+rotated_param = get_rotated_param(dist)
+unrotated_param = get_unrotated_param(dist)
+big_rotated_param = get_rotated_param(vertical_dist, horizontal_dist)
+dep_param = get_dep_param(r_1, r_2, r_m)
+log_param = get_log_param(r_1, r_2, r_m, total_std_log; seed = seed)
 rotated_planar = get_circuit(rotated_param, dep_param)
 unrotated_planar = get_circuit(unrotated_param, dep_param)
 big_rotated_planar = get_circuit(big_rotated_param, log_param)
@@ -40,7 +40,7 @@ max_samples = 10^6
 z_score_cutoff = 4.0
 # Optimise and simulate a design for a rotated planar code
 @testset "Rotated planar design" begin
-    # Set up a trivial design
+    # Set up a basic design
     rot_basic = get_basic_tuple_set(rotated_planar)
     d_rot_basic = generate_design(rotated_planar, rot_basic; save_data = true)
     # Test saving and loading and deletion
@@ -83,9 +83,10 @@ z_score_cutoff = 4.0
     @test d_rot_opt_load == d_rot_opt
     delete_design(d_rot_opt)
     # Examine the scaling of the merit for depolarising and log-normal noise
-    dep_scaling_data = calc_depolarising_scaling_data(d_rot_opt, dist_max; save_data = true)
+    dep_planar_scaling =
+        calc_depolarising_planar_scaling(d_rot_opt, dist_max; save_data = true)
     d_rot_opt_log = update_noise(d_rot_opt, log_param)
-    log_scaling_data = calc_lognormal_scaling_data(
+    log_planar_scaling = calc_lognormal_planar_scaling(
         d_rot_opt_log,
         dist_max;
         precision = precision,
@@ -93,14 +94,16 @@ z_score_cutoff = 4.0
         save_data = true,
     )
     # Test saving and loading and deletion
-    dep_scaling_data_load = load_scaling(d_rot_opt, d_rot_opt.ls_type)
-    @test dep_scaling_data_load.merit_scaling == dep_scaling_data.merit_scaling
-    delete_scaling(dep_scaling_data)
-    log_scaling_data_load = load_scaling(d_rot_opt_log, d_rot_opt_log.ls_type)
-    @test log_scaling_data_load.expectation_scaling == log_scaling_data.expectation_scaling
-    @test log_scaling_data_load.variance_scaling == log_scaling_data.variance_scaling
-    @test log_scaling_data_load.eigenvalues_scaling == log_scaling_data.eigenvalues_scaling
-    delete_scaling(log_scaling_data)
+    dep_planar_scaling_load = load_scaling(d_rot_opt, d_rot_opt.ls_type)
+    @test dep_planar_scaling_load.merit_scaling == dep_planar_scaling.merit_scaling
+    delete_scaling(dep_planar_scaling)
+    log_planar_scaling_load = load_scaling(d_rot_opt_log, d_rot_opt_log.ls_type)
+    @test log_planar_scaling_load.expectation_scaling ==
+          log_planar_scaling.expectation_scaling
+    @test log_planar_scaling_load.variance_scaling == log_planar_scaling.variance_scaling
+    @test log_planar_scaling_load.eigenvalues_scaling ==
+          log_planar_scaling.eigenvalues_scaling
+    delete_scaling(log_planar_scaling)
     # Transfer the tuple set to a differently-sized code
     d_rot_big = generate_design(
         big_rotated_planar,
@@ -153,7 +156,7 @@ z_score_cutoff = 4.0
 end
 # Optimise and simulate a design for a unrotated planar code
 @testset "Unrotated planar design" begin
-    # Set up a trivial design
+    # Set up a basic design
     unrot_basic = get_basic_tuple_set(unrotated_planar)
     d_unrot_basic = generate_design(unrotated_planar, unrot_basic)
     unrot_basic_merit = calc_gls_merit(d_unrot_basic)
@@ -183,8 +186,8 @@ end
     @test unrot_gls_merit.cond_num ≈ unrot_opt_merit.cond_num
     @test unrot_gls_merit.pinv_norm ≈ unrot_opt_merit.pinv_norm
     # Examine the scaling of the merit for depolarising and log-normal noise
-    dep_scaling_data = calc_depolarising_scaling_data(d_unrot_opt, dist_max)
-    log_scaling_data = calc_lognormal_scaling_data(
+    dep_planar_scaling = calc_depolarising_planar_scaling(d_unrot_opt, dist_max)
+    log_planar_scaling = calc_lognormal_planar_scaling(
         d_unrot_opt_log,
         dist_max;
         precision = precision,

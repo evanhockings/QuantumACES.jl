@@ -19,14 +19,14 @@ Parameterise a depolarising noise model with
 r_1 = 0.075 / 100
 r_2 = 0.5 / 100
 r_m = 2.0 / 100
-dep_param = DepolarisingParameters(r_1, r_2, r_m)
+dep_param = get_dep_param(r_1, r_2, r_m)
 ```
 
 Generate the syndrome extraction circuit of a rotated planar code with
 
 ```
 dist = 3
-rotated_param = RotatedPlanarParameters(dist)
+rotated_param = get_rotated_param(dist)
 rotated_planar = get_circuit(rotated_param, dep_param)
 ```
 
@@ -40,7 +40,7 @@ Use the optimised design to create a design for a larger code circuit
 
 ```
 dist_big = 9
-rotated_param_big = RotatedPlanarParameters(dist_big)
+rotated_param_big = get_rotated_param(dist_big)
 rotated_planar_big = get_circuit(rotated_param_big, dep_param)
 d_big = generate_design(rotated_planar_big, d.tuple_set_data)
 ```
@@ -71,3 +71,5 @@ Alternatively, install the package manually with
 ```
 pkg> conda pip_add stim
 ```
+
+Note that the entire module can be brought into scope with `import AveragedCircuitEigenvalueSampling as ACES`.

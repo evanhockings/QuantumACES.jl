@@ -24,7 +24,7 @@ struct Merit
     cond_num::Float64
     # Pseudoinverse norm of the design matrix, the inverse of the smallest singular value
     pinv_norm::Float64
-    # Time taken to implement each tuple's circuit, normalised according to the trivial tuple set
+    # Time taken to implement each tuple's circuit, normalised according to the basic tuple set
     tuple_times::Vector{Float64}
     # Weighting of the shots allocated to each tuple
     shot_weights::Vector{Float64}

@@ -10,9 +10,9 @@ seed = UInt(0)
 ls_type = :wls
 shots_set = [10^6; 10^7; 10^8]
 repetitions = 1000
-unrotated_param = UnrotatedPlanarParameters(dist)
-dep_param = DepolarisingParameters(r_1, r_2, r_m)
-log_param = LognormalParameters(r_1, r_2, r_m, total_std_log; seed = seed)
+unrotated_param = get_unrotated_param(dist)
+dep_param = get_dep_param(r_1, r_2, r_m)
+log_param = get_log_param(r_1, r_2, r_m, total_std_log; seed = seed)
 # Load the design
 metadata_dict = load("data/design_metadata_$(unrotated_param.circuit_name).jld2")
 @assert unrotated_param == metadata_dict["unrotated_param"]
@@ -32,7 +32,7 @@ d = load_design(
 )
 @assert d.c.noise_param == dep_param
 d_log = update_noise(d, log_param)
-# Generate the trivial design
+# Generate the basic design
 c = get_circuit(unrotated_param, dep_param)
 basic_tuple_set = get_basic_tuple_set(c)
 d_basic = generate_design(c, basic_tuple_set)
@@ -49,7 +49,7 @@ aces_data_log = simulate_aces(
     seed = seed,
     save_data = true,
 )
-# Simualte ACES for the trivial design and depolarising noise
+# Simualte ACES for the basic design and depolarising noise
 aces_data_basic_dep = simulate_aces(
     d_basic,
     shots_set;
@@ -57,7 +57,7 @@ aces_data_basic_dep = simulate_aces(
     seed = seed,
     save_data = true,
 )
-# Simualte ACES for the trivial design and log-normal noise
+# Simualte ACES for the basic design and log-normal noise
 aces_data_basic_log = simulate_aces(
     d_basic_log,
     shots_set;
