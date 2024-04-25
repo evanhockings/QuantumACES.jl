@@ -8,7 +8,7 @@ r_m = 2.0 / 100
 total_std_log = sqrt(log(10 / 9))
 seed = UInt(0)
 ls_type = :wls
-shots_set = [10^6; 10^7; 10^8]
+budget_set = [10^6; 10^7; 10^8]
 repetitions = 1000
 rotated_param = get_rotated_param(dist)
 dep_param = get_dep_param(r_1, r_2, r_m)
@@ -40,11 +40,11 @@ d_basic = generate_design(c, basic_tuple_set)
 d_basic_log = update_noise(d_basic, log_param)
 # Simualte ACES for the optimised design and depolarising noise
 aces_data_dep =
-    simulate_aces(d, shots_set; repetitions = repetitions, seed = seed, save_data = true)
+    simulate_aces(d, budget_set; repetitions = repetitions, seed = seed, save_data = true)
 # Simualte ACES for the optimised design and log-normal noise
 aces_data_log = simulate_aces(
     d_log,
-    shots_set;
+    budget_set;
     repetitions = repetitions,
     seed = seed,
     save_data = true,
@@ -52,7 +52,7 @@ aces_data_log = simulate_aces(
 # Simualte ACES for the basic design and depolarising noise
 aces_data_basic_dep = simulate_aces(
     d_basic,
-    shots_set;
+    budget_set;
     repetitions = repetitions,
     seed = seed,
     save_data = true,
@@ -60,7 +60,7 @@ aces_data_basic_dep = simulate_aces(
 # Simualte ACES for the basic design and log-normal noise
 aces_data_basic_log = simulate_aces(
     d_basic_log,
-    shots_set;
+    budget_set;
     repetitions = repetitions,
     seed = seed,
     save_data = true,

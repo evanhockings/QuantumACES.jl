@@ -27,9 +27,6 @@ Manifest.toml
 .DS_Store
 *.DS_Store
 
-# CondaPkg
-.CondaPkg
-
 # Ignore the data folders, as they can contain large files
 */data/
 

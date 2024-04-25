@@ -9,7 +9,7 @@ r_m = 2.0 / 100
 total_std_log = sqrt(log(10 / 9))
 seed = UInt(0)
 ls_type = :wls
-shots_set = [10^6; 10^7; 10^8; 10^9]
+budget_set = [10^6; 10^7; 10^8; 10^9]
 unrotated_param = get_unrotated_param(dist)
 unrotated_param_big = get_unrotated_param(dist_big)
 dep_param = get_dep_param(r_1, r_2, r_m)
@@ -64,7 +64,7 @@ end
 # Simualte ACES for the optimised design and depolarising noise
 aces_data_dep = simulate_aces(
     d_big,
-    shots_set;
+    budget_set;
     seed = seed,
     detailed_diagnostics = true,
     save_data = true,
@@ -76,7 +76,7 @@ d_big_log = update_noise(d_big, log_param)
 d_big = nothing
 aces_data_log = simulate_aces(
     d_big_log,
-    shots_set;
+    budget_set;
     seed = seed,
     detailed_diagnostics = true,
     save_data = true,

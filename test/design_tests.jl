@@ -34,7 +34,7 @@ dist_max = 5
 precision = 1.0
 min_repetitions = 5
 # Set up simulation parameters
-shots_set = [10^7; 2 * 10^7]
+budget_set = [10^7; 2 * 10^7]
 repetitions = 2
 max_samples = 10^6
 z_score_cutoff = 4.0
@@ -120,7 +120,7 @@ z_score_cutoff = 4.0
     # Simulate the design
     aces_data_rot_big = simulate_aces(
         d_rot_big,
-        shots_set;
+        budget_set;
         seed = seed,
         max_samples = max_samples,
         save_data = true,
@@ -128,7 +128,7 @@ z_score_cutoff = 4.0
     )
     aces_data_rot_big = simulate_aces(
         d_rot_big,
-        shots_set;
+        budget_set;
         repetitions = repetitions,
         seed = seed,
         max_samples = max_samples,
@@ -195,7 +195,7 @@ end
     )
     # Simulate the design
     aces_data_unrot_log =
-        simulate_aces(d_unrot_opt_log, shots_set; repetitions = repetitions, seed = seed)
+        simulate_aces(d_unrot_opt_log, budget_set; repetitions = repetitions, seed = seed)
     pretty_print(aces_data_unrot_log, unrot_merit_set)
     # Test that the simulations agree sufficiently with the predicted distributions
     unrot_log_gls_z_scores =

@@ -1,10 +1,5 @@
 # ACES.jl
 
-**WARNING**: This package is currently in a prerelease state.
-The API is NOT STABLE or appropriately documented.
-The next release will change the entire API.
-Please wait for it before building on this package.
-
 `ACES.jl` is a package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits.
 It is particularly interested in characterising the noise associated with fault-tolerant gadgets in the context of topological quantum error-correcting codes, such as syndrome extraction circuits.
 
@@ -48,28 +43,37 @@ d_big = generate_design(rotated_planar_big, d.tuple_set_data)
 Finally, simulate ACES noise characterisation using the specified number of measurement shots with 
 
 ```
-shots_set = [10^6; 10^7; 10^8]
-aces_data_big = simulate_aces(d_big, shots_set)
+budget_set = [10^6; 10^7; 10^8]
+aces_data_big = simulate_aces(d_big, budget_set)
 ```
 
-## Installation
+## Installation and setup
 
-This is not yet a registered package, and so must be downloaded manually.
-
-If you encounter issues installing [Stim](https://github.com/quantumlib/Stim), a Python package used by PythonCall, try typing
+This is not currently a registered package, so to add it you can run
 
 ```
-julia> using CondaPkg
-
 julia> # press ] to enter the Pkg REPL
 
-pkg> conda resolve
+pkg> add https://github.com/evanhockings/ACES.jl
 ```
 
-Alternatively, install the package manually with
+This package relies on the Python package [Stim](https://github.com/quantumlib/Stim) to perform stabiliser simulations.
+It uses [PythonCall](https://github.com/JuliaPy/PythonCall.jl) to interface with Stim, and this can be a little tricky to set up.
+One helpful method for managing Python versions is [pyenv](https://github.com/pyenv/pyenv), or for Windows, [pyenv-win](https://github.com/pyenv-win/pyenv-win), which is analogous to [Juliaup](https://github.com/JuliaLang/juliaup) in Julia.
+
+On Windows, to instruct PythonCall to use the Python version set by pyenv on Windows, configure PythonCall's environment variables by adding the following to your `~/.julia/config/startup.jl` file
 
 ```
-pkg> conda pip_add stim
+ENV["JULIA_CONDAPKG_BACKEND"] = "Null"
+python_exe = readchomp(`cmd /C pyenv which python`)
+ENV["JULIA_PYTHONCALL_EXE"] = python_exe
 ```
 
-Note that the entire module can be brought into scope with `import ACES as ACES`.
+On Unix systems, however, shell commands are parsed directly by Julia and are unaware of your PATH variable.
+I am not sure how to fix this, so you may need to manually supply `python_exe` for the Python version `<version>` as
+
+```
+python_exe = homedir() * "/.pyenv/versions/<version>/bin/python"
+```
+
+Then ensure Stim is installed by running `pip install stim`.

@@ -89,6 +89,15 @@ abstract type AbstractCircuit end
     AbstractScalingData
 
 Scaling data for the figure of merit should be stored in a subtype `T <: AbstractScalingData`.
+
+# Necessary fields
+
+  - `circuit_param::AbstractCircuitParameters`: Circuit parameters.
+  - `noise_param::AbstractNoiseParameters`: Noise parameters.
+  - `tuple_set::Vector{Vector{Int}}`: Set of tuples which arrange the circuit layers.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData](@ref) object that generates the tuple set.
+  - `shot_weights::Vector{Float64}`: Shot weights for each tuple in the set, which add to 1.
+  - `ls_type::Symbol`: Type of least squares estimator for which the scaling is calculated.
 """
 abstract type AbstractScalingData end
 

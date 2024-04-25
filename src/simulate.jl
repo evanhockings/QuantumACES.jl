@@ -1,55 +1,61 @@
-# Import Stim and Python garbage col
+# Import Stim
 const stim = PythonCall.pynew()
 function __init__()
     return PythonCall.pycopy!(stim, pyimport("stim"))
 end
 
+"""
+    ACESData
+
+ACES noise characterisation experiment simulation results.
+
+# Fields
+
+  - `d::Design`: Experimental design.
+  - `budget_set::Vector{Int}`: Measurement budgets.
+  - `shots_set::Vector{Int}`: Measurement shots corresponding to the measurement budgets in `budget_set`.
+  - `repetitions::Int`: Number of times to repeat the ACES estimation procedure.
+  - `seeds::Vector{UInt64}`: Seeds for each of the repetitions.
+  - `eigenvalues::Vector{Float64}`: Circuit eigenvalues.
+  - `covariance::SparseMatrixCSC{Float64, Int32}`: Circuit eigenvalue estimator covariance matrix.
+  - `est_eigenvalues_coll::Matrix{Vector{Float64}}`: Estimated circuit eigenvalues for each of the measurement budgets and repetitions.
+  - `fgls_gate_eigenvalues_coll::Matrix{Vector{Float64}}`: FGLS estimated gate eigenvalues for each of the measurement budgets and repetitions.
+  - `gls_gate_eigenvalues_coll::Matrix{Vector{Float64}}`: GLS estimated gate eigenvalues for each of the measurement budgets and repetitions, which uses the true circuit eigenvalue estimator covariance matrix.
+  - `wls_gate_eigenvalues_coll::Matrix{Vector{Float64}}`: WLS estimated gate eigenvalues for each of the measurement budgets and repetitions.
+  - `ols_gate_eigenvalues_coll::Matrix{Vector{Float64}}`: OLS estimated gate eigenvalues for each of the measurement budgets and repetitions.
+  - `fgls_gate_probabilities_coll::Matrix{Dict{Gate, Vector{Float64}}}`: FGLS estimated gate probability distributions for each of the measurement budgets and repetitions.
+  - `gls_gate_probabilities_coll::Matrix{Dict{Gate, Vector{Float64}}}`: GLS estimated gate probability distributions for each of the measurement budgets and repetitions.
+  - `wls_gate_probabilities_coll::Matrix{Dict{Gate, Vector{Float64}}}`: WLS estimated gate probability distributions for each of the measurement budgets and repetitions.
+  - `ols_gate_probabilities_coll::Matrix{Dict{Gate, Vector{Float64}}}`: OLS estimated gate probability distributions for each of the measurement budgets and repetitions.
+  - `fgls_gate_norm_coll::Matrix{Float64}`: Normalised RMS error between the FGLS estimated gate eigenvalues and the true gate eigenvalues for each of the measurement budgets and repetitions.
+  - `gls_gate_norm_coll::Matrix{Float64}`: Normalised RMS error between the GLS estimated gate eigenvalues and the true gate eigenvalues for each of the measurement budgets and repetitions.
+  - `wls_gate_norm_coll::Matrix{Float64}`: Normalised RMS error between the WLS estimated gate eigenvalues and the true gate eigenvalues for each of the measurement budgets and repetitions.
+  - `ols_gate_norm_coll::Matrix{Float64}`: Normalised RMS error between the OLS estimated gate eigenvalues and the true gate eigenvalues for each of the measurement budgets and repetitions.
+  - `calculation_times::Matrix{Float64}`: Time taken to simulate sampling and estimate the gate eigenvalues with FGLS, GLS, WLS, and OLS for each repetition.
+  - `overall_time::Float64`: Overall time taken to simulate ACES across all repetitions.
+"""
 struct ACESData
-    # The design
     d::Design
-    # The set of shots to repeatedly sample from the probability distribution
+    budget_set::Vector{Int}
     shots_set::Vector{Int}
-    # The set of shots to sample 
-    shots_set_norm::Vector{Int}
-    # The number of times to repeat the ACES estimation procedure
     repetitions::Int
-    # Seeds for each of the repetitions
     seeds::Vector{UInt64}
-    # Circuit eigenvalues
     eigenvalues::Vector{Float64}
-    # Circuit eigenvalue estimator covariance matrix
     covariance::SparseMatrixCSC{Float64, Int32}
-    # The estimated circuit eigenvalues for each of the shots in the set
     est_eigenvalues_coll::Matrix{Vector{Float64}}
-    # The FGLS estimated gate eigenvalues for each of the shots in the set
     fgls_gate_eigenvalues_coll::Matrix{Vector{Float64}}
-    # The GLS estimated gate eigenvalues for each of the shots in the set
-    # This uses the true covariance matrix
     gls_gate_eigenvalues_coll::Matrix{Vector{Float64}}
-    # The WLS estimated gate eigenvalues for each of the shots in the set
     wls_gate_eigenvalues_coll::Matrix{Vector{Float64}}
-    # The OLS estimated gate eigenvalues for each of the shots in the set
     ols_gate_eigenvalues_coll::Matrix{Vector{Float64}}
-    # The FGLS estimated gate probability distributions for each of the shots in the set
     fgls_gate_probabilities_coll::Matrix{Dict{Gate, Vector{Float64}}}
-    # The GLS estimated gate probability distributions for each of the shots in the set
     gls_gate_probabilities_coll::Matrix{Dict{Gate, Vector{Float64}}}
-    # The WLS estimated gate probability distributions for each of the shots in the set
     wls_gate_probabilities_coll::Matrix{Dict{Gate, Vector{Float64}}}
-    # The OLS estimated gate probability distributions for each of the shots in the set
     ols_gate_probabilities_coll::Matrix{Dict{Gate, Vector{Float64}}}
-    # The 2-norm between the FGLS estimated gate eigenvalues and the synthetic gate eigenvalues for each of the shots in the set
     fgls_gate_norm_coll::Matrix{Float64}
-    # The 2-norm between the GLS estimated gate eigenvalues and the synthetic gate eigenvalues for each of the shots in the set
     gls_gate_norm_coll::Matrix{Float64}
-    # The 2-norm between the WLS estimated gate eigenvalues and the synthetic gate eigenvalues for each of the shots in the set
     wls_gate_norm_coll::Matrix{Float64}
-    # The 2-norm between the OLS estimated gate eigenvalues and the synthetic gate eigenvalues for each of the shots in the set
     ols_gate_norm_coll::Matrix{Float64}
-    # The time taken to simulate sampling and estimate the gate eigenvalues for each repetition
-    # (simulate_time, fgls_time, gls_time, wls_time, ols_time)
     calculation_times::Matrix{Float64}
-    # The overall time taken to simulate ACES across all repetitions
     overall_time::Float64
 end
 
@@ -62,7 +68,11 @@ end
 
 @struct_hash_equal_isequal ACESData
 
-#
+"""
+    get_stim_circuit_string(circuit::Vector{Layer}, gate_probabilities::Dict{Gate, Vector{Float64}}, add_prep::Bool, add_meas::Bool)
+
+Returns a Stim string representation of the circuit `circuit` alongside error probabilities specified by `gate_probabilities`, as well as noisy preparations if `add_prep` is `true`, and noisy measurements if `add_meas` is `true`.
+"""
 function get_stim_circuit_string(
     circuit::Vector{Layer},
     gate_probabilities::Dict{Gate, Vector{Float64}},
@@ -156,9 +166,10 @@ function get_stim_circuit_string(
 end
 
 """
-    stim_sample(circuit::Vector{Layer}, gate_probabilities::Dict{Gate, Vector{Float64}}, shots::Int, add_prep::Bool, add_meas::Bool; stim_seed::Union{UInt64, Nothing} = nothing)
+    stim_sample(stim_circuit_string::String, shots::Int; stim_seed::Union{UInt64, Nothing} = nothing, force_gc::Bool = false)
 
-Rapidly simulate the provided circuit using the Python package Stim and return the measurement outcomes. Note that while the seed for Stim can be fixed, Stim guarantees inconsistency when using the same seed on different versions.
+Returns bit-packaged measurement outcomes from simulating the circuit `stim_circuit_string` over `shots` measurement shots using the Python package `Stim`.
+While the seed `stim_seed` can be fixed, `Stim` guarantees inconsistency when using the same seed on different versions.
 """
 function stim_sample(
     stim_circuit_string::String,
@@ -193,7 +204,11 @@ function stim_sample(
     return stim_samples::Matrix{UInt8}
 end
 
-#
+"""
+    batch_shots(shots::Int, measurements::Int, max_samples::Int)
+
+Returns the shots divided into batches for sampling from Stim.
+"""
 function batch_shots(shots::Int, measurements::Int, max_samples::Int)
     # Divide the shots into batches
     # Stim samples in batches of 256, so we want batch sizes that are multiples of 256
@@ -213,9 +228,17 @@ function batch_shots(shots::Int, measurements::Int, max_samples::Int)
 end
 
 """
-    estimate_eigenvalues(d::Design, shots_set::Vector{Int}; seed::Union{UInt64, Nothing} = nothing)
+    estimate_eigenvalues(d::Design, shots_set::Vector{Int}; kwargs...)
 
-Simulate ACES data for the design using the specified number of shots and noise parameters, and use that data to estimate the circuit eigenvalues, setting those greater than 1 to 1.
+Returns simulated estimated circuit eigenvalues for the experimental design `d` across each of the measurement shots counts specified in `shots_set`.
+
+# Keyword arguments
+
+  - `seed::Union{UInt64, Nothing} = nothing`: Seed controlling the random seeds for Stim.
+  - `epsilon::Float64 = 0.1`: Set estimated circuit eigenvalues below this threshold to this value, which sometimes occurs for experiments with small shot weights when the measurement budget is small.
+  - `detailed_diagnostics::Bool = false`: Whether to print diagnostic information about the simulation.
+  - `max_samples::Int = 10^10`: Maximum number of samples to take in a single Stim simulation.
+  - `force_gc::Bool = false`: Whether to force garbage collection before and after each Stim simulation.
 """
 function estimate_eigenvalues(
     d::Design,
@@ -231,7 +254,7 @@ function estimate_eigenvalues(
     gate_probabilities = d.c.gate_probabilities
     add_prep = d.c.add_prep
     add_meas = d.c.add_meas
-    shots_count = length(shots_set)
+    budget_count = length(shots_set)
     tuple_number = length(d.tuple_set)
     start_time = time()
     # Divide the shots between the experiments
@@ -239,7 +262,7 @@ function estimate_eigenvalues(
     @assert all(d.shot_weights .> 0.0) "The shot weights are not all positive."
     shots_divided_float = [
         shots_set[s] * d.shot_weights[t] / d.experiment_numbers[t] for
-        t in 1:tuple_number, s in 1:shots_count
+        t in 1:tuple_number, s in 1:budget_count
     ]
     @assert vec(sum(shots_divided_float .* d.experiment_numbers; dims = 1)) ≈ shots_set "The shots have not been divided correctly."
     shots_divided = ceil.(Int, shots_divided_float)
@@ -278,8 +301,8 @@ function estimate_eigenvalues(
         Random.seed!()
     end
     # Determine and sample from the circuits and then process their contributions to the eigenvalues
-    eigenvalues_coll = Vector{Vector{Vector{Float64}}}(undef, shots_count)
-    for s in 1:shots_count
+    eigenvalues_coll = Vector{Vector{Vector{Float64}}}(undef, budget_count)
+    for s in 1:budget_count
         eigenvalues_coll[s] = Vector{Vector{Float64}}(undef, tuple_number)
     end
     for i in 1:tuple_number
@@ -303,12 +326,12 @@ function estimate_eigenvalues(
             final_support_set[l] = get_support(m.final)
         end
         # Initialise the eigenvalue estimator containers
-        eigenvalues_pos = [zeros(Int, L) for _ in 1:shots_count]
-        eigenvalues_neg = [zeros(Int, L) for _ in 1:shots_count]
-        shots_pos = [zeros(Int, L) for _ in 1:shots_count]
-        shots_neg = [zeros(Int, L) for _ in 1:shots_count]
-        eigenvalues = [zeros(Float64, L) for _ in 1:shots_count]
-        shots = [zeros(Int, L) for _ in 1:shots_count]
+        eigenvalues_pos = [zeros(Int, L) for _ in 1:budget_count]
+        eigenvalues_neg = [zeros(Int, L) for _ in 1:budget_count]
+        shots_pos = [zeros(Int, L) for _ in 1:budget_count]
+        shots_neg = [zeros(Int, L) for _ in 1:budget_count]
+        eigenvalues = [zeros(Float64, L) for _ in 1:budget_count]
+        shots = [zeros(Int, L) for _ in 1:budget_count]
         # Generate the circuits and estimate the eigenvalues
         tuple_circuit_number = length(d.meas_ensemble[i])
         for j in 1:tuple_circuit_number
@@ -391,7 +414,7 @@ function estimate_eigenvalues(
                 ]
                 # Marginalise the sign data to estimate the eigenvalue
                 for k in 1:sign_circuit_number
-                    for idx in 1:shots_count
+                    for idx in 1:budget_count
                         shots_value = shots_divided[i, idx]
                         pauli_shots = 0
                         for s in 1:shots_value
@@ -423,14 +446,14 @@ function estimate_eigenvalues(
         # Flip each eigenvalue if the sign of its final Pauli is negative
         for l in 1:L
             if final_set[l].pauli[2n + 1]
-                for s in 1:shots_count
+                for s in 1:budget_count
                     eigenvalues_pos[s][l] = -eigenvalues_pos[s][l]
                     eigenvalues_neg[s][l] = -eigenvalues_neg[s][l]
                 end
             end
         end
         # Estimate and save the eigenvalues
-        for s in 1:shots_count
+        for s in 1:budget_count
             if hasproperty(d.c, :partition)
                 @assert shots_pos[s] == shots_neg[s] "The number of positive and negative shots is not equal."
                 shots[s] = shots_pos[s] + shots_neg[s]
@@ -451,8 +474,8 @@ function estimate_eigenvalues(
     # Garbage collection of PythonCall objects mixes badly with multithreaded Julia
     GC.gc()
     # Concatenate the results
-    eigenvalues_set = Vector{Vector{Float64}}(undef, shots_count)
-    for s in 1:shots_count
+    eigenvalues_set = Vector{Vector{Float64}}(undef, budget_count)
+    for s in 1:budget_count
         # Collate the eigenvalues
         eigenvalues_set[s] = vcat(eigenvalues_coll[s]...)
         small_eigenvalues = (eigenvalues_set[s] .< epsilon)
@@ -470,16 +493,23 @@ function estimate_eigenvalues(
 end
 
 """
-    fgls_estimate_gate_eigenvalues(d::Design, est_eigenvalues::Vector{Float64}; epsilon::Float64 = 1e-10, max_iter::Int = 10, recalc_eigenvalues::Bool = true, constrain::Bool = true, diagnostics::Bool = false)
+    fgls_estimate_gate_eigenvalues(d::Design, est_eigenvalues::Vector{Float64}; kwargs...)
 
-Estimate the gate eigenvalues from the circuit eigenvalues using feasible generalised least squares, iterating estimating the gate eigenvalues while using them to update the covariance matrix.
-By default, `recalc_eigenvalues` is true, so this uses the circuit eigenvalues estimated from the gate eigenvalues, rather than the actual circuit eigenvalue estimators. This is to try and ensure that the circuit eigenvalue entries are positive and hence the covariance matrix is positive-definite. Unfortunately, that is not always the case, and so we sometimes have to set covariance matrix entries to 0.
+Returns the gate eigenvalues estimated from the estimated circuit eigenvalues `est_eigenvalues` corresponding to the design `d` with feasible generalised least squares.
+
+# Keyword arguments
+
+  - `epsilon::Float64 = 1e-10`: Threshold for convergence of the feasible generalised least squares algorithm.
+  - `max_iterations::Int = 10`: Maximum number of iterations for the feasible generalised least squares algorithm.
+  - `recalc_eigenvalues::Bool = true`: If `true`, the circuit eigenvalues are recalculated from the estimated gate eigenvalues at each iteration, which ensures that the estimated covariance matrix is positive-definite.
+  - `constrain::Bool = true`: If `true`, the gate eigenvalues are constrained to be at most 1.
+  - `diagnostics::Bool = false`: Whether to print diagnostic information about the feasible generalised least squares algorithm.
 """
 function fgls_estimate_gate_eigenvalues(
     d::Design,
     est_eigenvalues::Vector{Float64};
     epsilon::Float64 = 1e-10,
-    max_iter::Int = 10,
+    max_iterations::Int = 10,
     recalc_eigenvalues::Bool = true,
     constrain::Bool = true,
     diagnostics::Bool = false,
@@ -509,7 +539,7 @@ function fgls_estimate_gate_eigenvalues(
         norm_difference = norm(new_gate_eigenvalues - old_gate_eigenvalues, 2) / sqrt(N)
         old_gate_eigenvalues = new_gate_eigenvalues
         # If the gate eigenvalues have converged, or the maximum iteration number has been reached, return the results
-        if norm_difference < epsilon || iter >= max_iter
+        if norm_difference < epsilon || iter >= max_iterations
             if diagnostics
                 if norm_difference < epsilon
                     println(
@@ -517,7 +547,7 @@ function fgls_estimate_gate_eigenvalues(
                     )
                 else
                     println(
-                        "The maximum number of feasible generalised least squares iterations $(max_iter) has been reached without convergence. The difference is $(round(norm_difference, sigdigits = 4)), whereas the threshold for convergence is $(epsilon).",
+                        "The maximum number of feasible generalised least squares iterations $(max_iterations) has been reached without convergence. The difference is $(round(norm_difference, sigdigits = 4)), whereas the threshold for convergence is $(epsilon).",
                     )
                 end
             end
@@ -532,7 +562,8 @@ end
 """
     gls_estimate_gate_eigenvalues(d::Design, est_eigenvalues::Vector{Float64}, est_covariance::SparseMatrixCSC{Float64, Int32}; constrain::Bool = true)
 
-Estimate the gate eigenvalues from the circuit eigenvalues using generalised least squares, using the supplied covariance matrix.
+Returns the gate eigenvalues estimated from the estimated circuit eigenvalues `est_eigenvalues` corresponding to the design `d` with generalised least squares, with estimated circuit eigenvalue covariance matrix `est_covariance`.
+If `constrain` is `true`, the gate eigenvalues are constrained to be at most 1.
 """
 function gls_estimate_gate_eigenvalues(
     d::Design,
@@ -583,7 +614,8 @@ end
 """
     wls_estimate_gate_eigenvalues(d::Design, est_eigenvalues::Vector{Float64}; constrain::Bool = true)
 
-Estimate the gate eigenvalues from the circuit eigenvalues using weighted least squares.
+Returns the gate eigenvalues estimated from the estimated circuit eigenvalues `est_eigenvalues` corresponding to the design `d` with weighted least squares.
+If `constrain` is `true`, the gate eigenvalues are constrained to be at most 1.
 """
 function wls_estimate_gate_eigenvalues(
     d::Design,
@@ -636,7 +668,8 @@ end
 """
     ols_estimate_gate_eigenvalues(d::Design, est_eigenvalues::Vector{Float64}; constrain::Bool = true)
 
-Estimate the gate eigenvalues from the circuit eigenvalues using ordinary least squares.
+Returns the gate eigenvalues estimated from the estimated circuit eigenvalues `est_eigenvalues` corresponding to the design `d` with ordinary least squares.
+If `constrain` is `true`, the gate eigenvalues are constrained to be at most 1.
 """
 function ols_estimate_gate_eigenvalues(
     d::Design,
@@ -657,7 +690,8 @@ end
 """
     estimate_gate_probabilities(d::Design, est_gate_eigenvalues::Vector{Float64})
 
-Estimate the gate error probabilities from the gate eigenvalues using the Walsh-Hadamard transform, projecting the resulting distributions into the probability simplex.
+Returns the gate Pauli error probabilities estimated from the estimated gate eigenvalues `est_gate_eigenvalues` corresponding to the design `d`.
+The estimated probability distributions are projected into the probability simplex.
 """
 function estimate_gate_probabilities(d::Design, est_gate_eigenvalues::Vector{Float64})
     # Determine the transform matrices
@@ -702,16 +736,37 @@ function estimate_gate_probabilities(d::Design, est_gate_eigenvalues::Vector{Flo
     return est_gate_probabilities::Dict{Gate, Vector{Float64}}
 end
 
+# TODO: Check if force_gc is currently actually necessary.
 """
-    simulate_aces(d::Design, shots_set::Vector{Int}; repetitions::Int = 1, seed::Union{UInt64, Nothing} = nothing, diagnostics::Bool = true, save_data::Bool = false)
+    simulate_aces(d::Design, budget_set::Vector{Int}; kwargs...)
 
-Simulates ACES for the design, performing `repetitions` repetitions, and sampling shots according to `shots_set` for each repetition.
+Simulates ACES noise characterisation experiments for the experimental design `d` across each of the measurement budgets in `budget_set`.
 
-WARNING: seeding will have all of the same features as seeding in Stim. In particular, this means if you sample the shots in batches, which happens when `max_samples` is exceeded, the results will differ from when you sample the shots all at once.
+WARNING: Seeding has the same features as in Stim.
+The behaviour of the same random seed will differ across different versions of Stim.
+Also, when measurement shots are sampled in batches, which occurs when `max_samples` is exceeded, the results will differ from when all shots are sampled at once.
+
+# Arguments
+
+  - `d::Design`: Experimental design.
+  - `budget_set::Vector{Int}`: Measurement budgets for which to simulate ACES.
+
+# Keyword arguments
+
+  - `repetitions::Int = 1`: Number of simulation repetitions.
+  - `seed::Union{UInt64, Nothing} = nothing`: the seed to use for the random number generator.
+  - `N_warn::Int = 3 * 10^4`: Number of circuit eigenvalues above which to warn the user about certain keyword argument choices.
+  - `max_samples::Int = 10^10`: Maximum number of Stim samples collected in a single simulation.
+  - `force_gc::Bool = false`: Whether to force garbage collection before and after each Stim simulation; this was added to prevent occasional segfaults but massively slows down the simulation, and is nevertheless currently advised for large-scale simulations.
+  - `diagnostics::Bool = true`: Whether to print diagnostics.
+  - `detailed_diagnostics::Bool = false`: Whether to print detailed diagnostics.
+  - `save_data::Bool = false`: Whether to save the data.
+  - `save_interval::Int = 50`: Repetition interval at which to save the data.
+  - `clear_design::Bool = false`: Whether to clear the saved design data after saving the full simulation data.
 """
 function simulate_aces(
     d::Design,
-    shots_set::Vector{Int};
+    budget_set::Vector{Int};
     repetitions::Int = 1,
     seed::Union{UInt64, Nothing} = nothing,
     N_warn::Int = 3 * 10^4,
@@ -743,10 +798,10 @@ function simulate_aces(
     gate_eigenvalues = d.c.gate_eigenvalues
     (eigenvalues, covariance) = calc_eigenvalues_covariance(d)
     # Normalise the sampled shot count by the amount of time taken to perform the circuits
-    shots_count = length(shots_set)
+    budget_count = length(budget_set)
     tuple_times_factor = sum(d.shot_weights .* d.tuple_times)
-    shots_set_norm = round.(Int, shots_set / tuple_times_factor)
-    @assert all(shots_set_norm .<= shots_set) "The normalised shots are larger than the original shots."
+    shots_set = round.(Int, budget_set / tuple_times_factor)
+    @assert all(shots_set .<= budget_set) "The normalised shots are larger than the original shots."
     # Generate the requisite random seeds using the fixed seed
     if seed !== nothing
         Random.seed!(seed)
@@ -756,20 +811,21 @@ function simulate_aces(
         Random.seed!()
     end
     # Initialise all data storage
-    est_eigenvalues_coll = Matrix{Vector{Float64}}(undef, repetitions, shots_count)
+    est_eigenvalues_coll = Matrix{Vector{Float64}}(undef, repetitions, budget_count)
     # Only estimate the covariance matrix and perform FGLS and GLS if the full covariance matrix is included in the design
     if d.full_covariance
         # FGLS estimates
         fgls_gate_eigenvalues_coll =
-            Matrix{Vector{Float64}}(undef, repetitions, shots_count)
+            Matrix{Vector{Float64}}(undef, repetitions, budget_count)
         fgls_gate_probabilities_coll =
-            Matrix{Dict{Gate, Vector{Float64}}}(undef, repetitions, shots_count)
-        fgls_gate_norm_coll = Matrix{Float64}(undef, repetitions, shots_count)
+            Matrix{Dict{Gate, Vector{Float64}}}(undef, repetitions, budget_count)
+        fgls_gate_norm_coll = Matrix{Float64}(undef, repetitions, budget_count)
         # GLS estimates
-        gls_gate_eigenvalues_coll = Matrix{Vector{Float64}}(undef, repetitions, shots_count)
+        gls_gate_eigenvalues_coll =
+            Matrix{Vector{Float64}}(undef, repetitions, budget_count)
         gls_gate_probabilities_coll =
-            Matrix{Dict{Gate, Vector{Float64}}}(undef, repetitions, shots_count)
-        gls_gate_norm_coll = Matrix{Float64}(undef, repetitions, shots_count)
+            Matrix{Dict{Gate, Vector{Float64}}}(undef, repetitions, budget_count)
+        gls_gate_norm_coll = Matrix{Float64}(undef, repetitions, budget_count)
     else
         # FGLS estimates
         fgls_gate_eigenvalues_coll = Matrix{Vector{Float64}}(undef, 0, 0)
@@ -781,23 +837,23 @@ function simulate_aces(
         gls_gate_norm_coll = Matrix{Float64}(undef, 0, 0)
     end
     # WLS estimates
-    wls_gate_eigenvalues_coll = Matrix{Vector{Float64}}(undef, repetitions, shots_count)
+    wls_gate_eigenvalues_coll = Matrix{Vector{Float64}}(undef, repetitions, budget_count)
     wls_gate_probabilities_coll =
-        Matrix{Dict{Gate, Vector{Float64}}}(undef, repetitions, shots_count)
-    wls_gate_norm_coll = Matrix{Float64}(undef, repetitions, shots_count)
+        Matrix{Dict{Gate, Vector{Float64}}}(undef, repetitions, budget_count)
+    wls_gate_norm_coll = Matrix{Float64}(undef, repetitions, budget_count)
     # OLS estimates
-    ols_gate_eigenvalues_coll = Matrix{Vector{Float64}}(undef, repetitions, shots_count)
+    ols_gate_eigenvalues_coll = Matrix{Vector{Float64}}(undef, repetitions, budget_count)
     ols_gate_probabilities_coll =
-        Matrix{Dict{Gate, Vector{Float64}}}(undef, repetitions, shots_count)
-    ols_gate_norm_coll = Matrix{Float64}(undef, repetitions, shots_count)
+        Matrix{Dict{Gate, Vector{Float64}}}(undef, repetitions, budget_count)
+    ols_gate_norm_coll = Matrix{Float64}(undef, repetitions, budget_count)
     # Time data
     calculation_times = Matrix{Float64}(undef, repetitions, 5)
     overall_time = 0.0
     # Load saved data
     saved_repetitions = 0
-    filename = aces_data_filename(d, shots_set)
+    filename = aces_data_filename(d, budget_set)
     if isfile(pwd() * "/data/" * filename)
-        saved_aces_data = load_aces(d, shots_set)
+        saved_aces_data = load_aces(d, budget_set)
         if saved_aces_data.repetitions >= repetitions
             if saved_aces_data.repetitions > repetitions
                 @warn "The saved data has more repetitions $(saved_aces_data.repetitions) than the requested number of repetitions $(repetitions)."
@@ -815,8 +871,8 @@ function simulate_aces(
             (saved_aces_data.d.tuple_set == d.tuple_set) &&
             (saved_aces_data.d.full_covariance == d.full_covariance) &&
             (saved_aces_data.d.shot_weights ≈ d.shot_weights) &&
-            (saved_aces_data.shots_set ≈ shots_set) &&
-            (saved_aces_data.shots_set_norm ≈ shots_set_norm)
+            (saved_aces_data.budget_set ≈ budget_set) &&
+            (saved_aces_data.shots_set ≈ shots_set)
         # Only used the saved data if it has the same parameters
         if same_data
             # Set parameters
@@ -871,7 +927,7 @@ function simulate_aces(
         simulate_start = time()
         est_eigenvalues_set = estimate_eigenvalues(
             d,
-            shots_set_norm;
+            shots_set;
             seed = seeds[idx],
             detailed_diagnostics = detailed_diagnostics,
             max_samples = max_samples,
@@ -880,12 +936,12 @@ function simulate_aces(
         simulate_time = time() - simulate_start
         if diagnostics
             println(
-                "Sampling $(round(maximum(shots_set_norm), sigdigits=4)) shots, normalised from $(round(maximum(shots_set), sigdigits=4)) shots, divided between $(d.experiment_number) experiments for the $(length(d.tuple_set)) tuples in the set, and then estimating the circuit eigenvalues for each of the $(shots_count) different shot counts, took $(round(simulate_time, digits = 3)) s.",
+                "Sampling $(round(maximum(shots_set), sigdigits=4)) shots, normalised from $(round(maximum(budget_set), sigdigits=4)) shots, divided between $(d.experiment_number) experiments for the $(length(d.tuple_set)) tuples in the set, and then estimating the circuit eigenvalues for each of the $(budget_count) different shot counts, took $(round(simulate_time, digits = 3)) s.",
             )
         end
         # Estimate the gate eigenvalues and probabilities for each of the shots
-        ls_times = zeros(Float64, 4, shots_count)
-        for s in 1:shots_count
+        ls_times = zeros(Float64, 4, budget_count)
+        for s in 1:budget_count
             # Estimate the gate eigenvalues and probabilities
             est_eigenvalues = est_eigenvalues_set[s]
             est_eigenvalues_coll[idx, s] = est_eigenvalues
@@ -900,7 +956,7 @@ function simulate_aces(
                 fgls_gate_probabilities =
                     estimate_gate_probabilities(d, fgls_gate_eigenvalues)
                 fgls_gate_norm =
-                    sqrt(shots_set[s] / N) *
+                    sqrt(budget_set[s] / N) *
                     norm(fgls_gate_eigenvalues - gate_eigenvalues, 2)
                 fgls_gate_eigenvalues_coll[idx, s] = fgls_gate_eigenvalues
                 fgls_gate_probabilities_coll[idx, s] = fgls_gate_probabilities
@@ -913,7 +969,7 @@ function simulate_aces(
                 gls_gate_probabilities =
                     estimate_gate_probabilities(d, gls_gate_eigenvalues)
                 gls_gate_norm =
-                    sqrt(shots_set[s] / N) *
+                    sqrt(budget_set[s] / N) *
                     norm(gls_gate_eigenvalues - gate_eigenvalues, 2)
                 gls_gate_eigenvalues_coll[idx, s] = gls_gate_eigenvalues
                 gls_gate_probabilities_coll[idx, s] = gls_gate_probabilities
@@ -925,7 +981,7 @@ function simulate_aces(
             wls_gate_eigenvalues = wls_estimate_gate_eigenvalues(d, est_eigenvalues)
             wls_gate_probabilities = estimate_gate_probabilities(d, wls_gate_eigenvalues)
             wls_gate_norm =
-                sqrt(shots_set[s] / N) * norm(wls_gate_eigenvalues - gate_eigenvalues, 2)
+                sqrt(budget_set[s] / N) * norm(wls_gate_eigenvalues - gate_eigenvalues, 2)
             wls_gate_eigenvalues_coll[idx, s] = wls_gate_eigenvalues
             wls_gate_probabilities_coll[idx, s] = wls_gate_probabilities
             wls_gate_norm_coll[idx, s] = wls_gate_norm
@@ -935,7 +991,7 @@ function simulate_aces(
             ols_gate_eigenvalues = ols_estimate_gate_eigenvalues(d, est_eigenvalues)
             ols_gate_probabilities = estimate_gate_probabilities(d, ols_gate_eigenvalues)
             ols_gate_norm =
-                sqrt(shots_set[s] / N) * norm(ols_gate_eigenvalues - gate_eigenvalues, 2)
+                sqrt(budget_set[s] / N) * norm(ols_gate_eigenvalues - gate_eigenvalues, 2)
             ols_gate_eigenvalues_coll[idx, s] = ols_gate_eigenvalues
             ols_gate_probabilities_coll[idx, s] = ols_gate_probabilities
             ols_gate_norm_coll[idx, s] = ols_gate_norm
@@ -947,7 +1003,7 @@ function simulate_aces(
         overall_time += simulate_time + sum(ls_times)
         if diagnostics
             println(
-                "Estimating the gate eigenvalues for each of the $(length(shots_set)) different shot counts with $(d.full_covariance ? "FGLS, GLS, WLS, OLS" : "WLS, OLS") took $(join(round.((d.full_covariance ? ls_times : ls_times[3:4]), digits = 3), ", ")) s.",
+                "Estimating the gate eigenvalues for each of the $(length(budget_set)) different shot counts with $(d.full_covariance ? "FGLS, GLS, WLS, OLS" : "WLS, OLS") took $(join(round.((d.full_covariance ? ls_times : ls_times[3:4]), digits = 3), ", ")) s.",
             )
         end
         if (idx % save_interval == 0) && idx != repetitions
@@ -955,8 +1011,8 @@ function simulate_aces(
                 if d.full_covariance
                     aces_data = ACESData(
                         d,
+                        budget_set,
                         shots_set,
-                        shots_set_norm,
                         idx,
                         seeds[1:idx],
                         eigenvalues,
@@ -980,8 +1036,8 @@ function simulate_aces(
                 else
                     aces_data = ACESData(
                         d,
+                        budget_set,
                         shots_set,
-                        shots_set_norm,
                         idx,
                         seeds[1:idx],
                         eigenvalues,
@@ -1014,8 +1070,8 @@ function simulate_aces(
     end
     aces_data = ACESData(
         d,
+        budget_set,
         shots_set,
-        shots_set_norm,
         repetitions,
         seeds,
         eigenvalues,

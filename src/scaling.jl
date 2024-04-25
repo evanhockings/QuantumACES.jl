@@ -1,48 +1,51 @@
+"""
+    DepolarisingPlanarScaling
+
+Scaling data for an experimental design for the syndrome extraction circuit of a surface code with depolarising Pauli noise.
+
+# Fields
+
+  - `dist_range::Vector{Int}`: Code distances.
+  - `merit_scaling::Vector{Merit}`: Merit of the design for a range of code distances.
+  - `G_fit::Function`: Gate number fit.
+  - `G_params::Vector{Int}`: Gate number fit parameters; ``a + bd + cd^2``.
+  - `N_fit::Function`: Gate eigenvalue number fit.
+  - `N_params::Vector{Int}`: Gate eigenvalue number fit parameters; ``a + bd + cd^2``.
+  - `trace_fit::Function`: Trace of the gate eigenvalue estimator covariance matrix fit.
+  - `trace_params::Vector{Float64}`: Trace of the gate eigenvalue estimator covariance matrix fit parameters; ``a + bd + cd^2``.
+  - `trace_sq_fit::Function`: Trace of the gate eigenvalue estimator covariance matrix squared fit.
+  - `trace_sq_params::Vector{Float64}`: Trace of the gate eigenvalue estimator covariance matrix squared fit parameters; ``a + bd + cd^2``.
+  - `expectation_fit::Function`: Normalised RMS error expectation fit.
+  - `variance_fit::Function`: Normalised RMS error variance fit.
+  - `circuit_param::AbstractCircuitParameters`: Code parameters.
+  - `noise_param::DepolarisingParameters`: Depolarising noise parameters.
+  - `tuple_set::Vector{Vector{Int}}`: Set of tuples which arrange the circuit layers.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData](@ref) object that generates the tuple set.
+  - `shot_weights::Vector{Float64}`: Shot weights for each tuple in the set, which add to 1.
+  - `ls_type::Symbol`: Type of least squares estimator for which the merits were calculated.
+  - `calculation_times::Matrix{Float64}`: Time taken to generate the design and calculate the merit, respectively, for each distance.
+  - `overall_time::Float64`: The overall time taken to calculate the merit scaling data for depolarising noise.
+"""
 struct DepolarisingPlanarScaling <: AbstractScalingData
-    # Code distances
     dist_range::Vector{Int}
-    # Merit of the design for a range of code distances
     merit_scaling::Vector{Merit}
-    # Gate number fit
     G_fit::Function
-    # Gate number fit parameters
-    # a + bd + cd^2
     G_params::Vector{Int}
-    # Gate eigenvalue number fit
     N_fit::Function
-    # Gate eigenvalue number fit parameters
-    # a + bd + cd^2
     N_params::Vector{Int}
-    # Trace of the gate eigenvalue estimator covariance matrix fit
     trace_fit::Function
-    # Trace of the gate eigenvalue estimator covariance matrix fit parameters 
-    # a + bd + cd^2
     trace_params::Vector{Float64}
-    # Trace of the gate eigenvalue estimator covariance matrix squared fit
     trace_sq_fit::Function
-    # Trace of the gate eigenvalue estimator covariance matrix squared fit parameters
-    # a + bd + cd^2
     trace_sq_params::Vector{Float64}
-    # NRMSE expectation fit
     expectation_fit::Function
-    # NRMSE variance fit
     variance_fit::Function
-    # Code parameters
     circuit_param::AbstractCircuitParameters
-    # Depolarising noise parameters
     noise_param::DepolarisingParameters
-    # Circuit rearrangements used to generate the design matrix
     tuple_set::Vector{Vector{Int}}
-    # Data used to generate the tuple set
     tuple_set_data::TupleSetData
-    # Weighting of the shots allocated to each tuple
     shot_weights::Vector{Float64}
-    # Type of least squares estimator for which the merits were calculated
     ls_type::Symbol
-    # The time taken to generate the design and calculate the merit for each distance
-    # (design_time, merit_time)
     calculation_times::Matrix{Float64}
-    # The overall time taken to calculate the merit scaling for depolarising noise
     overall_time::Float64
 end
 
@@ -53,56 +56,23 @@ function Base.show(io::IO, s::DepolarisingPlanarScaling)
     )
 end
 
-struct LognormalPlanarScaling <: AbstractScalingData
-    # Code distances
-    dist_range::Vector{Int}
-    # Gate eigenvalue number fit
-    N_fit::Function
-    # Gate eigenvalue number fit parameters
-    # a + bd + cd^2
-    N_params::Vector{Int}
-    # Expected NRMSE for a range of code distances
-    expectation_scaling::Vector{Vector{Float64}}
-    # Average expected NRMSE fit
-    expectation_fit::Function
-    # NRMSE variance for a range of code distances
-    variance_scaling::Vector{Vector{Float64}}
-    # Average NRMSE variance fit
-    variance_fit::Function
-    # Eigenvalues of the gate log-eigenvalue estimator covariance matrix for a range of code distances
-    eigenvalues_scaling::Vector{Vector{Vector{Float64}}}
-    # Code parameters
-    circuit_param::AbstractCircuitParameters
-    # Log-normal random noise parameters
-    noise_param::LognormalParameters
-    # Random seeds for the noise parameters
-    seeds::Vector{UInt64}
-    # Circuit rearrangements used to generate the design matrix
-    tuple_set::Vector{Vector{Int}}
-    # Data used to generate the tuple set
-    tuple_set_data::TupleSetData
-    # Weighting of the shots allocated to each tuple
-    shot_weights::Vector{Float64}
-    # Type of least squares estimator for which the merits were calculated
-    ls_type::Symbol
-    # The time taken to generate the design and calculate the merits for each distance
-    # (design_time, log_merit_time, dep_merit_time)
-    calculation_times::Matrix{Float64}
-    # The overall time taken to calculate the merit scaling for log-normal random noise
-    overall_time::Float64
-end
-
-function Base.show(io::IO, s::LognormalPlanarScaling)
-    return print(
-        io,
-        "Merit scaling data with log-normal random noise of a design for a $(s.circuit_param.circuit_name) code with $(length(s.tuple_set)) tuples.",
-    )
-end
-
 """
-    calc_depolarising_planar_scaling(d::Design, dist_range::Vector{Int}; ls_type::Symbol = :none, save_data::Bool = false, diagnostics::Bool = true)
+    calc_depolarising_planar_scaling(d::Design, dist_max::Int; kwargs...)
+    calc_depolarising_planar_scaling(d::Design, dist_range::Vector{Int}; kwargs...)
 
-Calculate the merit of the design for the supplied code distances to examine its scaling.
+Returns the scaling data as a [`DepolarisingPlanarScaling`](@ref) object for the figure of merit of the design `d` for the syndrome extraction circuit of a surface code with depolarising Pauli noise, as a function of the distance of the code.
+
+# Arguments
+
+  - `d::Design`: Design for which the merit scaling is calculated.
+  - `dist_max::Int`: Maximum code distance for which the merit scaling is calculated.
+  - `dist_range::Vector{Int}`: Vode distances for which the merit scaling is calculated.
+
+# Keyword arguments
+
+  - `ls_type::Symbol = :none`: Type of least squares estimator used to calculate the merit scaling, which defaults to the least squares estimator type of the design, or if that is not specified, `:wls`.
+  - `diagnostics::Bool = true`: Whether to print diagnostic information.
+  - `save_data::Bool = false`: Whether to save the merit scaling data.
 """
 function calc_depolarising_planar_scaling(
     d::Design,
@@ -119,7 +89,7 @@ function calc_depolarising_planar_scaling(
     ) || (
         typeof(d.c.circuit_param) == UnrotatedPlanarParameters &&
         typeof(d.c) == UnrotatedPlanarCircuit
-    ) "This function requires planar codes."
+    ) "This function requires surface codes."
     @assert minimum(dist_range) >= 3 "The supplied distances must all be at least 3."
     # Set some variables
     circuit_param = d.c.circuit_param
@@ -272,12 +242,6 @@ function calc_depolarising_planar_scaling(
     end
     return dep_planar_scaling::DepolarisingPlanarScaling
 end
-
-"""
-    calc_depolarising_planar_scaling(d::Design, dist_max::Int; ls_type::Symbol = :none, save_data::Bool = false, diagnostics::Bool = true)
-
-Calculate the merit of the design for code distances from 3 to the supplied maximum to examine its scaling.
-"""
 function calc_depolarising_planar_scaling(
     d::Design,
     dist_max::Int;
@@ -305,9 +269,98 @@ function calc_depolarising_planar_scaling(
 end
 
 """
-    calc_lognormal_planar_scaling(d::Design, dist_range::Vector{Int}; ls_type::Symbol = :none, precision::Float64 = 1e-3, max_repetitions::Int = 10000, min_repetitions::Int = 100, print_repetitions::Int = 100, seed::Union{UInt64, Nothing} = nothing, save_data::Bool = false, diagnostics::Bool = true)
+    LognormalPlanarScaling
 
-Calculate the merit of the design for the supplied code distances to examine its scaling.
+Scaling data for an experimental design for the syndrome extraction circuit of a surface code with log-normal random Pauli noise.
+
+# Fields
+
+  - `dist_range::Vector{Int}`: Code distances.
+  - `N_fit::Function`: Gate eigenvalue number fit.
+  - `N_params::Vector{Int}`: Gate eigenvalue number fit parameters; ``a + bd + cd^2``.
+  - `expectation_scaling::Vector{Vector{Float64}}`: Expected normalised RMS error for a range of code distances.
+  - `expectation_fit::Function`: Mean expected normalised RMS error fit.
+  - `variance_scaling::Vector{Vector{Float64}}`: Normalised RMS error variance for a range of code distances.
+  - `variance_fit::Function`: Mean normalised RMS error variance fit.
+  - `eigenvalues_scaling::Vector{Vector{Vector{Float64}}}`: Eigenvalues of the gate log-eigenvalue estimator covariance matrix for a range of code distances.
+  - `circuit_param::AbstractCircuitParameters`: Code parameters.
+  - `noise_param::LognormalParameters`: Log-normal random noise parameters.
+  - `seeds::Vector{UInt64}`: Seeds for the log-normal noise parameters.
+  - `tuple_set::Vector{Vector{Int}}`: Set of tuples which arrange the circuit layers.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData](@ref) object that generates the tuple set.
+  - `shot_weights::Vector{Float64}`: Shot weights for each tuple in the set, which add to 1.
+  - `ls_type::Symbol`: Type of least squares estimator for which the merits were calculated.
+  - `calculation_times::Matrix{Float64}`: The time taken to generate the design and calculate the figures of merit for random instances of log-normal Pauli noise, and for depolarising Pauli noise, respectively.
+  - `overall_time::Float64`: The overall time taken to calculate the merit scaling for log-normal random noise.
+"""
+struct LognormalPlanarScaling <: AbstractScalingData
+    # Code distances
+    dist_range::Vector{Int}
+    # Gate eigenvalue number fit
+    N_fit::Function
+    # Gate eigenvalue number fit parameters
+    # a + bd + cd^2
+    N_params::Vector{Int}
+    # Expected NRMSE for a range of code distances
+    expectation_scaling::Vector{Vector{Float64}}
+    # Average expected NRMSE fit
+    expectation_fit::Function
+    # NRMSE variance for a range of code distances
+    variance_scaling::Vector{Vector{Float64}}
+    # Average NRMSE variance fit
+    variance_fit::Function
+    # Eigenvalues of the gate log-eigenvalue estimator covariance matrix for a range of code distances
+    eigenvalues_scaling::Vector{Vector{Vector{Float64}}}
+    # Code parameters
+    circuit_param::AbstractCircuitParameters
+    # Log-normal random noise parameters
+    noise_param::LognormalParameters
+    # Random seeds for the noise parameters
+    seeds::Vector{UInt64}
+    # Circuit rearrangements used to generate the design matrix
+    tuple_set::Vector{Vector{Int}}
+    # Data used to generate the tuple set
+    tuple_set_data::TupleSetData
+    # Weighting of the shots allocated to each tuple
+    shot_weights::Vector{Float64}
+    # Type of least squares estimator for which the merits were calculated
+    ls_type::Symbol
+    # The time taken to generate the design and calculate the merits for each distance
+    # (design_time, log_merit_time, dep_merit_time)
+    calculation_times::Matrix{Float64}
+    # The overall time taken to calculate the merit scaling for log-normal random noise
+    overall_time::Float64
+end
+
+function Base.show(io::IO, s::LognormalPlanarScaling)
+    return print(
+        io,
+        "Merit scaling data with log-normal random noise of a design for a $(s.circuit_param.circuit_name) code with $(length(s.tuple_set)) tuples.",
+    )
+end
+
+"""
+    calc_lognormal_planar_scaling(d::Design, dist_max::Int; kwargs...)
+    calc_lognormal_planar_scaling(d::Design, dist_range::Vector{Int}; kwargs...)
+
+Returns the scaling data as a [`LognormalPlanarScaling`](@ref) object for the figure of merit of the design `d` for the syndrome extraction circuit of a surface code with log-normal random Pauli noise, as a function of the distance of the code.
+
+# Arguments
+
+  - `d::Design`: Design for which the merit scaling is calculated.
+  - `dist_max::Int`: Maximum code distance for which the merit scaling is calculated.
+  - `dist_range::Vector{Int}`: Code distances for which the merit scaling is calculated.
+
+# Keyword arguments
+
+  - `ls_type::Symbol = :none`: Type of least squares estimator used to calculate the merit scaling, which defaults to the least squares estimator type of the design, or if that is not specified, `:wls`.
+  - `precision::Float64 = 1e-3`: Precision to which the figure of merit is estimated, corresponding to the target standard error of the mean.
+  - `max_repetitions::Int = 10000`: Maximum number of random instances of log-normal Pauli noise over which the figure of merit is calculated.
+  - `min_repetitions::Int = 100`: Minimum number of random instances of log-normal Pauli noise over which the figure of merit is calculated.
+  - `print_repetitions::Int = 100`: Number of random instances of log-normal Pauli noise between printing diagnostics.
+  - `seed::Union{UInt64, Nothing} = nothing`: Seeds used to generate instances of log-normal Pauli noise.
+  - `diagnostics::Bool = true`: Whether to print diagnostic information.
+  - `save_data::Bool = false`: Whether to save the merit scaling data.
 """
 function calc_lognormal_planar_scaling(
     d::Design,
@@ -329,7 +382,7 @@ function calc_lognormal_planar_scaling(
     ) || (
         typeof(d.c.circuit_param) == UnrotatedPlanarParameters &&
         typeof(d.c) == UnrotatedPlanarCircuit
-    ) "This function requires planar codes."
+    ) "This function requires surface codes."
     @assert minimum(dist_range) >= 3 "The supplied distances must all be at least 3."
     @assert precision > 0 "The precision must be positive."
     @assert max_repetitions > 0 "The maximum number of repetitions must be positive."
@@ -546,7 +599,6 @@ function calc_lognormal_planar_scaling(
     end
     return log_planar_scaling::LognormalPlanarScaling
 end
-
 function calc_lognormal_planar_scaling(
     d::Design,
     dist_max::Int;
@@ -554,6 +606,7 @@ function calc_lognormal_planar_scaling(
     precision::Float64 = 1e-3,
     max_repetitions::Int = 10000,
     min_repetitions::Int = 100,
+    print_repetitions::Int = 100,
     seed::Union{UInt64, Nothing} = nothing,
     diagnostics::Bool = true,
     save_data::Bool = false,
@@ -574,6 +627,7 @@ function calc_lognormal_planar_scaling(
         precision = precision,
         max_repetitions = max_repetitions,
         min_repetitions = min_repetitions,
+        print_repetitions = print_repetitions,
         seed = seed,
         save_data = save_data,
         diagnostics = diagnostics,

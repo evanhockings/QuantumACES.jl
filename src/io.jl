@@ -1,22 +1,22 @@
-#
+"""
+    enter_folder(folder::String)
+
+If not currently in the folder `folder`, enter it.
+"""
 function enter_folder(folder::String)
-    # Check if the folder starts with `/`
-    if folder[1] != '/'
-        folder = "/" * folder
-    end
     # Enter the folder if not currently in the folder
     if pwd()[(end - length(folder) + 1):end] != folder
-        cd(pwd() * folder)
+        cd(folder)
     end
     return nothing
 end
 
-#
+"""
+    exit_folder(folder::String)
+
+If currently in the folder `folder`, exit it.
+"""
 function exit_folder(folder::String)
-    # Check if the folder starts with `/`
-    if folder[1] != '/'
-        folder = "/" * folder
-    end
     # Exit the folder if currently in the folder
     if pwd()[(end - length(folder) + 1):end] == folder
         cd(dirname(pwd()))
@@ -24,7 +24,11 @@ function exit_folder(folder::String)
     return nothing
 end
 
-#
+"""
+    tuples_filename(tuple_number::Int, repeat_numbers::Vector{Int})
+
+Returns a string describing the filename for the supplied tuple set data.
+"""
 function tuples_filename(tuple_number::Int, repeat_numbers::Vector{Int})
     if length(repeat_numbers) > 0
         filename = "$(tuple_number)_$(join(repeat_numbers, "_"))"
@@ -34,7 +38,12 @@ function tuples_filename(tuple_number::Int, repeat_numbers::Vector{Int})
     return filename::String
 end
 
-#
+"""
+    design_filename(d::Design)
+    design_filename(circuit_param::AbstractCircuitParameters, noise_param::AbstractNoiseParameters, tuple_number::Int, repeat_numbers::Vector{Int}, full_covariance::Bool, ls_type::Symbol)
+
+Returns a string describing the filename corresponding to the supplied design data.
+"""
 function design_filename(
     circuit_param::T,
     noise_param::U,
@@ -51,8 +60,6 @@ function design_filename(
     end
     return filename::String
 end
-
-#
 function design_filename(d::Design)
     filename = design_filename(
         d.c.circuit_param,
@@ -65,7 +72,13 @@ function design_filename(d::Design)
     return filename::String
 end
 
-#
+"""
+    scaling_filename(scaling_data::AbstractScalingData)
+    scaling_filename(d::Design, ls_type::Symbol)
+    scaling_filename(circuit_param::AbstractCircuitParameters, noise_param::AbstractNoiseParameters, tuple_number::Int, repeat_numbers::Vector{Int}, ls_type::Symbol)
+
+Returns a string describing the filename for the scaling data corresponding to the supplied design data.
+"""
 function scaling_filename(
     circuit_param::T,
     noise_param::U,
@@ -81,8 +94,6 @@ function scaling_filename(
     end
     return filename::String
 end
-
-#
 function scaling_filename(d::Design, ls_type::Symbol)
     filename = scaling_filename(
         d.c.circuit_param,
@@ -93,8 +104,6 @@ function scaling_filename(d::Design, ls_type::Symbol)
     )
     return filename::String
 end
-
-#
 function scaling_filename(scaling_data::T) where {T <: AbstractScalingData}
     filename = scaling_filename(
         scaling_data.circuit_param,
@@ -106,7 +115,13 @@ function scaling_filename(scaling_data::T) where {T <: AbstractScalingData}
     return filename::String
 end
 
-#
+"""
+    aces_data_filename(aces_data::ACESData)
+    aces_data_filename(d::Design, budget_set::Vector{Int})
+    aces_data_filename(circuit_param::AbstractCircuitParameters, noise_param::AbstractNoiseParameters, tuple_number::Int, repeat_numbers::Vector{Int}, full_covariance::Bool, ls_type::Symbol, budget_set::Vector{Int})
+
+Returns a string describing the filename corresponding to the ACES data.
+"""
 function aces_data_filename(
     circuit_param::T,
     noise_param::U,
@@ -114,9 +129,9 @@ function aces_data_filename(
     repeat_numbers::Vector{Int},
     full_covariance::Bool,
     ls_type::Symbol,
-    shots_set::Vector{Int},
+    budget_set::Vector{Int},
 ) where {T <: AbstractCircuitParameters, U <: AbstractNoiseParameters}
-    filename = "aces_data_$(circuit_param.circuit_name)_$(noise_param.noise_name)_$(tuples_filename(tuple_number, repeat_numbers))_$(full_covariance)_$(join(round.(shots_set, sigdigits=4), "_"))"
+    filename = "aces_data_$(circuit_param.circuit_name)_$(noise_param.noise_name)_$(tuples_filename(tuple_number, repeat_numbers))_$(full_covariance)_$(join(round.(budget_set, sigdigits=4), "_"))"
     if ls_type == :none
         filename *= ".jld2"
     else
@@ -124,9 +139,7 @@ function aces_data_filename(
     end
     return filename::String
 end
-
-#
-function aces_data_filename(d::Design, shots_set::Vector{Int})
+function aces_data_filename(d::Design, budget_set::Vector{Int})
     filename = aces_data_filename(
         d.c.circuit_param,
         d.c.noise_param,
@@ -134,21 +147,19 @@ function aces_data_filename(d::Design, shots_set::Vector{Int})
         d.tuple_set_data.repeat_numbers,
         d.full_covariance,
         d.ls_type,
-        shots_set,
+        budget_set,
     )
     return filename::String
 end
-
-#
 function aces_data_filename(aces_data::ACESData)
-    filename = aces_data_filename(aces_data.d, aces_data.shots_set)
+    filename = aces_data_filename(aces_data.d, aces_data.budget_set)
     return filename::String
 end
 
 """
-    Save(d::Design)
+    save_design(d::Design)
 
-Save the design to a file specified by the design itself.
+Saves the design `d` with the appropriate filename.
 """
 function save_design(d::Design)
     # Check for the data directory
@@ -162,9 +173,9 @@ function save_design(d::Design)
 end
 
 """
-    Load(vertical_dist::Int, horizontal_dist::Int, circuit_number::Int, full_covariance::Bool)
+    load_design(circuit_param::AbstractCircuitParameters, noise_param::AbstractNoiseParameters, tuple_number::Int, repeat_numbers::Vector{Int}, full_covariance::Bool, ls_type::Symbol)
 
-Load the design from a file specified by the supplied variables.
+Loads the design whose filename is specified by the supplied variables.
 """
 function load_design(
     circuit_param::T,
@@ -187,7 +198,11 @@ function load_design(
     return d::Design
 end
 
-#
+"""
+    delete_design(d::Design)
+
+Deletes the file corresponding to the design `d`.
+"""
 function delete_design(d::Design)
     # Delete the saved design data
     filename = design_filename(d)
@@ -199,7 +214,11 @@ function delete_design(d::Design)
     return nothing
 end
 
-#
+"""
+    save_scaling(scaling_data::AbstractScalingData)
+
+Saves the scaling data `scaling_data` with the appropriate filename.
+"""
 function save_scaling(scaling_data::T) where {T <: AbstractScalingData}
     # Check for the data directory
     if !isdir("data")
@@ -211,7 +230,12 @@ function save_scaling(scaling_data::T) where {T <: AbstractScalingData}
     return nothing
 end
 
-#
+"""
+    load_scaling(d::Design, ls_type::Symbol)
+    load_scaling(circuit_param::AbstractCircuitParameters, noise_param::AbstractNoiseParameters, tuple_number::Int, repeat_numbers::Vector{Int}, ls_type::Symbol)
+
+Loads the scaling data whose filename is specified by the supplied variables.
+"""
 function load_scaling(
     circuit_param::T,
     noise_param::U,
@@ -225,8 +249,6 @@ function load_scaling(
     scaling_data = load_object(pwd() * "/data/" * filename)
     return scaling_data::T where {T <: AbstractScalingData}
 end
-
-#
 function load_scaling(d::Design, ls_type::Symbol)
     # Load the scaling data
     filename = scaling_filename(d, ls_type)
@@ -234,7 +256,11 @@ function load_scaling(d::Design, ls_type::Symbol)
     return scaling_data::T where {T <: AbstractScalingData}
 end
 
-#
+"""
+    delete_scaling(scaling_data::AbstractScalingData)
+
+Deletes the file corresponding to the scaling data `scaling_data`.
+"""
 function delete_scaling(scaling_data::T) where {T <: AbstractScalingData}
     # Delete the saved design data
     filename = scaling_filename(scaling_data)
@@ -247,9 +273,9 @@ function delete_scaling(scaling_data::T) where {T <: AbstractScalingData}
 end
 
 """
-    save(aces_data::ACESData; clear_design::Bool = false)
+    save_aces(aces_data::ACESData; clear_design::Bool = false)
 
-Save the processed ACES data to a file specified by the design and the noise index.
+Saves the ACES data `aces_data` with the appropriate filename, and deletes the design file if it exists and `clear_design` is `true`.
 """
 function save_aces(aces_data::ACESData; clear_design::Bool = false)
     # Check for the data directory
@@ -267,9 +293,10 @@ function save_aces(aces_data::ACESData; clear_design::Bool = false)
 end
 
 """
-    Load(circuit_type::String, vertical_dist::Int, horizontal_dist::Int, circuit_number::Int, full_covariance::Bool, p_idx::Int)
+    load_aces(d::Design, budget_set::Vector{Int})
+    load_aces(circuit_param::AbstractCircuitParameters, noise_param::AbstractNoiseParameters, tuple_number::Int, repeat_numbers::Vector{Int}, full_covariance::Bool, ls_type::Symbol, budget_set::Vector{Int})
 
-Load the processed ACES data from a file specified by the design and the shots.
+Loads the ACES data whose filename is specified by the supplied variables.
 """
 function load_aces(
     circuit_param::T,
@@ -278,7 +305,7 @@ function load_aces(
     repeat_numbers::Vector{Int},
     full_covariance::Bool,
     ls_type::Symbol,
-    shots_set::Vector{Int},
+    budget_set::Vector{Int},
 ) where {T <: AbstractCircuitParameters, U <: AbstractNoiseParameters}
     # Load the ACES data
     filename = aces_data_filename(
@@ -288,21 +315,23 @@ function load_aces(
         repeat_numbers,
         full_covariance,
         ls_type,
-        shots_set,
+        budget_set,
     )
     aces_data = load_object(pwd() * "/data/" * filename)
     return aces_data::ACESData
 end
-
-#
-function load_aces(d::Design, shots_set::Vector{Int})
+function load_aces(d::Design, budget_set::Vector{Int})
     # Load the ACES data
-    filename = aces_data_filename(d, shots_set)
+    filename = aces_data_filename(d, budget_set)
     aces_data = load_object(pwd() * "/data/" * filename)
     return aces_data::ACESData
 end
 
-#
+"""
+    delete_aces(aces_data::ACESData)
+
+Deletes the file corresponding to the ACES data `aces_data`.
+"""
 function delete_aces(aces_data::ACESData)
     # Delete the saved ACES data
     filename = aces_data_filename(aces_data)

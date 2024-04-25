@@ -1,7 +1,7 @@
 """
     project_simplex(probabilities::Vector{Float64})
 
-Projects a probability distribution onto the probability simplex in the Euclidean norm.
+Returns a copy of the probability distribution `probabilities` projected into the probability simplex according to the Euclidean norm.
 """
 function project_simplex(probabilities::Vector{Float64})
     @assert any(isnan.(probabilities)) == false "The supplied vector contains NaN."
@@ -20,7 +20,7 @@ end
 """
     get_support(p::Pauli)
 
-Returns the support of the Pauli.
+Returns the support of the Pauli `p`.
 """
 function get_support(p::Pauli)
     n = p.qubit_num
@@ -32,7 +32,8 @@ end
 """
     wht_matrix(n::Int)
 
-Returns the symplectically ordered Walsh-Hadamard transform matrix of order n; to perform the inverse transform, divide the transform matrix by a scalar factor 4^n.
+Returns the symplectically ordered Walsh-Hadamard transform matrix of order `n`, which maps an n-qubit Pauli error probability distribution to its eigenvalues.
+The inverse transform is obtained by dividing the transform by the factor ``4^n``.
 """
 function wht_matrix(n::Int)
     a = BitArray(undef, 2n)
@@ -48,7 +49,11 @@ function wht_matrix(n::Int)
     return WHT_matrix::Matrix{Int}
 end
 
-#
+"""
+    pretty_print(merit_array::Matrix{Float64})
+
+Prints `merit_array`, produced by [`compare_ls_optimise_weights`](@ref), in a readable format.
+"""
 function pretty_print(merit_array::Matrix{Float64})
     # Check the input parameters
     @assert size(merit_array) == (3, 6) "The input array should be of size (3, 6) and formatted as produced by the function compare_ls_optimise_weights."
@@ -85,7 +90,11 @@ function pretty_print(merit_array::Matrix{Float64})
     return nothing
 end
 
-#
+"""
+    pretty_print(d::Design)
+
+Prints the tuple set and shot weight data of the design `d` in a readable format.
+"""
 function pretty_print(d::Design)
     # Initialise data
     tuple_set_data = d.tuple_set_data
@@ -125,17 +134,21 @@ function pretty_print(d::Design)
     return nothing
 end
 
-#
+"""
+    pretty_print(aces_data::ACESData, merit_set::Tuple{Merit, Merit, Merit})
+
+Prints the z-scores of the normalised RMS errors of the gate eigenvalue estimator vector for the GLS, WLS, and OLS estimators in `aces_data` using the predicted means and variances for each in `merit_set`.
+"""
 function pretty_print(aces_data::ACESData, merit_set::Tuple{Merit, Merit, Merit})
     # Set up parameters
     repetition_count = aces_data.repetitions
-    shot_count = length(aces_data.shots_set)
+    budget_count = length(aces_data.budget_set)
     gls_gate_norm_coll = aces_data.fgls_gate_norm_coll
     wls_gate_norm_coll = aces_data.wls_gate_norm_coll
     ols_gate_norm_coll = aces_data.ols_gate_norm_coll
-    @assert size(gls_gate_norm_coll) == (repetition_count, shot_count) "The GLS gate norm collection has the wrong size $(size(gls_gate_norm_coll))."
-    @assert size(wls_gate_norm_coll) == (repetition_count, shot_count) "The WLS gate norm collection has the wrong size $(size(wls_gate_norm_coll))."
-    @assert size(ols_gate_norm_coll) == (repetition_count, shot_count) "The OLS gate norm collection has the wrong size $(size(ols_gate_norm_coll))."
+    @assert size(gls_gate_norm_coll) == (repetition_count, budget_count) "The GLS gate norm collection has the wrong size $(size(gls_gate_norm_coll))."
+    @assert size(wls_gate_norm_coll) == (repetition_count, budget_count) "The WLS gate norm collection has the wrong size $(size(wls_gate_norm_coll))."
+    @assert size(ols_gate_norm_coll) == (repetition_count, budget_count) "The OLS gate norm collection has the wrong size $(size(ols_gate_norm_coll))."
     (gls_merit, wls_merit, ols_merit) = merit_set
     @assert gls_merit.ls_type == :gls "The GLS merit has the wrong type $(gls_merit.ls_type)."
     @assert wls_merit.ls_type == :wls "The WLS merit has the wrong type $(wls_merit.ls_type)."
@@ -147,7 +160,7 @@ function pretty_print(aces_data::ACESData, merit_set::Tuple{Merit, Merit, Merit}
     # Print the data
     repetitions = convert(Vector{Int}, collect(1:repetition_count))
     shot_number =
-        ["10^$(round(log10(aces_data.shots_set[i]), digits = 3))" for i in 1:shot_count]
+        ["10^$(round(log10(aces_data.budget_set[i]), digits = 3))" for i in 1:budget_count]
     header = [
         "Repetition"
         "GLS S = " .* shot_number
@@ -166,7 +179,7 @@ end
 """
     get_pauli_string(p::Pauli)
 
-Returns the string corresponding to the input Pauli.
+Returns the string representation of the Pauli `p`.
 """
 function get_pauli_string(p::Pauli)
     pauli = p.pauli
@@ -198,7 +211,11 @@ function get_pauli_string(p::Pauli)
     return pauli_string::String
 end
 
-#
+"""
+    get_mapping_string(m::Mapping, c::AbstractCircuit; two_qubit_only::Bool = false)
+
+Returns the string representation of the mapping `m` for the circuit `c`, including eigenvalues.
+"""
 function get_mapping_string(
     m::Mapping,
     c::T;
@@ -247,7 +264,7 @@ function get_mapping_string(
             throw(error("The gate $(g) does not operate on either 1 or 2 qubits."))
         end
         eigenvalue_power = m.design_row[nz_idx]
-        gate_string = "($(g.type)-$(Int(g.index)):$(Int.(g.targets)))"
+        gate_string = "($(g.type):$(Int(g.index)):$(Int.(g.targets)))"
         eigenvalue_string = pauli_string * " ^$(Int(eigenvalue_power))"
         if !two_qubit_only || length(g.targets) == 2
             push!(gate_eigenvalue_strings, (gate_string, eigenvalue_string))
