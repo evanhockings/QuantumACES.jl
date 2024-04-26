@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Simulate
 
 ```@autodocs
-Modules = [ACES]
+Modules = [QuantumACES]
 Pages = ["simulate.jl"]
 ```

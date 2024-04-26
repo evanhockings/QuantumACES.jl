@@ -1,6 +1,6 @@
-using ACES, Test
+using QuantumACES, Test
 
-@testset "ACES.jl" begin
+@testset "QuantumACES.jl" begin
     @testset "Aqua" begin
         include("aqua_tests.jl")
     end

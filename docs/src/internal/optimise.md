@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Optimise
 
 ```@autodocs
-Modules = [ACES]
+Modules = [QuantumACES]
 Pages = ["optimise.jl"]
 ```

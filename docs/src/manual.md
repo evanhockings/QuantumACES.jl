@@ -8,8 +8,11 @@ Pages = ["manual.md"]
 
 ## Introduction
 
+TODO
 
 ## Example usage
+
+To see a full example of how to use this package, see the code generating the data for [arXiv:2404.06545](https://arxiv.org/abs/2404.06545) in the `scalable_aces` folder on the [scalable_aces](https://github.com/evanhockings/AveragedCircuitEigenvalueSampling.jl/tree/scalable_aces) branch.
 
 Parameterise a depolarising noise model with single-qubit gate infidelity `r_1`, two-qubit gate infidelity `r_2`, and measurement infidelity `r_m`.
 
@@ -58,6 +61,8 @@ aces_data_big = simulate_aces(d_big, budget_set)
 
 ## Creating new circuits
 
+TODO
 
 ## Creating new noise models
 
+TODO

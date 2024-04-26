@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Tuples
 
 ```@autodocs
-Modules = [ACES]
+Modules = [QuantumACES]
 Pages = ["tuples.jl"]
 ```

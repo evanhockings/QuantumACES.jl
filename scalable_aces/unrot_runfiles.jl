@@ -1,4 +1,4 @@
-using ACES
+using QuantumACES
 enter_folder("scalable_aces")
 include(pwd() * "/unrot_optimise.jl")
 include(pwd() * "/unrot_scaling.jl")

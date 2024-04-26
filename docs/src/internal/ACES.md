@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # ACES
 
 ```@autodocs
-Modules = [ACES]
-Pages = ["ACES.jl"]
+Modules = [QuantumACES]
+Pages = ["QuantumACES.jl"]
 ```

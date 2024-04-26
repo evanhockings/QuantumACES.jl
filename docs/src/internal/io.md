@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # IO
 
 ```@autodocs
-Modules = [ACES]
+Modules = [QuantumACES]
 Pages = ["io.jl"]
 ```

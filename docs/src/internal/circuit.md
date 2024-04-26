@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Circuit
 
 ```@autodocs
-Modules = [ACES]
+Modules = [QuantumACES]
 Pages = ["circuit.jl"]
 ```

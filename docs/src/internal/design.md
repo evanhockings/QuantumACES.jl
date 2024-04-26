@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Design
 
 ```@autodocs
-Modules = [ACES]
+Modules = [QuantumACES]
 Pages = ["design.jl"]
 ```

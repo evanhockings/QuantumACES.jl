@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Noise
 
 ```@autodocs
-Modules = [ACES]
+Modules = [QuantumACES]
 Pages = ["noise.jl"]
 ```

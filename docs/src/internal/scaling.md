@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Scaling
 
 ```@autodocs
-Modules = [ACES]
+Modules = [QuantumACES]
 Pages = ["scaling.jl"]
 ```

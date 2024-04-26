@@ -1,8 +1,8 @@
 """
-`ACES.jl` is a Julia package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits.
+`QuantumACES.jl` is a package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits with averaged circuit eigenvalue sampling (ACES).
 It is particularly interested in characterising the noise associated with fault-tolerant gadgets in the context of topological quantum error correcting codes, such as surface code syndrome extraction circuits.
 """
-module ACES
+module QuantumACES
 
 # Imports
 using PythonCall,
@@ -219,6 +219,7 @@ include("io.jl")
 # Source: https://discourse.julialang.org/t/lsp-missing-reference-woes/98231/16
 @static if false
     include("../test/runtests.jl")
+    include("../test/aqua_tests.jl")
     include("../test/merit_tests.jl")
     include("../test/design_tests.jl")
     include("../scalable_aces/rot_optimise.jl")
@@ -228,7 +229,6 @@ include("io.jl")
     include("../scalable_aces/unrot_optimise.jl")
     include("../scalable_aces/unrot_scaling.jl")
     include("../scalable_aces/unrot_simulate.jl")
-    include("../scalable_aces/unrot_simulate_big.jl")
     include("../scalable_aces/unrot_simulate_big.jl")
 end
 

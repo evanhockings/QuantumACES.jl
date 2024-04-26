@@ -4,7 +4,7 @@ CollapsedDocStrings = true
 
 # Public API
 
-Documentation for the public API of `ACES.jl`.
+Documentation for the public API of `QuantumACES.jl`.
 
 See the Internal API section for documentation of the internal API.
 
@@ -25,7 +25,7 @@ Order = [:type]
 ## Public functions
 
 ```@autodocs
-Modules = [ACES]
+Modules = [QuantumACES]
 Order = [:function]
 Private = false
 ```
@@ -33,7 +33,7 @@ Private = false
 ## Public types
 
 ```@autodocs
-Modules = [ACES]
+Modules = [QuantumACES]
 Order = [:type]
 Private = false
 ```

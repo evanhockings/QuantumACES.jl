@@ -1,4 +1,4 @@
-name = "ACES"
+name = "QuantumACES"
 uuid = "57b1db7a-c9fc-4178-b66e-6b8364be52bb"
 authors = ["Evan Hockings"]
 version = "0.1.0"

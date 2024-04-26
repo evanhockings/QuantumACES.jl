@@ -5,6 +5,6 @@ CollapsedDocStrings = true
 # Tableau
 
 ```@autodocs
-Modules = [ACES]
+Modules = [QuantumACES]
 Pages = ["tableau.jl"]
 ```
