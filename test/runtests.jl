@@ -1,6 +1,9 @@
 using ACES, Test
 
 @testset "ACES.jl" begin
+    @testset "Aqua" begin
+        include("aqua_tests.jl")
+    end
     @testset "Design merits and gradients" begin
         include("merit_tests.jl")
     end

@@ -1,20 +1,39 @@
-# Public documentation
+```@meta
+CollapsedDocStrings = true
+```
 
-Documentation for the public interface of `ACES.jl`.
+# Public API
 
-## Index
+Documentation for the public API of `ACES.jl`.
+
+See the Internal API section for documentation of the internal API.
+
+## Function index
 
 ```@index
 Pages = ["public.md"]
+Order = [:function]
 ```
 
-## Public interface
+## Type index
 
+```@index
+Pages = ["public.md"]
+Order = [:type]
 ```
-ACES
-generate_design
-optimise_design
-simulate_aces
-calc_depolarising_planar_scaling
-calc_lognormal_planar_scaling
+
+## Public functions
+
+```@autodocs
+Modules = [ACES]
+Order = [:function]
+Private = false
+```
+
+## Public types
+
+```@autodocs
+Modules = [ACES]
+Order = [:type]
+Private = false
 ```

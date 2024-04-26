@@ -130,11 +130,16 @@ end
 
 """
     get_tuple_set_data(c::AbstractCircuit; init_scaling::Float64 = 0.2)
+    get_tuple_set_data(c::AbstractCircuit, tuple_set::Vector{Vector{Int}}; init_scaling::Float64 = 0.2)
 
-Returns the default tuple set data corresponding to the circuit `c`.
+Returns the tuple set data corresponding to the circuit `c`, with the non-repeated tuples either being the supplied `tuple_set` or the basic tuple set for `c`.
 The repeat numbers are initialised to be inversely proportional to the average noise on the gates in the layers, implicitly assuming depolarising noise, scaled by a factor `init_scaling` which is empirically helpful.
 """
-function get_tuple_set_data(c::T; init_scaling::Float64 = 0.2) where {T <: AbstractCircuit}
+function get_tuple_set_data(
+    c::T,
+    tuple_set::Vector{Vector{Int}};
+    init_scaling::Float64 = 0.2,
+) where {T <: AbstractCircuit}
     # Initialise parameters
     r_1 = c.noise_param.r_1
     r_2 = c.noise_param.r_2
@@ -199,10 +204,15 @@ function get_tuple_set_data(c::T; init_scaling::Float64 = 0.2) where {T <: Abstr
     # It seems best to have repeat tuples of order 2 repeated an odd number of times
     repeat_numbers = 2 * round.(Int, repeat_numbers / 2) .- 1
     # Generate the tuple set data
-    basic_tuple_set = get_basic_tuple_set(c)
     tuple_set_data =
-        TupleSetData(basic_tuple_set, repeat_tuple_set, repeat_numbers, repeat_indices)
-    return tuple_set_data
+        TupleSetData(tuple_set, repeat_tuple_set, repeat_numbers, repeat_indices)
+    return tuple_set_data::TupleSetData
+end
+function get_tuple_set_data(c::T; init_scaling::Float64 = 0.2) where {T <: AbstractCircuit}
+    # Generate the tuple set data
+    basic_tuple_set = get_basic_tuple_set(c)
+    tuple_set_data = get_tuple_set_data(c, basic_tuple_set; init_scaling = init_scaling)
+    return tuple_set_data::TupleSetData
 end
 
 """

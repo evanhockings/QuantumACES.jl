@@ -138,16 +138,6 @@ export
 # Function exports
 export
     # tableau.jl functions
-    hadamard!,
-    phase!,
-    cx!,
-    cz!,
-    x!,
-    z!,
-    y!,
-    row_sum!,
-    measure!,
-    reset!,
     apply!,
     make_layer,
     pad_layer,
@@ -155,6 +145,7 @@ export
     get_dep_param,
     get_log_param,
     # circuit.jl functions
+    prepare_circuit,
     get_rotated_param,
     get_unrotated_param,
     get_circuit,

@@ -7,12 +7,7 @@ parent_dir = dirname(script_dir)
 Pkg.develop(PackageSpec(; path = parent_dir))
 using Documenter, ACES
 #
-DocMeta.setdocmeta!(
-    ACES,
-    :DocTestSetup,
-    :(using ACES);
-    recursive = true,
-)
+DocMeta.setdocmeta!(ACES, :DocTestSetup, :(using ACES); recursive = true)
 
 makedocs(;
     format = Documenter.HTML(;
