@@ -3,7 +3,7 @@
 
 A tableau representation of a stabiliser state.
 
-Stabiliser circuit simulations follow `Improved simulation of stabilizer circuits` by Scott Aaronson and Daniel Gottesman.
+Stabiliser circuit simulations follow `Improved simulation of stabilizer circuits` by S. Aaronson and D. Gottesman (2004).
 
 # Fields
 

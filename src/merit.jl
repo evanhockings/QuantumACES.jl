@@ -1,37 +1,44 @@
+"""
+    Merit
+
+Merit parameters for an experimental design.
+
+# Fields
+
+  - `circuit_param::AbstractCircuitParameters`: Circuit parameters.
+  - `noise_param::AbstractNoiseParameters`: Noise parameters.
+  - `ls_type::Symbol`: Type of least squares estimator for which the merit is reported.
+  - `tuple_set::Vector{Vector{Int}}`: Set of tuples which arrange the circuit layers.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData](@ref) object that generates the tuple set.
+  - `tuple_times::Vector{Float64}`: Time taken to implement the circuit corresponding to each tuple, normalised according to the basic tuple set.
+  - `shot_weights::Vector{Float64}`: Shot weights for each tuple in the set, which add to 1.
+  - `experiment_numbers::Vector{Int}`: Number of experiments for each tuple in the set.
+  - `experiment_number::Int`: Total number of experiments.
+  - `G::Int`: Total number of gates.
+  - `N::Int`: Number of gate eigenvalues.
+  - `expectation::Float64`: Expected normalised RMS error for the gate eigenvalue estimator vector.
+  - `variance::Float64`: Normalised RMS error variance for the gate eigenvalue estimator vector.
+  - `eigenvalues::Vector{Float64}`: Eigenvalues of the gate eigenvalue estimator covariance matrix.
+  - `cond_num::Float64`: Condition number of the design matrix, the ratio of the largest and smallest singular values.
+  - `pinv_norm::Float64`: Pseudoinverse norm of the design matrix, the inverse of the smallest singular value.
+"""
 struct Merit
-    # Tuple set
-    tuple_set::Vector{Vector{Int}}
-    # Tuple set data
-    tuple_set_data::TupleSetData
-    # Code parameters
     circuit_param::AbstractCircuitParameters
-    # Noise parameters
     noise_param::AbstractNoiseParameters
-    # The total number of gates
-    G::Int
-    # The number of gate eigenvalues
-    N::Int
-    # Type of least squares estimator used
     ls_type::Symbol
-    # Expectation of the NRMSE
-    expectation::Float64
-    # Variance of the NRMSE
-    variance::Float64
-    # Eigenvalues of the gate log-eigenvalue estimator covariance matrix
-    # These allows us to calculate the distribution of the NRMSE
-    eigenvalues::Vector{Float64}
-    # Condition number of the design matrix, the ratio of the largest and smallest singular values
-    cond_num::Float64
-    # Pseudoinverse norm of the design matrix, the inverse of the smallest singular value
-    pinv_norm::Float64
-    # Time taken to implement each tuple's circuit, normalised according to the basic tuple set
+    tuple_set::Vector{Vector{Int}}
+    tuple_set_data::TupleSetData
     tuple_times::Vector{Float64}
-    # Weighting of the shots allocated to each tuple
     shot_weights::Vector{Float64}
-    # The number of experiments for each tuple in the set
     experiment_numbers::Vector{Int}
-    # The total number of experiments
     experiment_number::Int
+    G::Int
+    N::Int
+    expectation::Float64
+    variance::Float64
+    eigenvalues::Vector{Float64}
+    cond_num::Float64
+    pinv_norm::Float64
 end
 
 function Base.show(io::IO, merit::Merit)
@@ -42,8 +49,11 @@ end
 
 """
     calc_covariance(d::Design, eigenvalues::Vector{Float64}, gate_eigenvalues::Vector{Float64}; warning::Bool = true)
+    calc_covariance(d::Design, eigenvalues::Vector{Float64}; warning::Bool = true)
+    calc_covariance(d::Design; warning::Bool = true)
 
-Returns the circuit eigenvalue estimator covariance matrix. If `warning=true`, warns if `d.full_covariance` is not true that it will only generate the diagonal of the covariance matrix.
+Returns the circuit eigenvalue estimator covariance matrix for the design `d` with circuit eigenvalues `eigenvalues` and gate eigenvalues `gate_eigenvalues`.
+If `warning` is `true`, warns that if `d.full_covariance` is `false` this will only generate the diagonal of the covariance matrix.
 """
 function calc_covariance(
     d::Design,
@@ -137,24 +147,12 @@ function calc_covariance(
     end
     return covariance::SparseMatrixCSC{Float64, Int32}
 end
-
-"""
-    calc_covariance(d::Design; warning::Bool = true)
-
-Returns the circuit eigenvalue estimator covariance matrix. If `warning=true`, warns if `d.full_covariance` is not true that it will only generate the diagonal of the covariance matrix.
-"""
 function calc_covariance(d::Design, eigenvalues::Vector{Float64}; warning::Bool = true)
     # Calculate the covariance matrix
     gate_eigenvalues = d.c.gate_eigenvalues
     covariance = calc_covariance(d, eigenvalues, gate_eigenvalues; warning = warning)
     return covariance::SparseMatrixCSC{Float64, Int32}
 end
-
-"""
-    calc_covariance(d::Design; warning::Bool = true)
-
-Returns the circuit eigenvalue estimator covariance matrix. If `warning=true`, warns if `d.full_covariance` is not true that it will only generate the diagonal of the covariance matrix.
-"""
 function calc_covariance(d::Design; warning::Bool = true)
     # Generate the circuit eigenvalues
     gate_eigenvalues = d.c.gate_eigenvalues
@@ -167,7 +165,8 @@ end
 """
     calc_eigenvalues_covariance(d::Design; warning::Bool = true)
 
-Returns the circuit eigenvalues and circuit eigenvalue estimator covariance matrix. If `warning=true`, warns if `d.full_covariance` is not true that it will only generate the diagonal of the covariance matrix.
+Returns the circuit eigenvalues and circuit eigenvalue estimator covariance matrix for the design `d`.
+If `warning` is `true`, warns that if `d.full_covariance` is `false` this will only generate the diagonal of the covariance matrix.
 """
 function calc_eigenvalues_covariance(d::Design; warning::Bool = true)
     # Generate the circuit eigenvalues
@@ -181,7 +180,8 @@ end
 """
     calc_covariance_log(d::Design; warning::Bool = true)
 
-Returns the covariance matrix of the circuit log-eigenvalues. If `warning=true`, warns if `d.full_covariance` is not true that it will only generate the diagonal of the covariance matrix.
+Returns the covariance matrix of the circuit log-eigenvalues for the design `d`.
+If `warning` is `true`, warns that if `d.full_covariance` is `false` this will only generate the diagonal of the covariance matrix.
 """
 function calc_covariance_log(d::Design; warning::Bool = true)
     # Generate the circuit eigenvalues and covariance matrix
@@ -195,7 +195,11 @@ function calc_covariance_log(d::Design; warning::Bool = true)
     return covariance_log::SparseMatrixCSC{Float64, Int}
 end
 
-#
+"""
+    sparse_covariance_inv(covariance_log::SparseMatrixCSC{Float64, Int}, mapping_lengths::Vector{Int})
+
+Returns the inverse of the sparse block diagonal circuit log-eigenvalue estimator covariance matrix `covariance_log`, where the block sizes are specified by `mapping_lengths`.
+"""
 function sparse_covariance_inv(
     covariance_log::SparseMatrixCSC{Float64, Int},
     mapping_lengths::Vector{Int},
@@ -222,6 +226,8 @@ end
 
 """
     calc_gls_covariance(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
+
+Returns the gate eigenvalue estimator covariance matrix for the generalised least squares (GLS) estimator corresponding to the design `d` with circuit log-eigenvalue estimator covariance matrix `covariance_log`.
 """
 function calc_gls_covariance(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
     # Calculate the inverse of the covariance matrix of the circuit log-eigenvalues
@@ -240,6 +246,8 @@ end
 
 """
     calc_wls_covariance(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
+
+Returns the gate eigenvalue estimator covariance matrix for the weighted least squares (WLS) estimator corresponding to the design `d` with circuit log-eigenvalue estimator covariance matrix `covariance_log`.
 """
 function calc_wls_covariance(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
     # Calculate the WLS estimator
@@ -263,6 +271,8 @@ end
 
 """
     calc_ols_covariance(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
+
+Returns the gate eigenvalue estimator covariance matrix for the ordinary least squares (OLS) estimator corresponding to the design `d` with circuit log-eigenvalue estimator covariance matrix `covariance_log`.
 """
 function calc_ols_covariance(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
     # Calculate the OLS estimator
@@ -280,7 +290,11 @@ function calc_ols_covariance(d::Design, covariance_log::SparseMatrixCSC{Float64,
     return ols_gate_eigenvalues_cov::Symmetric{Float64, Matrix{Float64}}
 end
 
-# 
+"""
+    calc_ls_covariance(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}, ls_type::Symbol)
+
+Returns the gate eigenvalue estimator covariance matrix for the least squares estimator specified by `ls_type` (`:gls`, `:wls`, or `:ols`) corresponding to the design `d` with circuit log-eigenvalue estimator covariance matrix `covariance_log`.
+"""
 function calc_ls_covariance(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int},
@@ -298,7 +312,11 @@ function calc_ls_covariance(
     return gate_eigenvalues_cov::Symmetric{Float64, Matrix{Float64}}
 end
 
-# 
+"""
+    nrmse_moments(cov_eigenvalues::Vector{Float64})
+
+Returns the expectation and variance of the normalised RMS error, as determined by the eigenvalues `cov_eigenvalues` of the gate eigenvalue estimator covariance matrix.
+"""
 function nrmse_moments(cov_eigenvalues::Vector{Float64})
     # Calculate the trace of the gate eigenvalue estimator covariance matrix, and its square
     sigma_tr = sum(cov_eigenvalues)
@@ -310,7 +328,11 @@ function nrmse_moments(cov_eigenvalues::Vector{Float64})
     return (expectation::Float64, variance::Float64)
 end
 
-# 
+"""
+    calc_gls_moments(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
+
+Returns the expectation and variance of the normalised RMS error for the generalised least squares (GLS) estimator corresponding to the design `d` with circuit log-eigenvalue estimator covariance matrix `covariance_log`.
+"""
 function calc_gls_moments(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
     # Calculate the GLS moments from the GLS gate eigenvalue estimator covariance matrix
     (gls_expectation, gls_variance) =
@@ -318,7 +340,11 @@ function calc_gls_moments(d::Design, covariance_log::SparseMatrixCSC{Float64, In
     return (gls_expectation::Float64, gls_variance::Float64)
 end
 
-# 
+"""
+    calc_wls_moments(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
+
+Returns the expectation and variance of the normalised RMS error for the weighted least squares (WLS) estimator corresponding to the design `d` with circuit log-eigenvalue estimator covariance matrix `covariance_log`.
+"""
 function calc_wls_moments(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
     # Calculate the WLS moments from the WLS gate eigenvalue estimator covariance matrix
     (wls_expectation, wls_variance) =
@@ -326,7 +352,11 @@ function calc_wls_moments(d::Design, covariance_log::SparseMatrixCSC{Float64, In
     return (wls_expectation::Float64, wls_variance::Float64)
 end
 
-# 
+"""
+    calc_ols_moments(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
+
+Returns the expectation and variance of the normalised RMS error for the ordinary least squares (OLS) estimator corresponding to the design `d` with circuit log-eigenvalue estimator covariance matrix `covariance_log`.
+"""
 function calc_ols_moments(d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
     # Calculate the OLS moments from the OLS gate eigenvalue estimator covariance matrix
     (ols_expectation, ols_variance) =
@@ -334,7 +364,11 @@ function calc_ols_moments(d::Design, covariance_log::SparseMatrixCSC{Float64, In
     return (ols_expectation::Float64, ols_variance::Float64)
 end
 
-# 
+"""
+    calc_ls_moments(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}, ls_type::Symbol)
+
+Returns the expectation and variance of the normalised RMS error for the least squares estimator specified by `ls_type` (`:gls`, `:wls`, or `:ols`) corresponding to the design `d` with circuit log-eigenvalue estimator covariance matrix `covariance_log`.
+"""
 function calc_ls_moments(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int},
@@ -352,7 +386,11 @@ function calc_ls_moments(
     return (expectation::Float64, variance::Float64)
 end
 
-# 
+"""
+    calc_gls_merit(d::Design)
+
+Returns the [`Merit`](@ref) object for the generalised least squares (GLS) estimator corresponding to the design `d`.
+"""
 function calc_gls_merit(d::Design)
     # Calculate the circuit log-eigenvalue covariance matrix and the gate eigenvalues
     covariance_log = calc_covariance_log(d)
@@ -375,27 +413,31 @@ function calc_gls_merit(d::Design)
     gls_cov_eigenvalues = eigvals(calc_gls_covariance(d, covariance_log))
     (gls_expectation, gls_variance) = nrmse_moments(gls_cov_eigenvalues)
     gls_merit = Merit(
-        d.tuple_set,
-        d.tuple_set_data,
         d.c.circuit_param,
         d.c.noise_param,
+        :gls,
+        d.tuple_set,
+        d.tuple_set_data,
+        d.tuple_times,
+        d.shot_weights,
+        d.experiment_numbers,
+        d.experiment_number,
         length(d.c.total_gates),
         d.c.N,
-        :gls,
         gls_expectation,
         gls_variance,
         gls_cov_eigenvalues,
         design_matrix_cond_num,
         design_matrix_pinv_norm,
-        d.tuple_times,
-        d.shot_weights,
-        d.experiment_numbers,
-        d.experiment_number,
     )
     return gls_merit::Merit
 end
 
-# 
+"""
+    calc_wls_merit(d::Design)
+
+Returns the [`Merit`](@ref) object for the weighted least squares (WLS) estimator corresponding to the design `d`.
+"""
 function calc_wls_merit(d::Design)
     # Calculate the circuit log-eigenvalue covariance matrix and the gate eigenvalues
     covariance_log = calc_covariance_log(d)
@@ -418,27 +460,31 @@ function calc_wls_merit(d::Design)
     wls_cov_eigenvalues = eigvals(calc_wls_covariance(d, covariance_log))
     (wls_expectation, wls_variance) = nrmse_moments(wls_cov_eigenvalues)
     wls_merit = Merit(
-        d.tuple_set,
-        d.tuple_set_data,
         d.c.circuit_param,
         d.c.noise_param,
+        :wls,
+        d.tuple_set,
+        d.tuple_set_data,
+        d.tuple_times,
+        d.shot_weights,
+        d.experiment_numbers,
+        d.experiment_number,
         length(d.c.total_gates),
         d.c.N,
-        :wls,
         wls_expectation,
         wls_variance,
         wls_cov_eigenvalues,
         design_matrix_cond_num,
         design_matrix_pinv_norm,
-        d.tuple_times,
-        d.shot_weights,
-        d.experiment_numbers,
-        d.experiment_number,
     )
     return wls_merit::Merit
 end
 
-# 
+"""
+    calc_ols_merit(d::Design)
+
+Returns the [`Merit`](@ref) object for the ordinary least squares (OLS) estimator corresponding to the design `d`.
+"""
 function calc_ols_merit(d::Design)
     # Calculate the circuit log-eigenvalue covariance matrix and the gate eigenvalues
     covariance_log = calc_covariance_log(d)
@@ -461,27 +507,31 @@ function calc_ols_merit(d::Design)
     ols_cov_eigenvalues = eigvals(calc_ols_covariance(d, covariance_log))
     (ols_expectation, ols_variance) = nrmse_moments(ols_cov_eigenvalues)
     ols_merit = Merit(
-        d.tuple_set,
-        d.tuple_set_data,
         d.c.circuit_param,
         d.c.noise_param,
+        :ols,
+        d.tuple_set,
+        d.tuple_set_data,
+        d.tuple_times,
+        d.shot_weights,
+        d.experiment_numbers,
+        d.experiment_number,
         length(d.c.total_gates),
         d.c.N,
-        :ols,
         ols_expectation,
         ols_variance,
         ols_cov_eigenvalues,
         design_matrix_cond_num,
         design_matrix_pinv_norm,
-        d.tuple_times,
-        d.shot_weights,
-        d.experiment_numbers,
-        d.experiment_number,
     )
     return ols_merit::Merit
 end
 
-# 
+"""
+    calc_ls_merit(d::Design, ls_type::Symbol)
+
+Returns the [`Merit`](@ref) object for the least squares estimator specified by `ls_type` (`:gls`, `:wls`, or `:ols`) corresponding to the design `d`.
+"""
 function calc_ls_merit(d::Design, ls_type::Symbol)
     if ls_type == :gls
         merit = calc_gls_merit(d)
@@ -495,7 +545,11 @@ function calc_ls_merit(d::Design, ls_type::Symbol)
     return merit::Merit
 end
 
-# 
+"""
+    calc_ls_merit(d::Design, ls_type::Symbol)
+
+Returns [`Merit`](@ref) objects for all three least squares estimators (generalised, weighted, and ordinary least squares) corresponding to the design `d`.
+"""
 function calc_merit_set(d::Design)
     # Calculate the circuit log-eigenvalue covariance matrix and the gate eigenvalues
     covariance_log = calc_covariance_log(d)
@@ -518,71 +572,76 @@ function calc_merit_set(d::Design)
     gls_cov_eigenvalues = eigvals(calc_gls_covariance(d, covariance_log))
     (gls_expectation, gls_variance) = nrmse_moments(gls_cov_eigenvalues)
     gls_merit = Merit(
-        d.tuple_set,
-        d.tuple_set_data,
         d.c.circuit_param,
         d.c.noise_param,
+        :gls,
+        d.tuple_set,
+        d.tuple_set_data,
+        d.tuple_times,
+        d.shot_weights,
+        d.experiment_numbers,
+        d.experiment_number,
         length(d.c.total_gates),
         d.c.N,
-        :gls,
         gls_expectation,
         gls_variance,
         gls_cov_eigenvalues,
         design_matrix_cond_num,
         design_matrix_pinv_norm,
-        d.tuple_times,
-        d.shot_weights,
-        d.experiment_numbers,
-        d.experiment_number,
     )
     # Calculate the WLS merit from the WLS gate eigenvalue estimator covariance matrix
     wls_cov_eigenvalues = eigvals(calc_wls_covariance(d, covariance_log))
     (wls_expectation, wls_variance) = nrmse_moments(wls_cov_eigenvalues)
     wls_merit = Merit(
-        d.tuple_set,
-        d.tuple_set_data,
         d.c.circuit_param,
         d.c.noise_param,
+        :wls,
+        d.tuple_set,
+        d.tuple_set_data,
+        d.tuple_times,
+        d.shot_weights,
+        d.experiment_numbers,
+        d.experiment_number,
         length(d.c.total_gates),
         d.c.N,
-        :wls,
         wls_expectation,
         wls_variance,
         wls_cov_eigenvalues,
         design_matrix_cond_num,
         design_matrix_pinv_norm,
-        d.tuple_times,
-        d.shot_weights,
-        d.experiment_numbers,
-        d.experiment_number,
     )
     # Calculate the OLS merit from the OLS gate eigenvalue estimator covariance matrix
     ols_cov_eigenvalues = eigvals(calc_ols_covariance(d, covariance_log))
     (ols_expectation, ols_variance) = nrmse_moments(ols_cov_eigenvalues)
     ols_merit = Merit(
-        d.tuple_set,
-        d.tuple_set_data,
         d.c.circuit_param,
         d.c.noise_param,
+        :ols,
+        d.tuple_set,
+        d.tuple_set_data,
+        d.tuple_times,
+        d.shot_weights,
+        d.experiment_numbers,
+        d.experiment_number,
         length(d.c.total_gates),
         d.c.N,
-        :ols,
         ols_expectation,
         ols_variance,
         ols_cov_eigenvalues,
         design_matrix_cond_num,
         design_matrix_pinv_norm,
-        d.tuple_times,
-        d.shot_weights,
-        d.experiment_numbers,
-        d.experiment_number,
     )
     return (gls_merit::Merit, wls_merit::Merit, ols_merit::Merit)
 end
 
-# 
+"""
+    nrmse_pdf_integrand(u::Float64, x::Float64, norm_cov_eigenvalues::Vector{Float64})
+
+Returns the integrand of the Imhof method CDF for the distribution of the NRMSE.
+
+Calculation follows Eq. 3.2 of `Computing the distribution of quadratic forms in normal variables` by J. P. Imhof (1961).
+"""
 function nrmse_pdf_integrand(u::Float64, x::Float64, norm_cov_eigenvalues::Vector{Float64})
-    # Integrand of Imhof's method CDF following Eq. 3.2 of `Computing the Distribution of Quadratic Forms in Normal Variables` by J. P. Imhof (1961)
     # Both theta and rho have been simplified as, with reference to Eq. 1.1 we see that h and delta are 1 and 0, respectively
     theta = sum(atan(eigenvalue * u) for eigenvalue in norm_cov_eigenvalues) / 2 - x * u / 2
     rho = prod((1 + (eigenvalue * u)^2) for eigenvalue in norm_cov_eigenvalues)^(1 / 4)
@@ -590,10 +649,17 @@ function nrmse_pdf_integrand(u::Float64, x::Float64, norm_cov_eigenvalues::Vecto
     return integrand::Float64
 end
 
-# 
+"""
+    nrmse_pdf(cov_eigenvalues::Vector{Float64}, x_values::Vector{Float64}; epsilon::Float64 = 1e-5)
+
+Returns the probability density function (PDF) for the normalised RMS error (NRMSE) of the gate eigenvalue estimator vector, which follows a generalised chi-squared distribution and whose covariance matrix has eigenvalues `cov_eigenvalues`, at the coordinates specified by `x_values`.
+Does not calculate values when the normal approximation to the PDF is less than a factor of `epsilon` of its maximum value.
+
+Calculation follows Eq. 3.2 of `Computing the distribution of quadratic forms in normal variables` by J. P. Imhof (1961).
+"""
 function nrmse_pdf(
     cov_eigenvalues::Vector{Float64},
-    x_values::Vector{Float64},
+    x_values::Vector{Float64};
     epsilon::Float64 = 1e-5,
 )
     # Normalise the gate eigenvalue estimator covariance matrix eigenvalues
@@ -607,7 +673,6 @@ function nrmse_pdf(
         exp.(-(x_values .- expectation) .^ 2 / (2 * variance))
     nrmse_pdf_normal_max = maximum(nrmse_pdf_normal)
     # Perform Imhof's method to calculate the PDF
-    # Imhof's method CDF following Eq. 3.2 of `Computing the Distribution of Quadratic Forms in Normal Variables` by J. P. Imhof (1961)
     function imhof_cdf(x)
         return 0.5 -
                quadgk(u -> nrmse_pdf_integrand(u, x, norm_cov_eigenvalues), 0, Inf)[1] / π

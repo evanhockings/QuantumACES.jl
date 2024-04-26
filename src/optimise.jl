@@ -1,4 +1,9 @@
-#
+"""
+    optimal_expectation(tuple_set_data::TupleSetData, expectation_dict::Dict{Vector{Int}, Float64}, c::AbstractCircuit; options::OptimOptions = OptimOptions())
+
+Returns the optimised figure of merit, and a dictionary of stored values, for the circuit `c` with tuple set data `tuple_set_data`, with optimised shot weights.
+The optimisation is parameterised by the [`OptimOptions`](@ref) object `options`.
+"""
 function optimal_expectation(
     tuple_set_data::TupleSetData,
     expectation_dict::Dict{Vector{Int}, Float64},
@@ -27,6 +32,12 @@ function optimal_expectation(
     return (expectation::Float64, expectation_dict::Dict{Vector{Int}, Float64})
 end
 
+"""
+    step_repetitions(tuple_set_data::TupleSetData, expectation_dict::Dict{Vector{Int}, Float64}, step_tracker::Vector{Int}, coordinate_idx::Int, c::AbstractCircuit; options::OptimOptions = OptimOptions())
+
+Returns the tuple set data, a dictionary of stored figure of merit, and the step tracker after stepping the repetition number for the tuple set data `tuple_set_data` at the index `coordinate_idx` for the circuit `c`.
+The optimisation is parameterised by the [`OptimOptions`](@ref) object `options`.
+"""
 function step_repetitions(
     tuple_set_data::TupleSetData,
     expectation_dict::Dict{Vector{Int}, Float64},
@@ -105,6 +116,12 @@ function step_repetitions(
     )
 end
 
+"""
+    optimise_repetitions(c::AbstractCircuit, tuple_set_data::TupleSetData; options::OptimOptions = OptimOptions())
+
+Returns the tuple set data after optimising the repetition numbers in the supplied tuple set data `tuple_set_data` for the circuit `c`.
+The optimisation is parameterised by the [`OptimOptions`](@ref) object `options`.
+"""
 function optimise_repetitions(
     c::T,
     tuple_set_data::TupleSetData;
@@ -180,7 +197,7 @@ end
 """
     sample_zipf(N::Int, s::Float64)
 
-Sample from a generalised Zipf distribution supported on 1 to N with parameter s.
+Returns a sample from a generalised Zipf distribution supported on 1 to `N` parameterised by the power `s`.
 """
 function sample_zipf(N::Int, s::Float64)
     # Generate the (unnormalised) Zipf PMF
@@ -191,7 +208,11 @@ function sample_zipf(N::Int, s::Float64)
     return zipf_sample::Int
 end
 
-#
+"""
+    tuple_append!(circuit_tuple::Vector{Int}, tuple_length::Int, s::Float64, unique_indices::Vector{Int})
+
+Appends a random index from `unique_indices` to the tuple `circuit_tuple`, repeated a number of times determined by a Zipf distribution on 1 to `tuple_length` with power `s`.
+"""
 function tuple_append!(
     circuit_tuple::Vector{Int},
     tuple_length::Int,
@@ -206,7 +227,12 @@ function tuple_append!(
     return nothing
 end
 
-#
+"""
+    tuple_append!(circuit_tuple::Vector{Int}, tuple_length::Int, s::Float64, unique_indices::Vector{Int}, two_qubit_indices::Vector{Int}, other_indices::Vector{Int})
+
+Appends a random index from `unique_indices` to the tuple `circuit_tuple`, repeated a number of times determined by a Zipf distribution on 1 to `tuple_length` with power `s`.
+Ensures that two-qubit layers, whose indices are given by `two_qubit_indices`, are always followed by other layers in the tuple, whose indices are given by `other_indices`.
+"""
 function tuple_append!(
     circuit_tuple::Vector{Int},
     tuple_length::Int,
@@ -236,9 +262,12 @@ function tuple_append!(
 end
 
 """
-    random_tuple(c::T, tuple_length::Int, s::Float64, mirror::Bool)
+    random_tuple(c::AbstractCircuit, tuple_length::Int, s::Float64, mirror::Bool)
 
-Generates a random tuple, or arrangement with repetition, for the `unique_layer_indices` of a circuit whose length is `tuple_length`. Adds random layers to the tuple, with the number of copies following a generalised Zipf distribution; when the parameter `s` is `Inf`, this only adds one copy, and 2 is another common choice. If `mirror`, mirrors the first `floor((tuple_length - 1) / 2)` layers of the circuit.
+Returns a random tuple for the circuit `c` with length `tuple_length`.
+The generation is parameterised by the Zipf power `s` and the tuple is mirrored if `mirror` is `true`.
+Adds random indices to the tuple, repeated a number of times following a generalised Zipf distribution.
+For dynamically decoupled circuits, this function ensures that two-qubit gate layers are always followed by some other layer in the tuple.
 """
 function random_tuple(
     c::T,
@@ -330,7 +359,11 @@ function random_tuple(
     return circuit_tuple::Vector{Int}
 end
 
-#
+"""
+    grow_design(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}, circuit_tuple::Vector{Int})
+
+Returns versions of the design `d` and circuit log-eigenvalue estimator covariance matrix `covariance_log` after adding the tuple `circuit_tuple` to the tuple set of the design.
+"""
 function grow_design(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int},
@@ -436,7 +469,12 @@ function grow_design(
     return (d_grow::Design, covariance_log_grow::SparseMatrixCSC{Float64, Int})
 end
 
-#
+"""
+    prune_design(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}, prune_idx::Int; update_weights::Bool = true)
+
+Returns versions of the design `d` and circuit log-eigenvalue estimator covariance matrix `covariance_log` after removing the tuple at index `prune_idx` from the tuple set of the design.
+If `update_weights` is `false`, do not update the shot weight factor for the covariance matrix.
+"""
 function prune_design(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int},
@@ -520,6 +558,9 @@ end
 
 """
     grow_design_excursion(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; options::OptimOptions = OptimOptions())
+
+Returns versions of the design `d` and circuit log-eigenvalue estimator covariance matrix `covariance_log` after optimising the tuple set of the design with an excursion that grows the tuple set.
+The optimisation is parameterised by the [`OptimOptions`](@ref) object `options`.
 """
 function grow_design_excursion(
     d::Design,
@@ -610,7 +651,12 @@ function grow_design_excursion(
     return (d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
 end
 
-#
+"""
+    prune_design_excursion(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; options::OptimOptions = OptimOptions())
+
+Returns versions of the design `d` and circuit log-eigenvalue estimator covariance matrix `covariance_log` after optimising the tuple set of the design with an excursion that prunes the tuple set.
+The optimisation is parameterised by the [`OptimOptions`](@ref) object `options`.
+"""
 function prune_design_excursion(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int};
@@ -667,7 +713,12 @@ function prune_design_excursion(
     return (d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
 end
 
-#
+"""
+    optimise_tuple_set(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; options::OptimOptions = OptimOptions())
+
+Returns versions of the design `d` and circuit log-eigenvalue estimator covariance matrix `covariance_log` after optimising the tuple set of the design with repeated excursions that grow and prune the tuple set.
+The optimisation is parameterised by the [`OptimOptions`](@ref) object `options`.
+"""
 function optimise_tuple_set(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int};
@@ -724,6 +775,13 @@ function optimise_tuple_set(
     return (d::Design, covariance_log::SparseMatrixCSC{Float64, Int})
 end
 
+"""
+    optimise_design(c::AbstractCircuit; options::OptimOptions = OptimOptions())
+    optimise_design(c::AbstractCircuit, tuple_set_data::TupleSetData; options::OptimOptions = OptimOptions())
+
+Returns an optimised experimental design for the circuit `c` initialised with the tuple set data `tuple_set_data`.
+The optimisation is parameterised by the [`OptimOptions`](@ref) object `options`.
+"""
 function optimise_design(
     c::T,
     tuple_set_data::TupleSetData;
@@ -771,8 +829,6 @@ function optimise_design(
     end
     return d::Design
 end
-
-#
 function optimise_design(
     c::T;
     options::OptimOptions = OptimOptions(),

@@ -404,7 +404,7 @@ end
 
 Returns a [`RotatedPlanarParameters`](@ref) object that parameterises the syndrome extraction circuit of a rotated surface code.
 
-Default gate layer times are estimated from `Suppressing quantum errors by scaling a surface code logical qubit` by Google Quantum AI.
+Default gate layer times are estimated from `Suppressing quantum errors by scaling a surface code logical qubit` by Google Quantum AI (2023).
 
 # Arguments
 

@@ -1,4 +1,8 @@
-#
+"""
+    get_shot_weights_factor(shot_weights::Vector{Float64}, tuple_times::Vector{Float64}, mapping_lengths::Vector{Int})
+
+Returns the shot weights factor for the sparse block diagonal circuit (log-)eigenvalue estimator covariance matrix for the shot weights `shot_weights` and tuple times `tuple_times`, where the block sizes are specified by `mapping_lengths`.
+"""
 function get_shot_weights_factor(
     shot_weights::Vector{Float64},
     tuple_times::Vector{Float64},
@@ -22,7 +26,11 @@ function get_shot_weights_factor(
     return shot_weights_factor::Diagonal{Float64, Vector{Float64}}
 end
 
-#
+"""
+    get_shot_weights_factor_inv(shot_weights::Vector{Float64}, tuple_times::Vector{Float64}, mapping_lengths::Vector{Int})
+
+Returns the shot weights inverse factor for the sparse block diagonal circuit (log-)eigenvalue estimator covariance matrix for the shot weights `shot_weights` and tuple times `tuple_times`, where the block sizes are specified by `mapping_lengths`.
+"""
 function get_shot_weights_factor_inv(
     shot_weights::Vector{Float64},
     tuple_times::Vector{Float64},
@@ -45,7 +53,11 @@ function get_shot_weights_factor_inv(
     return shot_weights_factor_inv::Diagonal{Float64, Vector{Float64}}
 end
 
-#
+"""
+    get_shot_weights_local_grad(shot_weights::Vector{Float64}, tuple_times::Vector{Float64})
+
+Returns the local gradient factor corresponding to each tuple's block in the covariance matrix, at shot weights `shot_weights` and tuple times `tuple_times`.
+"""
 function get_shot_weights_local_grad(
     shot_weights::Vector{Float64},
     tuple_times::Vector{Float64},
@@ -56,7 +68,11 @@ function get_shot_weights_local_grad(
     return shot_weights_local_grad::Vector{Float64}
 end
 
-#
+"""
+    get_merit_grad(sigma_tr::Float64, sigma_tr_grad::Vector{Float64}, sigma_sq_tr::Float64, sigma_sq_tr_grad::Vector{Float64}, N::Int)
+
+Returns the gradient of the figure of merit with respect to the shot weights given the trace of the gate eigenvalue estimator covariance matrix `sigma_tr` and its square `sigma_sq_tr`, the gradient with respect to the shot weights `sigma_tr_grad` and the gradient of the square `sigma_sq_tr_grad`, and the number of gate eigenvalues `N`.
+"""
 function get_merit_grad(
     sigma_tr::Float64,
     sigma_tr_grad::Vector{Float64},
@@ -74,13 +90,21 @@ function get_merit_grad(
     return merit_grad::Vector{Float64}
 end
 
+"""
+    get_shot_weights_log_matrix(shot_weights::Vector{Float64})
+
+Returns the matrix that transforms the gradient of the figure of merit with respect to the shot weights `shot_weights` into the gradient of the figure of merit with respect to the logarithms of the shot weights.
+"""
 function get_shot_weights_log_matrix(shot_weights::Vector{Float64})
-    # Matrix transforms the shot weight gradients to gradients of the shot weight logarithms
     shot_weights_log_matrix = shot_weights * shot_weights' - Diagonal(shot_weights)
     return shot_weights_log_matrix::Matrix{Float64}
 end
 
-#
+"""
+    calc_gls_merit_grad_log(d::Design, shot_weights::Vector{Float64}, covariance_log_unweighted_inv::SparseMatrixCSC{Float64, Int})
+
+Returns the gradient of the generalised least squares (GLS) figure of merit for the design `d` with respect to the logarithms of the shot weights `shot_weights`, using the inverse of the unweighted (by the shot weights factor) covariance matrix of the circuit log-eigenvalue estimator `covariance_log_unweighted_inv`.
+"""
 function calc_gls_merit_grad_log(
     d::Design,
     shot_weights::Vector{Float64},
@@ -130,7 +154,12 @@ function calc_gls_merit_grad_log(
     return (merit_grad_log::Vector{Float64}, merit::Float64)
 end
 
-#
+"""
+    gls_optimise_weights(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; options::OptimOptions = OptimOptions())
+
+Returns versions of the design `d` and circuit log-eigenvalue estimator covariance matrix `covariance_log` after optimising the shot weights with respect to the generalised least squares (GLS) figure of merit, alongside the figure of merit values at each step.
+The optimisation is parameterised by the [`OptimOptions`](@ref) object `options`.
+"""
 function gls_optimise_weights(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int};
@@ -307,7 +336,11 @@ function gls_optimise_weights(
     )
 end
 
-# 
+"""
+    calc_wls_merit_grad_log(d::Design, shot_weights::Vector{Float64}, covariance_log_unweighted::SparseMatrixCSC{Float64, Int})
+
+Returns the gradient of the weighted least squares (WLS) figure of merit for the design `d` with respect to the logarithms of the shot weights `shot_weights`, using the unweighted (by the shot weights factor) covariance matrix of the circuit log-eigenvalue estimator `covariance_log_unweighted`.
+"""
 function calc_wls_merit_grad_log(
     d::Design,
     shot_weights::Vector{Float64},
@@ -370,7 +403,12 @@ function calc_wls_merit_grad_log(
     return (merit_grad_log::Vector{Float64}, merit::Float64)
 end
 
-#
+"""
+    wls_optimise_weights(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; options::OptimOptions = OptimOptions())
+
+Returns versions of the design `d` and circuit log-eigenvalue estimator covariance matrix `covariance_log` after optimising the shot weights with respect to the weighted least squares (WLS) figure of merit, alongside the figure of merit values at each step.
+The optimisation is parameterised by the [`OptimOptions`](@ref) object `options`.
+"""
 function wls_optimise_weights(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int};
@@ -540,7 +578,11 @@ function wls_optimise_weights(
     )
 end
 
-#
+"""
+    calc_ols_merit_grad_log(d::Design, shot_weights::Vector{Float64}, ols_estimator::Matrix{Float64}, ols_estimator_covariance::Matrix{Float64}, ols_gram_covariance::Matrix{Float64})
+
+Returns the gradient of the ordinary least squares (OLS) figure of merit for the design `d` with respect to the logarithms of the shot weights `shot_weights`, using the OLS estimator matrix `ols_estimator`, scaled by the unweighted covariance matrix in `ols_estimator_covariance`, and the OLS Gram matrix also scaled by the unweighted covariance matrix in `ols_gram_covariance`.
+"""
 function calc_ols_merit_grad_log(
     d::Design,
     shot_weights::Vector{Float64},
@@ -584,7 +626,12 @@ function calc_ols_merit_grad_log(
     return (merit_grad_log::Vector{Float64}, merit::Float64)
 end
 
-#
+"""
+    ols_optimise_weights(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; options::OptimOptions = OptimOptions())
+
+Returns versions of the design `d` and circuit log-eigenvalue estimator covariance matrix `covariance_log` after optimising the shot weights with respect to the ordinary least squares (OLS) figure of merit, alongside the figure of merit values at each step.
+The optimisation is parameterised by the [`OptimOptions`](@ref) object `options`.
+"""
 function ols_optimise_weights(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int};
@@ -773,7 +820,12 @@ function ols_optimise_weights(
     )
 end
 
-#
+"""
+    optimise_weights(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; options::OptimOptions = OptimOptions())
+
+Returns versions of the design `d` and circuit log-eigenvalue estimator covariance matrix `covariance_log` after optimising the shot weights with respect to the figure of merit, alongside the figure of merit values at each step.
+The optimisation is parameterised by the [`OptimOptions`](@ref) object `options`, which in particular specifies the least squares estimator type for which the figure of merit is calculated.
+"""
 function optimise_weights(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int};
@@ -804,7 +856,12 @@ function optimise_weights(
     )
 end
 
-#
+"""
+    compare_ls_optimise_weights(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; gls_options::OptimOptions = OptimOptions(; ls_type = :gls), wls_options::OptimOptions = OptimOptions(; ls_type = :wls), ols_options::OptimOptions = OptimOptions(; ls_type = :ols))
+
+Returns versions of the design `d` and circuit log-eigenvalue estimator covariance matrix `covariance_log` after optimising the shot weights with respect to the figure of merit, alongside the figure of merit values at each step and the final merits, for all three least squares estimator types.
+The optimisation for each is parameterised by the [`OptimOptions`](@ref) objects `gls_options`, `wls_options`, and `ols_options`, respectively.
+"""
 function compare_ls_optimise_weights(
     d::Design,
     covariance_log::SparseMatrixCSC{Float64, Int};
