@@ -60,12 +60,12 @@ test_param_3 = get_unrotated_param(
 test_code_3 = get_circuit(test_param_3, dep_param)
 # Set up gradient descent parameters
 max_steps = 10
-rot_covariance_log = QuantumACES.calc_covariance_log(d_rot)
+rot_covariance_log = calc_covariance_log(d_rot)
 N_rot = rotated_planar.N
 C_rot = length(d_rot.tuple_set)
 rot_mapping_lengths = length.(d_rot.mapping_ensemble)
 rot_gate_eigenvalues_diag = Diagonal(d_rot.c.gate_eigenvalues)
-unrot_covariance_log = QuantumACES.calc_covariance_log(d_unrot)
+unrot_covariance_log = calc_covariance_log(d_unrot)
 N_unrot = unrotated_planar.N
 C_unrot = length(d_unrot.tuple_set)
 unrot_mapping_lengths = length.(d_unrot.mapping_ensemble)
@@ -90,7 +90,7 @@ unrot_gate_eigenvalues_diag = Diagonal(d_unrot.c.gate_eigenvalues)
     @test rot_gls_opt_merit.expectation ≈ rot_gls_opt_expectation
     @test rot_gls_opt_merit.variance ≈ rot_gls_opt_variance
     # Check that gradient descent improved the figure of merit
-    rot_gls_unopt_expectation = QuantumACES.calc_gls_moments(d_rot, rot_covariance_log)[1]
+    rot_gls_unopt_expectation = calc_gls_moments(d_rot, rot_covariance_log)[1]
     @test rot_gls_opt_expectation < rot_gls_unopt_expectation
     # Test the GLS gradient
     gls_1 = time()
@@ -180,7 +180,7 @@ end
     @test rot_wls_opt_merit.expectation ≈ rot_wls_opt_expectation
     @test rot_wls_opt_merit.variance ≈ rot_wls_opt_variance
     # Check that gradient descent improved the figure of merit
-    rot_wls_unopt_expectation = QuantumACES.calc_wls_moments(d_rot, rot_covariance_log)[1]
+    rot_wls_unopt_expectation = calc_wls_moments(d_rot, rot_covariance_log)[1]
     @test rot_wls_opt_expectation < rot_wls_unopt_expectation
     # Test the WLS gradient
     wls_1 = time()
@@ -269,8 +269,7 @@ end
     @test unrot_ols_opt_merit.expectation ≈ unrot_ols_opt_expectation
     @test unrot_ols_opt_merit.variance ≈ unrot_ols_opt_variance
     # Check that gradient descent improved the figure of merit
-    unrot_ols_unopt_expectation =
-        QuantumACES.calc_ols_moments(d_unrot, unrot_covariance_log)[1]
+    unrot_ols_unopt_expectation = calc_ols_moments(d_unrot, unrot_covariance_log)[1]
     @test unrot_ols_opt_expectation < unrot_ols_unopt_expectation
     # Test the OLS gradient
     ols_1 = time()
@@ -375,7 +374,7 @@ end
 @testset "Growing and pruning designs" begin
     # Generate the design
     d_rot_basic = generate_design(rotated_planar, rot_basic)
-    rot_covariance_log_basic = QuantumACES.calc_covariance_log(d_rot_basic)
+    rot_covariance_log_basic = calc_covariance_log(d_rot_basic)
     # Grow the design
     (d_rot_grow, rot_covariance_log_grow) = QuantumACES.grow_design(
         d_rot_basic,
@@ -385,7 +384,7 @@ end
     # Test that the grown design and covariance matrix are correct
     rot_grow = [rot_basic; [rotated_planar.circuit_tuple]]
     d_rot_grow_test = generate_design(rotated_planar, rot_grow)
-    rot_covariance_log_test = QuantumACES.calc_covariance_log(d_rot_grow)
+    rot_covariance_log_test = calc_covariance_log(d_rot_grow)
     @test d_rot_grow.c == d_rot_grow_test.c
     @test d_rot_grow.full_covariance == d_rot_grow_test.full_covariance
     @test d_rot_grow.matrix == d_rot_grow_test.matrix

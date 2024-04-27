@@ -158,6 +158,11 @@ export
     complete_design,
     update_noise,
     # merit.jl functions
+    calc_covariance_log,
+    calc_gls_moments,
+    calc_wls_moments,
+    calc_ols_moments,
+    calc_ls_moments,
     calc_gls_merit,
     calc_wls_merit,
     calc_ols_merit,

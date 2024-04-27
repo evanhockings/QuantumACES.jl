@@ -68,7 +68,7 @@ aces_data_dep = simulate_aces(
     seed = seed,
     detailed_diagnostics = true,
     save_data = true,
-    force_gc = true,
+    # force_gc = true,
 )
 aces_data_dep = nothing
 # Simualte ACES for the optimised design and log-normal noise
@@ -80,5 +80,6 @@ aces_data_log = simulate_aces(
     seed = seed,
     detailed_diagnostics = true,
     save_data = true,
-    force_gc = true,
+    # force_gc = true,
 )
+# TODO: See if we need force_gc to be true
