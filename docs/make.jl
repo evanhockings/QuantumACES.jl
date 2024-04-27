@@ -1,23 +1,17 @@
-using Pkg
-# pkg"activate .."
-# push!(LOAD_PATH, "../src/")
-script_dir = @__DIR__
-Pkg.activate(script_dir)
-parent_dir = dirname(script_dir)
-Pkg.develop(PackageSpec(; path = parent_dir))
-using Documenter, QuantumACES
-#
+using QuantumACES, Documenter
+
 DocMeta.setdocmeta!(QuantumACES, :DocTestSetup, :(using QuantumACES); recursive = true)
 
 makedocs(;
+    modules = [QuantumACES],
+    authors = "Evan Hockings",
+    sitename = "QuantumACES.jl",
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", nothing) == "true",
-        # canonical = "https://evanhockings.github.io/QuantumACES.jl",
+        canonical = "https://evanhockings.github.io/QuantumACES.jl",
+        edit_link = "main",
+        assets = String[],
     ),
-    modules = [QuantumACES],
-    sitename = "QuantumACES.jl",
-    authors = "Evan Hockings",
-    repo = "https://github.com/evanhockings/QuantumACES.jl/blob/{commit}{path}#{line}",
     pages = [
         "Home" => "index.md",
         "Manual" => "manual.md",
@@ -31,23 +25,4 @@ makedocs(;
     ],
 )
 
-#=
-
-makedocs(;
-    modules = [QuantumACES],
-    authors = "Evan Hockings",
-    repo = "https://github.com/evanhockings/QuantumACES.jl/blob/{commit}{path}#{line}",
-    sitename = "QuantumACES.jl",
-    format = Documenter.HTML(;
-        prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://evanhockings.github.io/QuantumACES.jl",
-        assets = String[],
-    ),
-    pages = ["Home" => "index.md"],
-)
-
-deploydocs(;
-    repo = "github.com/evanhockings/QuantumACES.jl",
-    devbranch = "main",
-)
-=#
+deploydocs(; repo = "github.com/evanhockings/QuantumACES.jl", devbranch = "main")

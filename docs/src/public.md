@@ -7,6 +7,11 @@ CollapsedDocStrings = true
 Documentation for the public API of `QuantumACES.jl`.
 
 See the Internal API section for documentation of the internal API.
+To use the internal API, import the module by running the following.
+
+```julia
+import QuantumACES as ACES
+```
 
 ## Function index
 
