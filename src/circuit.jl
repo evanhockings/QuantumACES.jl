@@ -367,6 +367,10 @@ struct RotatedPlanarParameters <: AbstractCircuitParameters
         @assert haskey(layer_time_dict, :two_qubit) "The layer time dictionary must contain the key :two_qubit."
         @assert haskey(layer_time_dict, :meas_reset) "The layer time dictionary must contain the key :meas_reset."
         @assert haskey(layer_time_dict, :dynamical) "The layer time dictionary must contain the key :dynamical."
+        @assert layer_time_dict[:single_qubit] > 0.0 "The single-qubit layer time must be positive."
+        @assert layer_time_dict[:two_qubit] > 0.0 "The two-qubit layer time must be positive."
+        @assert layer_time_dict[:meas_reset] > 0.0 "The measurement and reset layer time must be positive."
+        @assert layer_time_dict[:dynamical] > 0.0 "The dynamical decoupling layer time must be positive."
         # Test the circuit name
         test_circuit_name = "rotated_planar_$(vertical_dist)_$(horizontal_dist)"
         if check_type != :xzzx
@@ -420,8 +424,8 @@ Default gate layer times are estimated from `Suppressing quantum errors by scali
   - `pad_identity::Bool = true`: Whether to pad layers with single-qubit identity gates.
   - `single_qubit_time::Float64 = 29.0`: Time taken to implement a single-qubit gate in nanoseconds.
   - `two_qubit_time::Float64 = 29.0`: Time taken to implement a two-qubit gate in nanoseconds.
-  - `dynamical_decoupling_time::Float64 = 29.0`: Time taken to implement a dynamical decoupling layer in nanoseconds.
   - `meas_reset_time::Float64 = 660.0`: Time taken to perform measurement and reset at the end of the circuit in nanoseconds.
+  - `dynamical_decoupling_time::Float64 = 29.0`: Time taken to implement a dynamical decoupling layer in nanoseconds.
 """
 function get_rotated_param(
     vertical_dist::Int,
@@ -432,8 +436,8 @@ function get_rotated_param(
     pad_identity::Bool = true,
     single_qubit_time::Float64 = 29.0,
     two_qubit_time::Float64 = 29.0,
-    dynamical_decoupling_time::Float64 = 29.0,
     meas_reset_time::Float64 = 660.0,
+    dynamical_decoupling_time::Float64 = 29.0,
 )
     # Check some conditions
     @assert (vertical_dist >= 3 && horizontal_dist >= 3) "Invalid distance $(vertical_dist) x $(horizontal_dist). Must be at least 3 x 3."
@@ -444,12 +448,16 @@ function get_rotated_param(
     if dynamically_decouple && ~(check_type == :xzzx && gate_type == :cz)
         @warn "Dynamical decoupling is only supported for check type :xzzx and gate type :cz."
     end
+    @assert single_qubit_time > 0.0 "The single-qubit layer time must be positive."
+    @assert two_qubit_time > 0.0 "The two-qubit layer time must be positive."
+    @assert meas_reset_time > 0.0 "The measurement and reset layer time must be positive."
+    @assert dynamical_decoupling_time > 0.0 "The dynamical decoupling layer time must be positive."
     # Construct the layer time dictionary
     layer_time_dict = Dict(
         :single_qubit => single_qubit_time,
         :two_qubit => two_qubit_time,
-        :dynamical => dynamical_decoupling_time,
         :meas_reset => meas_reset_time,
+        :dynamical => dynamical_decoupling_time,
     )
     # Generate the circuit name
     circuit_name = "rotated_planar_$(vertical_dist)_$(horizontal_dist)"
@@ -784,6 +792,9 @@ struct UnrotatedPlanarParameters <: AbstractCircuitParameters
         @assert haskey(layer_time_dict, :single_qubit) "The layer time dictionary must contain the key :single_qubit."
         @assert haskey(layer_time_dict, :two_qubit) "The layer time dictionary must contain the key :two_qubit."
         @assert haskey(layer_time_dict, :meas_reset) "The layer time dictionary must contain the key :meas_reset."
+        @assert layer_time_dict[:single_qubit] > 0.0 "The single-qubit layer time must be positive."
+        @assert layer_time_dict[:two_qubit] > 0.0 "The two-qubit layer time must be positive."
+        @assert layer_time_dict[:meas_reset] > 0.0 "The measurement and reset layer time must be positive."
         # Test the circuit name
         test_circuit_name = "unrotated_planar_$(vertical_dist)_$(horizontal_dist)"
         if gate_type != :cx
@@ -842,6 +853,9 @@ function get_unrotated_param(
     # Check some conditions
     @assert (vertical_dist >= 3 && horizontal_dist >= 3) "Invalid distance $(vertical_dist) x $(horizontal_dist). Must be at least 3 x 3."
     @assert gate_type == :cx "Invalid gate type $(gate_type). Must be :cx."
+    @assert single_qubit_time > 0.0 "The single-qubit layer time must be positive."
+    @assert two_qubit_time > 0.0 "The two-qubit layer time must be positive."
+    @assert meas_reset_time > 0.0 "The measurement and reset layer time must be positive."
     # Construct the layer time dictionary
     layer_time_dict = Dict(
         :single_qubit => single_qubit_time,

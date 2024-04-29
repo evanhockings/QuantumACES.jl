@@ -27,7 +27,6 @@ ols_repeat_numbers = metadata_dict["ols_repeat_numbers"]
 dep_param_num = length(dep_param_set)
 dep_idx = 14
 @assert dep_param == dep_param_set[dep_idx]
-dep_worst_idx = 3
 repetitions = 400
 d_gls = load_design(
     unrotated_param,
@@ -42,14 +41,6 @@ d_wls = load_design(
     dep_param_set[dep_idx],
     tuple_number_set[dep_idx],
     repeat_numbers_set[dep_idx],
-    true,
-    ls_type,
-)
-d_wls_worst = load_design(
-    unrotated_param,
-    dep_param_set[dep_worst_idx],
-    tuple_number_set[dep_worst_idx],
-    repeat_numbers_set[dep_worst_idx],
     true,
     ls_type,
 )
@@ -154,6 +145,15 @@ dep_planar_scaling_gls =
 dep_planar_scaling_ols =
     calc_depolarising_planar_scaling(d_ols, dist_max; ls_type = :ols, save_data = true)
 # Badly optimised WLS design
+dep_worst_idx = findmin(vec(mean(expectation_array; dims = 2)))[2]
+d_wls_worst = load_design(
+    unrotated_param,
+    dep_param_set[dep_worst_idx],
+    tuple_number_set[dep_worst_idx],
+    repeat_numbers_set[dep_worst_idx],
+    true,
+    ls_type,
+)
 d_wls_worst = update_noise(d_wls_worst, dep_param)
 @assert d_wls_worst.c.noise_param == dep_param
 dep_planar_scaling_wls_worst = calc_depolarising_planar_scaling(

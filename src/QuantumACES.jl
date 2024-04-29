@@ -145,6 +145,7 @@ export
     get_dep_param,
     get_log_param,
     # circuit.jl functions
+    get_layer_times,
     prepare_circuit,
     get_rotated_param,
     get_unrotated_param,
@@ -185,6 +186,7 @@ export
     # simulate.jl functions
     simulate_aces,
     # utils.jl functions
+    get_support,
     pretty_print,
     get_pauli_string,
     get_mapping_string,
@@ -219,7 +221,7 @@ include("simulate.jl")
 include("utils.jl")
 include("io.jl")
 
-# IntelliSence for Julia VSCode does not work, but this hacky trick fixes that
+# IntelliSense for Julia VSCode does not work, but this hacky trick fixes that
 # It convinces the LSP that the following files are part of src
 # Source: https://discourse.julialang.org/t/lsp-missing-reference-woes/98231/16
 @static if false
@@ -227,14 +229,6 @@ include("io.jl")
     include("../test/aqua_tests.jl")
     include("../test/merit_tests.jl")
     include("../test/design_tests.jl")
-    include("../scalable_aces/rot_optimise.jl")
-    include("../scalable_aces/rot_scaling.jl")
-    include("../scalable_aces/rot_simulate.jl")
-    include("../scalable_aces/rot_simulate_big.jl")
-    include("../scalable_aces/unrot_optimise.jl")
-    include("../scalable_aces/unrot_scaling.jl")
-    include("../scalable_aces/unrot_simulate.jl")
-    include("../scalable_aces/unrot_simulate_big.jl")
 end
 
 end

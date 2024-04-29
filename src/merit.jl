@@ -62,7 +62,7 @@ function calc_covariance(
     warning::Bool = true,
 )
     # Warn if the design does not have the full covariance matrix
-    if warning && !d.full_covariance
+    if warning && ~d.full_covariance
         @warn "The design does not include the full covariance matrix; only the diagonal will be calculated."
     end
     # Initialise some variables

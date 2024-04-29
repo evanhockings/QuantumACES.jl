@@ -141,8 +141,14 @@ function get_tuple_set_data(
     init_scaling::Float64 = 0.2,
 ) where {T <: AbstractCircuit}
     # Initialise parameters
-    r_1 = c.noise_param.r_1
-    r_2 = c.noise_param.r_2
+    known_avg_noise = (
+        typeof(c.noise_param) == DepolarisingParameters ||
+        typeof(c.noise_param) == LognormalParameters
+    )
+    if known_avg_noise
+        r_1 = c.noise_param.r_1
+        r_2 = c.noise_param.r_2
+    end
     types = unique(c.layer_types)
     type_num = length(types)
     repeat_numbers = zeros(type_num)
@@ -177,9 +183,18 @@ function get_tuple_set_data(
         # Initialise the repeat numbers
         for (idx, type) in enumerate(types)
             if type == :single_qubit || type == :dynamical
-                repeat_numbers[idx] = init_scaling * (1 / ((4 / 3) * r_1))
+                if known_avg_noise
+                    repeat_numbers[idx] = init_scaling * (1 / ((4 / 3) * r_1))
+                else
+                    repeat_numbers[idx] = 1
+                end
             elseif type == :two_qubit
-                repeat_numbers[idx] = init_scaling * (1 / ((4 / 3) * r_1 + (16 / 15) * r_2))
+                if known_avg_noise
+                    repeat_numbers[idx] =
+                        init_scaling * (1 / ((4 / 3) * r_1 + (16 / 15) * r_2))
+                else
+                    repeat_numbers[idx] = 1
+                end
             else
                 throw(error("Unsupported gate type $(type)."))
             end
@@ -192,9 +207,17 @@ function get_tuple_set_data(
         # Initialise the repeat numbers
         for (idx, type) in enumerate(types)
             if type == :single_qubit
-                repeat_numbers[idx] = init_scaling * (1 / ((4 / 3) * r_1))
+                if known_avg_noise
+                    repeat_numbers[idx] = init_scaling * (1 / ((4 / 3) * r_1))
+                else
+                    repeat_numbers[idx] = 1
+                end
             elseif type == :two_qubit
-                repeat_numbers[idx] = init_scaling * (1 / ((16 / 15) * r_2))
+                if known_avg_noise
+                    repeat_numbers[idx] = init_scaling * (1 / ((16 / 15) * r_2))
+                else
+                    repeat_numbers[idx] = 1
+                end
             else
                 throw(error("Unsupported gate type $(type)."))
             end

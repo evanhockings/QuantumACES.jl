@@ -736,7 +736,6 @@ function estimate_gate_probabilities(d::Design, est_gate_eigenvalues::Vector{Flo
     return est_gate_probabilities::Dict{Gate, Vector{Float64}}
 end
 
-# TODO: Check if force_gc is currently actually necessary.
 """
     simulate_aces(d::Design, budget_set::Vector{Int}; kwargs...)
 
@@ -757,7 +756,7 @@ Also, when measurement shots are sampled in batches, which occurs when `max_samp
   - `seed::Union{UInt64, Nothing} = nothing`: the seed to use for the random number generator.
   - `N_warn::Int = 3 * 10^4`: Number of circuit eigenvalues above which to warn the user about certain keyword argument choices.
   - `max_samples::Int = 10^10`: Maximum number of Stim samples collected in a single simulation.
-  - `force_gc::Bool = false`: Whether to force garbage collection before and after each Stim simulation; this was added to prevent occasional segfaults but massively slows down the simulation, and is nevertheless currently advised for large-scale simulations.
+  - `force_gc::Bool = false`: Whether to force garbage collection before and after each Stim simulation; this was added to prevent occasional segfaults but massively slows down the simulation, and currently does not appear to be necessary.
   - `diagnostics::Bool = true`: Whether to print diagnostics.
   - `detailed_diagnostics::Bool = false`: Whether to print detailed diagnostics.
   - `save_data::Bool = false`: Whether to save the data.
@@ -780,17 +779,14 @@ function simulate_aces(
 )
     # Warn the user if they have unadvisable settings for a large circuit
     if d.c.N >= N_warn
-        if !diagnostics
+        if ~diagnostics
             @warn "This ACES simulation is for a very large circuit: turning on diagnostics is advised."
         end
-        if !detailed_diagnostics
+        if ~detailed_diagnostics
             @warn "This ACES simulation is for a very large circuit: turning on detailed diagnostics is advised."
         end
-        if !save_data
+        if ~save_data
             @warn "This ACES simulation is for a very large circuit: saving the data is advised."
-        end
-        if !force_gc
-            @warn "This ACES simulation is for a very large circuit: forcing garbage collection is advised."
         end
     end
     # Generate synthetic ACES data

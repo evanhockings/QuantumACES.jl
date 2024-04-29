@@ -382,7 +382,7 @@ function update_design_row!(
                 wrong_Z = (signature == Bool[0; 1] && gate.type ∉ ["PZ+", "PZ-", "MZ"])
                 wrong_X = (signature == Bool[1; 0] && gate.type ∉ ["PX+", "PX-", "MX"])
                 wrong_Y = (signature == Bool[1; 1] && gate.type ∉ ["PY+", "PY-", "MY"])
-                @assert !wrong_Z && !wrong_X && !wrong_Y "The Pauli $(pauli) is not prepared or measured by the gate $(gate)."
+                @assert ~wrong_Z && ~wrong_X && ~wrong_Y "The Pauli $(pauli) is not prepared or measured by the gate $(gate)."
                 @assert signature != Bool[0; 0] "The Pauli $(pauli) is meant to be supported on qubit $(target_1) and yet has signature $(signature) there."
                 # Preparations and measurements get unique variables
                 pauli_index = 1
@@ -894,18 +894,18 @@ Returns a [`Design`](@ref) object containing all relevant information describing
 
   - `shot_weights::Union{Vector{Float64}, Nothing} = nothing`: Shot weights for each tuple in the set, which must add to 1. When `nothing`, automatically generates the default shot weights.
   - `full_covariance::Bool = true`: If `true`, generates parameters to construct the full covariance matrix, else if `false`, only generates parameters to construct the terms on the diagonal.
+  - `N_warn::Int = 3 * 10^4`: Number of circuit eigenvalues above which to warn the user about certain keyword argument choices.
   - `diagnostics::Bool = false`: Whether to print diagnostic information.
   - `save_data::Bool = false`: Whether to save the design data.
-  - `suppress_warnings::Bool = false`: Whether to suppress warnings about keyword arguments when generating designs for large circuits.
 """
 function generate_design(
     c::T,
     tuple_set::Vector{Vector{Int}};
     shot_weights::Union{Vector{Float64}, Nothing} = nothing,
     full_covariance::Bool = true,
+    N_warn::Int = 3 * 10^4,
     diagnostics::Bool = false,
     save_data::Bool = false,
-    suppress_warnings::Bool = false,
 ) where {T <: AbstractCircuit}
     # Set some parameters
     start_time = time()
@@ -918,14 +918,14 @@ function generate_design(
         @assert all(shot_weights .> 0.0) "The shot weights are not all positive."
     end
     # Warn the user if they have unadvisable settings for a large circuit
-    if N >= 10^4 && !suppress_warnings
+    if N >= N_warn
         if full_covariance
             @warn "This design is for a very large circuit: generating the full covariance matrix is unadvised."
         end
-        if !diagnostics
+        if ~diagnostics
             @warn "This design is for a very large circuit: turning on diagnostics is advised."
         end
-        if !save_data
+        if ~save_data
             @warn "This design is for a very large circuit: saving the data is advised."
         end
     end
@@ -1025,7 +1025,6 @@ function generate_design(
     full_covariance::Bool = true,
     diagnostics::Bool = false,
     save_data::Bool = false,
-    suppress_warnings::Bool = false,
 ) where {T <: AbstractCircuit}
     # Generate the design
     tuple_set = get_tuple_set(tuple_set_data)
@@ -1035,8 +1034,7 @@ function generate_design(
         shot_weights = shot_weights,
         full_covariance = full_covariance,
         diagnostics = diagnostics,
-        save_data = false,
-        suppress_warnings = suppress_warnings,
+        save_data = save_data,
     )
     @reset d.tuple_set_data = tuple_set_data
     # Save and return the results
@@ -1052,7 +1050,6 @@ function generate_design(
     full_covariance::Bool = true,
     diagnostics::Bool = false,
     save_data::Bool = false,
-    suppress_warnings::Bool = false,
 ) where {T <: AbstractCircuit}
     # Generate the design
     tuple_set_data = get_tuple_set_data(c)
@@ -1063,7 +1060,6 @@ function generate_design(
         full_covariance = full_covariance,
         diagnostics = diagnostics,
         save_data = save_data,
-        suppress_warnings = suppress_warnings,
     )
     # Return the results
     return d::Design
