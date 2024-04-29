@@ -6,39 +6,120 @@ CollapsedDocStrings = true
 
 Documentation for the public API of `QuantumACES.jl`.
 
-See the Internal API section for documentation of the internal API.
-To use the internal API, import the module by running the following.
+To use internal API, which is documented in the internal API section, import the module by running the following.
 
 ```julia
 import QuantumACES as ACES
 ```
 
-## Function index
-
-```@index
-Pages = ["public.md"]
-Order = [:function]
-```
-
-## Type index
-
-```@index
-Pages = ["public.md"]
-Order = [:type]
-```
-
-## Public functions
+## QuantumACES.jl
 
 ```@autodocs
 Modules = [QuantumACES]
-Order = [:function]
+Pages = ["QuantumACES.jl"]
 Private = false
 ```
 
-## Public types
+## tableau.jl
 
 ```@autodocs
 Modules = [QuantumACES]
-Order = [:type]
+Pages = ["tableau.jl"]
+Private = false
+```
+
+## noise.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["noise.jl"]
+Private = false
+```
+
+## circuit.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["circuit.jl"]
+Private = false
+```
+
+## tuples.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["tuples.jl"]
+Private = false
+```
+
+## design.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["design.jl"]
+Private = false
+```
+
+## merit.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["merit.jl"]
+Private = false
+```
+
+## weights.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["weights.jl"]
+Private = false
+```
+
+## optimise.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["optimise.jl"]
+Private = false
+```
+
+## scaling.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["scaling.jl"]
+Private = false
+```
+
+## simulate.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["simulate.jl"]
+Private = false
+```
+
+## kwargs.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["kwargs.jl"]
+Private = false
+```
+
+## utils.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["utils.jl"]
+Private = false
+```
+
+## io.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["io.jl"]
 Private = false
 ```

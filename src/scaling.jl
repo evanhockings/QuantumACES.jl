@@ -20,7 +20,7 @@ Scaling data for an experimental design for the syndrome extraction circuit of a
   - `circuit_param::AbstractCircuitParameters`: Code parameters.
   - `noise_param::DepolarisingParameters`: Depolarising noise parameters.
   - `tuple_set::Vector{Vector{Int}}`: Set of tuples which arrange the circuit layers.
-  - `tuple_set_data::TupleSetData`: [`TupleSetData](@ref) object that generates the tuple set.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData`](@ref) object that generates the tuple set.
   - `shot_weights::Vector{Float64}`: Shot weights for each tuple in the set, which add to 1.
   - `ls_type::Symbol`: Type of least squares estimator for which the merits were calculated.
   - `calculation_times::Matrix{Float64}`: Time taken to generate the design and calculate the merit, respectively, for each distance.
@@ -287,7 +287,7 @@ Scaling data for an experimental design for the syndrome extraction circuit of a
   - `noise_param::LognormalParameters`: Log-normal random noise parameters.
   - `seeds::Vector{UInt64}`: Seeds for the log-normal noise parameters.
   - `tuple_set::Vector{Vector{Int}}`: Set of tuples which arrange the circuit layers.
-  - `tuple_set_data::TupleSetData`: [`TupleSetData](@ref) object that generates the tuple set.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData`](@ref) object that generates the tuple set.
   - `shot_weights::Vector{Float64}`: Shot weights for each tuple in the set, which add to 1.
   - `ls_type::Symbol`: Type of least squares estimator for which the merits were calculated.
   - `calculation_times::Matrix{Float64}`: The time taken to generate the design and calculate the figures of merit for random instances of log-normal Pauli noise, and for depolarising Pauli noise, respectively.

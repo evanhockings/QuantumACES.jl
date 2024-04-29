@@ -73,7 +73,7 @@ Experimental design for a noise characterisation experiment for a circuit.
   - `full_covariance::Bool`: If `true`, generates parameters to construct the full covariance matrix in `covariance_dict_ensemble`, else if `false`, only generates parameters to construct the terms on the diagonal.
   - `matrix::SparseMatrixCSC{Int32, Int32}`: Sparse M x N design matrix, corresponding to M circuit eigenvalues and N gate eigenvalues.
   - `tuple_set::Vector{Vector{Int}}`: Set of tuples which arrange the circuit layers.
-  - `tuple_set_data::TupleSetData`: [`TupleSetData](@ref) object that generates the tuple set.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData`](@ref) object that generates the tuple set.
   - `mapping_ensemble::Vector{Vector{Mapping}}`: Vector of the [`Mapping`](@ref) objects for each of the circuit eigenvalue for the Paulis corresponding to that tuple, for each tuple in the set.
   - `experiment_ensemble::Vector{Vector{Vector{Int}}}`: Vector of the experiments that index [`Mapping`](@ref) objects, which correspond to simultaneously preparable and measurable circuit eigenvalues, for each tuple in the set.
   - `covariance_dict_ensemble::Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}`: Dictionary of [`Mapping`](@ref) objects describing the non-zero entries of the sparse circuit eigenvalue estimator covariance matrix, alongside the number of times the entry is estimated by the experiment set, for each tuple in the set.
@@ -888,7 +888,7 @@ Returns a [`Design`](@ref) object containing all relevant information describing
 
   - `c::AbstractCircuit`: Circuit for which the design matrix is to be generated.
   - `tuple_set::Vector{Vector{Int}}`: Tuple set arranging the circuit layers that is used to generate the experimental design.
-  - `tuple_set_data::TupleSetData`: [`TupleSetData](@ref) object that generates the tuple set.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData`](@ref) object that generates the tuple set.
 
 # Keyword arguments
 

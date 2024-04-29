@@ -118,6 +118,7 @@ end
 
 Returns a dictionary of the Pauli error probabilities for each gate in `total_gates` generated according to the noise parameters `noise_param`.
 
+The order in which [`Pauli`](@ref) stores Pauli operators as bit strings orders the Pauli error probabilities for each gate.
 For single-qubit gates, the Pauli error probabilities are ordered as `I`, `X`, `Z`, `Y`.
 For two-qubit gates, the Pauli error probabilities are ordered as `II`, `XI`, `IX`, `XX`, `ZI`, `YI`, `ZX`, `YX`, `IZ`, `XZ`, `IY`, `XY`, `ZZ`, `YZ`, `ZY`, `YY`.
 """

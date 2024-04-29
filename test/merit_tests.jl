@@ -341,24 +341,17 @@ end
     # Compare the merits when optimised for the three LS estimators
     (d_rot_set, rot_covariance_log_set, rot_merit_descent_set, rot_merit_array) =
         compare_ls_optimise_weights(d_rot, rot_covariance_log)
-    # Plot the loss curves
-    #=
-    rot_merit_descent_plot = scatter(
-        rot_merit_descent_set[1];
-        yticks=2.4:0.4:4.0,
-        ylims=(2.4, 4.0),
-        ylabel=L"\mathcal{F}",
-        xlabel="Steps",
-        xticks=0:5:30,
-        xlims=(0, 32),
-        grid=false,
-        markersize=3.0,
-        label="gls",
-    )
-    scatter!(rot_merit_descent_set[2]; markersize=3.0, label="wls")
-    scatter!(rot_merit_descent_set[3]; markersize=3.0, label="ols")
-    display(rot_merit_descent_plot)
-    =#
+    # Test that gradient descent converges quickly and to merits within expected bounds
+    max_steps = 35
+    merit_min = 2.4
+    merit_max = 4.0
+    @test all(length.(rot_merit_descent_set) .<= max_steps)
+    @test all([rot_merit_descent_set[idx][end] .> merit_min for idx in 1:3])
+    @test all([rot_merit_descent_set[idx][end] .< merit_max for idx in 1:3])
+    # Test that the GLS merit is better than the WLS merit
+    @test rot_merit_array[1, 1] < rot_merit_array[2, 2]
+    # Test that the WLS merit is better than the OLS merit
+    @test rot_merit_array[2, 2] < rot_merit_array[3, 3]
     # Test that the GLS merit is best with shot weights optimised for GLS
     @test rot_merit_array[1, 1] <= rot_merit_array[2, 1]
     @test rot_merit_array[1, 1] <= rot_merit_array[3, 1]
@@ -475,44 +468,28 @@ end
             sqrt(S / N) * norm(wls_gate_eigenvalues_coll[idx] - gate_eigenvalues, 2)
     end
     # Generate the NRMSE probability distribution
-    x_tick_int = 1.0
-    x_pdf_int = 0.01
-    x_min = 2.0
-    x_max = 5.0
-    bin_int = 0.05
-    y_tick_int = 1.0
-    y_min = 0.0
-    y_max = 3.0
-    y_pad = 0.1
-    x_values = collect(x_min:x_pdf_int:x_max)
+    nrmse_min = 2.0
+    nrmse_max = 5.0
+    pdf_int = 0.01
+    nrmse_values = collect(nrmse_min:pdf_int:nrmse_max)
     (gls_rot_merit, wls_rot_merit, ols_rot_merit) = calc_merit_set(d_rot)
-    wls_rot_nrmse_pdf = nrmse_pdf(wls_rot_merit.eigenvalues, x_values)
-    # Plot the empirical and predicted distributions
-    #=
-    wls_nrmse_test = histogram(
-        wls_gate_norm_coll;
-        xlabel = "NRMSE",
-        xticks = x_min:x_tick_int:x_max,
-        xlims = (x_min, x_max),
-        ylabel = "pdf",
-        yticks = y_min:y_tick_int:y_max,
-        ylims = (y_min - y_pad, y_max + y_pad),
-        label = "sampled dist.",
-        bins = x_min:bin_int:x_max,
-        normalize = :pdf,
-        grid = false,
+    wls_rot_nrmse_pdf = nrmse_pdf(wls_rot_merit.eigenvalues, nrmse_values)
+    # Test that the predicted and simulated values are consistent enough
+    @test minimum(wls_gate_norm_coll) > nrmse_values[findfirst(wls_rot_nrmse_pdf .> 0.0)]
+    @test maximum(wls_gate_norm_coll) < nrmse_values[findlast(wls_rot_nrmse_pdf .> 0.0)]
+    @test isapprox(
+        sort(wls_gate_norm_coll)[ceil(Int, repetitions / 2)],
+        nrmse_values[findmax(wls_rot_nrmse_pdf)[2]];
+        atol = 2e-2,
     )
-    plot!(x_values, wls_rot_nrmse_pdf; label = "pred. dist.")
-    display(wls_nrmse_test)
-    =#
     # The start and end values of the probability distribution should be zero
     @test wls_rot_nrmse_pdf[1] ≈ 0.0
     @test wls_rot_nrmse_pdf[end] ≈ 0.0
     # This simplifies our trapezoidal rule tests of the integral, expectation, and variance
-    wls_rot_nrmse_pdf_integral = sum(wls_rot_nrmse_pdf) * x_pdf_int
-    wls_rot_nrmse_pdf_expectation = sum(wls_rot_nrmse_pdf .* x_values) * x_pdf_int
+    wls_rot_nrmse_pdf_integral = sum(wls_rot_nrmse_pdf) * pdf_int
+    wls_rot_nrmse_pdf_expectation = sum(wls_rot_nrmse_pdf .* nrmse_values) * pdf_int
     wls_rot_nrmse_pdf_variance =
-        sum(wls_rot_nrmse_pdf .* x_values .^ 2) * x_pdf_int -
+        sum(wls_rot_nrmse_pdf .* nrmse_values .^ 2) * pdf_int -
         wls_rot_nrmse_pdf_expectation^2
     @test isapprox(wls_rot_nrmse_pdf_integral, 1.0, rtol = 1e-4)
     @test isapprox(wls_rot_nrmse_pdf_expectation, wls_rot_merit.expectation, rtol = 1e-4)

@@ -2,13 +2,13 @@
 CollapsedDocStrings = true
 ```
 
-# kwargs.jl
+# QuantumACES.jl
 
 ## Public functions
 
 ```@autodocs; canonical = false
 Modules = [QuantumACES]
-Pages = ["kwargs.jl"]
+Pages = ["QuantumACES.jl"]
 Private = false
 ```
 
@@ -16,6 +16,6 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["kwargs.jl"]
+Pages = ["QuantumACES.jl"]
 Public = false
 ```

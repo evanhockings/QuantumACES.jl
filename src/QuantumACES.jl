@@ -95,7 +95,7 @@ Scaling data for the figure of merit should be stored in a subtype `T <: Abstrac
   - `circuit_param::AbstractCircuitParameters`: Circuit parameters.
   - `noise_param::AbstractNoiseParameters`: Noise parameters.
   - `tuple_set::Vector{Vector{Int}}`: Set of tuples which arrange the circuit layers.
-  - `tuple_set_data::TupleSetData`: [`TupleSetData](@ref) object that generates the tuple set.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData`](@ref) object that generates the tuple set.
   - `shot_weights::Vector{Float64}`: Shot weights for each tuple in the set, which add to 1.
   - `ls_type::Symbol`: Type of least squares estimator for which the scaling is calculated.
 """
@@ -144,6 +144,7 @@ export
     # noise.jl functions
     get_dep_param,
     get_log_param,
+    get_gate_probabilities,
     # circuit.jl functions
     get_layer_times,
     prepare_circuit,

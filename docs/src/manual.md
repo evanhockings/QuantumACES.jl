@@ -1,11 +1,5 @@
 # Package Guide
 
-## Index
-
-```@index
-Pages = ["manual.md"]
-```
-
 ## Introduction
 
 `QuantumACES.jl` is a package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits with averaged circuit eigenvalue sampling (ACES).
@@ -55,7 +49,7 @@ Then ensure Stim is installed by running `pip install stim` in your terminal.
 
 ## Example usage
 
-To see a full example showing how this package can be used, see the code that generates the data for [arXiv:2404.06545](https://arxiv.org/abs/2404.06545) in the `scalable_aces` folder on the [scalable_aces](https://github.com/evanhockings/AveragedCircuitEigenvalueSampling.jl/tree/scalable_aces) branch.
+To see a full example showing how this package can be used, see the code that generates the data for [arXiv:2404.06545](https://arxiv.org/abs/2404.06545) in the `scalable_aces` folder on the [scalable_aces](https://github.com/evanhockings/QuantumACES.jl/tree/scalable_aces) branch.
 
 Beware that the examples shown below may take a number of hours to run.
 Ensure that Julia is set up to use as many threads as your CPU can handle.
@@ -389,4 +383,4 @@ fgls_z_scores_phen =
 As before, note that the distribution of the normalised RMS error between the estimated and true gate eigenvalues is not quite normally distributed.
 Hence the z-scores shown here, which are normalised by the predicted performance of the experimental design, will not quite be normally distributed.
 
-To gain a fuller understanding of the methods used in this package, refer to [arXiv:2404.06545](https://arxiv.org/abs/2404.06545).
+For a fuller understanding of the methods used in this package, refer to [arXiv:2404.06545](https://arxiv.org/abs/2404.06545).

@@ -9,7 +9,7 @@ Merit parameters for an experimental design.
   - `noise_param::AbstractNoiseParameters`: Noise parameters.
   - `ls_type::Symbol`: Type of least squares estimator for which the merit is reported.
   - `tuple_set::Vector{Vector{Int}}`: Set of tuples which arrange the circuit layers.
-  - `tuple_set_data::TupleSetData`: [`TupleSetData](@ref) object that generates the tuple set.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData`](@ref) object that generates the tuple set.
   - `tuple_times::Vector{Float64}`: Time taken to implement the circuit corresponding to each tuple, normalised according to the basic tuple set.
   - `shot_weights::Vector{Float64}`: Shot weights for each tuple in the set, which add to 1.
   - `experiment_numbers::Vector{Int}`: Number of experiments for each tuple in the set.
@@ -650,16 +650,16 @@ function nrmse_pdf_integrand(u::Float64, x::Float64, norm_cov_eigenvalues::Vecto
 end
 
 """
-    nrmse_pdf(cov_eigenvalues::Vector{Float64}, x_values::Vector{Float64}; epsilon::Float64 = 1e-5)
+    nrmse_pdf(cov_eigenvalues::Vector{Float64}, nrmse_values::Vector{Float64}; epsilon::Float64 = 1e-5)
 
-Returns the probability density function (PDF) for the normalised RMS error (NRMSE) of the gate eigenvalue estimator vector, which follows a generalised chi-squared distribution and whose covariance matrix has eigenvalues `cov_eigenvalues`, at the coordinates specified by `x_values`.
+Returns the probability density function (PDF) for the normalised RMS error (NRMSE) of the gate eigenvalue estimator vector, which follows a generalised chi-squared distribution and whose covariance matrix has eigenvalues `cov_eigenvalues`, at the coordinates specified by `nrmse_values`.
 Does not calculate values when the normal approximation to the PDF is less than a factor of `epsilon` of its maximum value.
 
 Calculation follows Eq. 3.2 of `Computing the distribution of quadratic forms in normal variables` by J. P. Imhof (1961).
 """
 function nrmse_pdf(
     cov_eigenvalues::Vector{Float64},
-    x_values::Vector{Float64};
+    nrmse_values::Vector{Float64};
     epsilon::Float64 = 1e-5,
 )
     # Normalise the gate eigenvalue estimator covariance matrix eigenvalues
@@ -670,15 +670,15 @@ function nrmse_pdf(
     # Calculate the normal approximation of the PDF
     nrmse_pdf_normal =
         1 / (sqrt(2 * π) * sqrt(variance)) *
-        exp.(-(x_values .- expectation) .^ 2 / (2 * variance))
+        exp.(-(nrmse_values .- expectation) .^ 2 / (2 * variance))
     nrmse_pdf_normal_max = maximum(nrmse_pdf_normal)
     # Perform Imhof's method to calculate the PDF
     function imhof_cdf(x)
         return 0.5 -
                quadgk(u -> nrmse_pdf_integrand(u, x, norm_cov_eigenvalues), 0, Inf)[1] / π
     end
-    nrmse_pdf = zeros(length(x_values))
-    for (idx, x) in enumerate(x_values)
+    nrmse_pdf = zeros(length(nrmse_values))
+    for (idx, x) in enumerate(nrmse_values)
         # Only perform the calculation for sufficiently large PDF values
         if nrmse_pdf_normal[idx] / nrmse_pdf_normal_max > epsilon
             # Differentiate the CDF to obtain the PDF
