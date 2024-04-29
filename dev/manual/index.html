@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Manual · QuantumACES.jl</title><meta name="title" content="Manual · QuantumACES.jl"/><meta property="og:title" content="Manual · QuantumACES.jl"/><meta property="twitter:title" content="Manual · QuantumACES.jl"/><meta name="description" content="Documentation for QuantumACES.jl."/><meta property="og:description" content="Documentation for QuantumACES.jl."/><meta property="twitter:description" content="Documentation for QuantumACES.jl."/><meta property="og:url" content="https://evanhockings.github.io/QuantumACES.jl/manual/"/><meta property="twitter:url" content="https://evanhockings.github.io/QuantumACES.jl/manual/"/><link rel="canonical" href="https://evanhockings.github.io/QuantumACES.jl/manual/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">QuantumACES.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>Manual</a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#Installation-and-setup"><span>Installation and setup</span></a></li><li><a class="tocitem" href="#Example-usage"><span>Example usage</span></a></li><li><a class="tocitem" href="#More-advanced-usage"><span>More advanced usage</span></a></li></ul></li><li><span class="tocitem">Reference</span><ul><li><a class="tocitem" href="../public/">Public API</a></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Internal API</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../internal/QuantumACES/">QuantumACES.jl</a></li><li><a class="tocitem" href="../internal/tableau/">tableau.jl</a></li><li><a class="tocitem" href="../internal/noise/">noise.jl</a></li><li><a class="tocitem" href="../internal/circuit/">circuit.jl</a></li><li><a class="tocitem" href="../internal/tuples/">tuples.jl</a></li><li><a class="tocitem" href="../internal/design/">design.jl</a></li><li><a class="tocitem" href="../internal/merit/">merit.jl</a></li><li><a class="tocitem" href="../internal/weights/">weights.jl</a></li><li><a class="tocitem" href="../internal/optimise/">optimise.jl</a></li><li><a class="tocitem" href="../internal/scaling/">scaling.jl</a></li><li><a class="tocitem" href="../internal/simulate/">simulate.jl</a></li><li><a class="tocitem" href="../internal/kwargs/">kwargs.jl</a></li><li><a class="tocitem" href="../internal/utils/">utils.jl</a></li><li><a class="tocitem" href="../internal/io/">io.jl</a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Manual</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Manual</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/evanhockings/QuantumACES.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/evanhockings/QuantumACES.jl/blob/main/docs/src/manual.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Package-Guide"><a class="docs-heading-anchor" href="#Package-Guide">Package Guide</a><a id="Package-Guide-1"></a><a class="docs-heading-anchor-permalink" href="#Package-Guide" title="Permalink"></a></h1><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p><code>QuantumACES.jl</code> is a package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits with averaged circuit eigenvalue sampling (ACES). It is particularly interested in characterising the noise associated with fault-tolerant gadgets in the context of topological quantum error correcting codes, such as surface code syndrome extraction circuits.</p><p>The methods used in this package are detailed in <a href="https://arxiv.org/abs/2404.06545">arXiv:2404.06545</a>, and the code generating the data for this paper can be found in the <code>scalable_aces</code> folder on the <a href="https://github.com/evanhockings/QuantumACES.jl/tree/scalable_aces">scalable_aces</a> branch. These methods build on the original ACES protocol presented in <a href="https://arxiv.org/abs/2108.05803">arXiv:2108.05803</a>. This package relies on <a href="https://github.com/quantumlib/Stim">Stim</a> for stabiliser circuit simulations.</p><p>Typical usage of this package involves a few steps:</p><ul><li>Constructing the circuit and noise model for which you aim to perform an ACES noise characterisation experiment, using either provided functions or your own.</li><li>Optimise an experimental design for a depolarising noise model with the same average error rates as the noise model you aim to characterise.<ul><li>Optional: Predict the performance of the experimental design, including its scaling as a function of circuit parameters, for example as a function of the code distance in the case of surface code syndrome extraction circuits.</li></ul></li><li>Simulate noise characterisation experiments across a range of specified measurement budgets that use the optimised experimental design. </li></ul><h2 id="Installation-and-setup"><a class="docs-heading-anchor" href="#Installation-and-setup">Installation and setup</a><a id="Installation-and-setup-1"></a><a class="docs-heading-anchor-permalink" href="#Installation-and-setup" title="Permalink"></a></h2><p>This is not currently a registered package, so to add it you can run</p><pre><code class="nohighlight hljs">julia&gt; # press ] to enter the Pkg REPL
+
+pkg&gt; add https://github.com/evanhockings/QuantumACES.jl</code></pre><p>This package relies on the Python package <a href="https://github.com/quantumlib/Stim">Stim</a> to perform stabiliser simulations. It calls stim with <a href="https://github.com/JuliaPy/PythonCall.jl">PythonCall</a>, which can be a little tricky to set up. One helpful method for managing Python versions is <a href="https://github.com/pyenv/pyenv">pyenv</a>, or for Windows, <a href="https://github.com/pyenv-win/pyenv-win">pyenv-win</a>, which is analogous to <a href="https://github.com/JuliaLang/juliaup">Juliaup</a> for Julia.</p><p>On Windows, to instruct PythonCall to use the Python version set by pyenv, configure PythonCall&#39;s environment variables by adding the following to your <code>~/.julia/config/startup.jl</code> file</p><pre><code class="nohighlight hljs">ENV[&quot;JULIA_CONDAPKG_BACKEND&quot;] = &quot;Null&quot;
+python_exe = readchomp(`cmd /C pyenv which python`)
+ENV[&quot;JULIA_PYTHONCALL_EXE&quot;] = python_exe</code></pre><p>On Unix systems, shell commands are parsed directly by Julia and appear to be unaware of your PATH variable. I am not sure how to fix this, so you may need to manually supply <code>python_exe</code> for the Python version <code>&lt;version&gt;</code> as</p><pre><code class="nohighlight hljs">python_exe = homedir() * &quot;/.pyenv/versions/&lt;version&gt;/bin/python&quot;</code></pre><p>Then ensure Stim is installed by running <code>pip install stim</code> in your terminal.</p><h2 id="Example-usage"><a class="docs-heading-anchor" href="#Example-usage">Example usage</a><a id="Example-usage-1"></a><a class="docs-heading-anchor-permalink" href="#Example-usage" title="Permalink"></a></h2><p>To see a full example showing how this package can be used, see the code that generates the data for <a href="https://arxiv.org/abs/2404.06545">arXiv:2404.06545</a> in the <code>scalable_aces</code> folder on the <a href="https://github.com/evanhockings/QuantumACES.jl/tree/scalable_aces">scalable_aces</a> branch.</p><p>Beware that the examples shown below may take a number of hours to run. Ensure that Julia is set up to use as many threads as your CPU can handle.</p><p>First parameterise a depolarising noise model with single-qubit gate infidelity <code>r_1</code>, two-qubit gate infidelity <code>r_2</code>, and measurement infidelity <code>r_m</code>, and a log-normal random Pauli noise model with the same gate infidelities and a standard deviation of the underlying normal distributions <code>total_std_log</code>, alongside a random seed used when generating the noise model.</p><pre><code class="language-julia hljs">r_1 = 0.075 / 100
+r_2 = 0.5 / 100
+r_m = 2.0 / 100
+total_std_log = sqrt(log(10 / 9))
+seed = UInt(0)
+dep_param = get_dep_param(r_1, r_2, r_m)
+log_param = get_log_param(r_1, r_2, r_m, total_std_log; seed = seed)</code></pre><p>Then generate the syndrome extraction circuit for a distance <code>dist</code> (rotated) surface code.</p><pre><code class="language-julia hljs">dist = 3
+rotated_param = get_rotated_param(dist)
+rotated_planar = get_circuit(rotated_param, dep_param)</code></pre><p>Optimise an experimental design for these parameters, configuring the optimisation with the parameters associated with <a href="../public/#QuantumACES.OptimOptions"><code>OptimOptions</code></a>.</p><pre><code class="language-julia hljs">d = optimise_design(rotated_planar, options = OptimOptions(; ls_type = :wls, seed = seed))</code></pre><p>Create a copy of the optimised design that associates log-normal random Pauli noise with the circuit, and simulate <code>repetitions</code> rounds of an ACES noise characterisation experiment across all of the supplied measurement budgets in <code>budget_set</code>, which are measurement shots normalised by the time taken to perform the experiment.</p><pre><code class="language-julia hljs">d_log = update_noise(d, log_param)
+budget_set = [10^6; 10^7; 10^8]
+repetitions = 20
+aces_data = simulate_aces(d_log, budget_set; repetitions = repetitions)</code></pre><p>We can compare the performance to performance predictions at the largest measurement budget, although we note that the z-scores will not be normally distributed as the underlying distribution is not quite normal.</p><pre><code class="language-julia hljs">wls_merit_log = calc_wls_merit(d_log)
+fgls_z_scores =
+    (aces_data.fgls_gate_norm_coll[:, 3] .- wls_merit_log.expectation) /
+    sqrt(wls_merit_log.variance)</code></pre><p>Next, calculate the performance scaling of this design as a fuction of the code distance up to some large distance <code>dist_max</code> with the weighted least squares (WLS) estimator, for both depolarising and log-normal random Pauli noise.</p><pre><code class="language-julia hljs">dist_max = 9
+dep_planar_scaling = calc_depolarising_planar_scaling(d, dist_max; ls_type = :wls)
+log_planar_scaling = calc_lognormal_planar_scaling(d_log, dist_max; ls_type = :wls, seed = seed)</code></pre><p>Next, transfer the optimised experimental design to the syndrome extraction circuit for a distance <code>dist_big</code> surface code with log-normal random Pauli noise.</p><pre><code class="language-julia hljs">dist_big = 13
+rotated_param_big = get_rotated_param(dist_big)
+rotated_planar_big = get_circuit(rotated_param_big, log_param)
+d_big = generate_design(rotated_planar_big, d.tuple_set_data)</code></pre><p>We can simulate a large-scale ACES noise characterisation experiment across the supplied measurement budgets.</p><pre><code class="language-julia hljs">budget_set_big = [10^6; 10^7; 10^8; 10^9]
+aces_data_big = simulate_aces(d_big, budget_set_big)</code></pre><p>Finally, we compare the performance to predictions across the measurement budgets, although note that we would not expect the z-scores here to actually correspond to a normal distribution as the underlying distribution is not quite normal, and there is a substantive amount of uncertainty associated with the fit.</p><pre><code class="language-julia hljs">pred_expectation = log_planar_scaling.expectation_fit(dist_big)
+pred_variance = log_planar_scaling.variance_fit(dist_big)
+fgls_z_scores_big =
+    (aces_data_big.fgls_gate_norm_coll[1, :] .- pred_expectation) / sqrt(pred_variance)</code></pre><h2 id="More-advanced-usage"><a class="docs-heading-anchor" href="#More-advanced-usage">More advanced usage</a><a id="More-advanced-usage-1"></a><a class="docs-heading-anchor-permalink" href="#More-advanced-usage" title="Permalink"></a></h2><p>This package also supports creating your own circuits and noise models.</p><p>Let us begin by creating a new circuit, following the example circuit shown in Figure 2 of <a href="https://arxiv.org/abs/2404.06545">arXiv:2404.06545</a>. The first step is to create a parameter struct for the circuit, which must be a subtype of <a href="../public/#QuantumACES.AbstractCircuitParameters"><code>AbstractCircuitParameters</code></a> and contain the necessary fields <code>layer_time_dict</code> and <code>circuit_name</code>.</p><pre><code class="language-julia hljs">struct ExampleParameters &lt;: AbstractCircuitParameters
+    pad_identity::Bool
+    layer_time_dict::Dict{Symbol, Float64}
+    circuit_name::String
+end</code></pre><p>We need a function to construct the parameter struct.</p><pre><code class="language-julia hljs">function get_example_parameters(;
+    pad_identity = true,
+    single_qubit_time::Float64 = 29.0,
+    two_qubit_time::Float64 = 29.0,
+    meas_reset_time::Float64 = 660.0,
+)
+    # Create the example parameters
+    @assert single_qubit_time &gt; 0.0 &quot;The single-qubit layer time must be positive.&quot;
+    @assert two_qubit_time &gt; 0.0 &quot;The two-qubit layer time must be positive.&quot;
+    @assert meas_reset_time &gt; 0.0 &quot;The measurement and reset layer time must be positive.&quot;
+    layer_time_dict = Dict(
+        :single_qubit =&gt; single_qubit_time,
+        :two_qubit =&gt; two_qubit_time,
+        :meas_reset =&gt; meas_reset_time,
+    )
+    circuit_name = &quot;example_circuit&quot;
+    if pad_identity != true
+        circuit_name *= &quot;_pad_identity_$(pad_identity)&quot;
+    end
+    example_param = ExampleParameters(pad_identity, layer_time_dict, &quot;example_circuit&quot;)
+    return example_param::ExampleParameters
+end</code></pre><p>And we need a function to create the circuit from the parameter struct.</p><pre><code class="language-julia hljs">function example_circuit(example_param::ExampleParameters)
+    # Set up variables
+    pad_identity = example_param.pad_identity
+    layer_time_dict = example_param.layer_time_dict
+    single_qubit_type = :single_qubit
+    two_qubit_type = :two_qubit
+    # Generate the circuit
+    qubit_num = 3
+    circuit = [
+        Layer([Gate(&quot;CZ&quot;, 0, [2; 3])], qubit_num),
+        Layer([Gate(&quot;CX&quot;, 0, [1; 2]), Gate(&quot;H&quot;, 0, [3])], qubit_num),
+        Layer([Gate(&quot;H&quot;, 0, [1]), Gate(&quot;S&quot;, 0, [2]), Gate(&quot;H&quot;, 0, [3])], qubit_num),
+    ]
+    layer_types = [two_qubit_type, two_qubit_type, single_qubit_type]
+    layer_times = get_layer_times(layer_types, layer_time_dict)
+    # Pad each layer with identity gates if appropriate
+    if pad_identity
+        circuit = [pad_layer(l) for l in circuit]
+    end
+    return (
+        circuit::Vector{Layer},
+        qubit_num::Int,
+        layer_types::Vector{Symbol},
+        layer_times::Vector{Float64},
+    )
+end</code></pre><p>Finally, we create a function that generates the circuit in the form of a <a href="../public/#QuantumACES.Circuit"><code>Circuit</code></a> struct. We do this by adding a method to <a href="../internal/circuit/#QuantumACES.get_circuit-Union{Tuple{T}, Tuple{RotatedPlanarParameters, T}} where T&lt;:AbstractNoiseParameters-internal-circuit"><code>get_circuit</code></a> which uses the new parameter struct as an argument. A helpful function for this is <a href="../internal/circuit/#QuantumACES.prepare_circuit-Union{Tuple{T}, Tuple{Vector{Layer}, Int64, Vector{Symbol}, Vector{Float64}, T}} where T&lt;:AbstractNoiseParameters-internal-circuit"><code>prepare_circuit</code></a>, which deals with much of the busywork associated with generating the circuit.</p><pre><code class="language-julia hljs">function QuantumACES.get_circuit(
+    example_param::ExampleParameters,
+    noise_param::T;
+    add_prep::Bool = false,
+    add_meas::Bool = true,
+) where {T &lt;: AbstractNoiseParameters}
+    # Construct the circuit
+    (circuit, qubit_num, layer_types, layer_times) = example_circuit(example_param)
+    circuit_tuple = collect(1:length(circuit))
+    # Prepare the circuit and generate additional parameters
+    (
+        labelled_circuit,
+        unique_layer_indices,
+        gates,
+        total_gates,
+        gate_index,
+        N,
+        gate_probabilities,
+        gate_eigenvalues,
+    ) = prepare_circuit(
+        circuit,
+        qubit_num,
+        layer_types,
+        layer_times,
+        noise_param;
+        add_prep = add_prep,
+        add_meas = add_meas,
+    )
+    # Return the circuit
+    c = Circuit(
+        example_param,
+        labelled_circuit,
+        circuit_tuple,
+        qubit_num,
+        unique_layer_indices,
+        layer_types,
+        layer_times,
+        gates,
+        total_gates,
+        gate_index,
+        N,
+        noise_param,
+        gate_probabilities,
+        gate_eigenvalues,
+        add_prep,
+        add_meas,
+    )
+    return c::Circuit
+end</code></pre><p>Make sure to follow the form of this example function when creating your own circuit. If you want to include more data with your circuit, create a new struct that is a subtype of <a href="../public/#QuantumACES.AbstractCircuit"><code>AbstractCircuit</code></a>, and add the necessary fields, namely all of those present in <a href="../public/#QuantumACES.Circuit"><code>Circuit</code></a>.</p><p>Next, we will create a phenomenological noise model where each Pauli error probability has some probability <code>p</code> of occurring, so that two-qubit errors have a probability <code>p^2</code>. As with the circuit, we begin by creating a parameter struct for the noise model, which must be a subtype of <a href="../public/#QuantumACES.AbstractNoiseParameters"><code>AbstractNoiseParameters</code></a> and contain the necessary field <code>noise_name</code>.</p><pre><code class="language-julia hljs">struct PhenomenologicalParameters &lt;: AbstractNoiseParameters
+    p::Float64
+    m::Float64
+    noise_name::String
+end</code></pre><p>We need a function to construct the parameter struct.</p><pre><code class="language-julia hljs">function get_phen_param(p::Float64, m::Float64)
+    @assert (p &gt;= 0) &amp;&amp; (p &lt;= 1 / 10) &quot;The phenomenological gate error probability $(p) is out of bounds.&quot;
+    @assert (m &gt;= 0) &amp;&amp; (m &lt;= 1 / 2) &quot;The phenomenological measurement error probability $(m) is out of bounds.&quot;
+    noise_name = &quot;phenomenological_$(round(p; sigdigits = 4))_$(round(m; sigdigits = 4))&quot;
+    return PhenomenologicalParameters(p, m, noise_name)::PhenomenologicalParameters
+end</code></pre><p>And we need a function to create the noise model for a set of gates from the parameter struct. As with the circuit, we add a method to <a href="../internal/noise/#QuantumACES.get_gate_probabilities-Tuple{Vector{Gate}, DepolarisingParameters}-internal-noise"><code>get_gate_probabilities</code></a> which uses the new parameter struct as an argument.</p><pre><code class="language-julia hljs">function QuantumACES.get_gate_probabilities(
+    total_gates::Vector{Gate},
+    noise_param::PhenomenologicalParameters,
+)
+    # Extract the parameters for generating the noise
+    p = noise_param.p
+    m = noise_param.m
+    # Determine the weight of the error corresponding to each gate error probability
+    one_qubit_support_size = ones(3)
+    n = 2
+    two_qubit_support_size = Vector{Int}(undef, 0)
+    bit_array = BitArray(undef, 2n + 1)
+    for bit_array.chunks[1] in 1:(2^(2n) - 1)
+        two_qubit_pauli = Pauli(convert(Vector{Bool}, bit_array), n)
+        push!(two_qubit_support_size, length(get_support(two_qubit_pauli)))
+    end
+    @assert sum(two_qubit_support_size .== 1) == 6
+    @assert sum(two_qubit_support_size .== 2) == 9
+    # Generate the noise
+    gate_probabilities = Dict{Gate, Vector{Float64}}()
+    for gate in total_gates
+        if gate.type ∈ [&quot;MZ&quot;, &quot;MX&quot;, &quot;MY&quot;]
+            probability = [m]
+        elseif length(gate.targets) == 1
+            probability = p .^ one_qubit_support_size
+        elseif length(gate.targets) == 2
+            probability = p .^ two_qubit_support_size
+        else
+            throw(error(&quot;The gate $(gate) is unsupported.&quot;))
+        end
+        @assert sum(probability) &lt; 1 &quot;The probabilities $(probability) sum to more than 1; change the input parameters.&quot;
+        gate_probabilities[gate] = [1 - sum(probability); probability]
+    end
+    return gate_probabilities::Dict{Gate, Vector{Float64}}
+end</code></pre><p>Make sure to follow the form of this example function when creating your own noise model.</p><p>Now we are ready to reprise the basic usage example for this example circuit. First, parameterise depolarising and phenomenological noise models, making sure to create a depolarising noise model with the same gate infidelity as the phenomenological noise model.</p><pre><code class="language-julia hljs">p = 0.025 / 100
+m = 2.0 / 100
+r_1 = 3 * p
+r_2 = 6 * p + 9 * p^2
+r_m = m
+phen_param = get_phen_param(p, m)
+dep_param = get_dep_param(r_1, r_2, r_m)</code></pre><p>Then construct the circuit</p><pre><code class="nohighlight hljs">example_param = get_example_parameters()
+circuit_example = get_circuit(example_param, dep_param)</code></pre><p>Optimise the experimental design for the generalised least squares (GLS) estimator as we are not interested in scaling this experimental design to large numbers of qubits, configuring the optimisation with the parameters associated with <a href="../public/#QuantumACES.OptimOptions"><code>OptimOptions</code></a>. This is because the circuit acts on only three qubits and, unlike the surface code syndrome extraction circuits, does not form a family of circuits.</p><pre><code class="language-julia hljs">seed = UInt(0)
+d = optimise_design(circuit_example; options = OptimOptions(; ls_type = :gls, seed = seed))</code></pre><p>Create a copy of the optimised design that associates phenomenological noise with the circuit, and compare the predicted performance of the experimental design with depolarising and phenomenological noise.</p><pre><code class="language-julia hljs">d_phen = update_noise(d, phen_param)
+merit_dep = calc_gls_merit(d)
+merit_phen = calc_gls_merit(d_phen)</code></pre><p>We can also simulate the performance of the experimental design with phenomenological noise.</p><pre><code class="language-julia hljs">budget_set = [10^6; 10^7; 10^8]
+repetitions = 20
+aces_data = simulate_aces(d_phen, budget_set; repetitions = repetitions, seed = seed)</code></pre><p>Finally, compare the performance to predictions at the largest measurement budget.</p><pre><code class="language-julia hljs">fgls_z_scores_phen =
+    (aces_data.fgls_gate_norm_coll[:, 3] .- merit_phen.expectation) /
+    sqrt(merit_phen.variance)</code></pre><p>As before, note that the distribution of the normalised RMS error between the estimated and true gate eigenvalues is not quite normally distributed. Hence the z-scores shown here, which are normalised by the predicted performance of the experimental design, will not quite be normally distributed.</p><p>For a fuller understanding of the methods used in this package, refer to <a href="https://arxiv.org/abs/2404.06545">arXiv:2404.06545</a>.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../public/">Public API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.4.0 on <span class="colophon-date" title="Monday 29 April 2024 16:06">Monday 29 April 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
