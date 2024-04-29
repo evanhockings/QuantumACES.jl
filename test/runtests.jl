@@ -1,6 +1,9 @@
-using AveragedCircuitEigenvalueSampling, Test
+using QuantumACES, Test
 
-@testset "AveragedCircuitEigenvalueSampling.jl" begin
+@testset "QuantumACES.jl" begin
+    @testset "Aqua" begin
+        include("aqua_tests.jl")
+    end
     @testset "Design merits and gradients" begin
         include("merit_tests.jl")
     end

@@ -1,21 +1,40 @@
-using ACES
-using Documenter
+using QuantumACES, Documenter
 
-DocMeta.setdocmeta!(ACES, :DocTestSetup, :(using ACES); recursive = true)
+DocMeta.setdocmeta!(QuantumACES, :DocTestSetup, :(using QuantumACES); recursive = true)
 
 makedocs(;
-         modules = [ACES],
-         authors = "Evan Hockings",
-         repo = "https://github.com/EvanHockings/ACES.jl/blob/{commit}{path}#{line}",
-         sitename = "ACES.jl",
-         format = Documenter.HTML(;
-                                  prettyurls = get(ENV, "CI", "false") == "true",
-                                  canonical = "https://EvanHockings.github.io/ACES.jl",
-                                  assets = String[]),
-         pages = [
-             "Home" => "index.md",
-         ])
+    modules = [QuantumACES],
+    authors = "Evan Hockings",
+    sitename = "QuantumACES.jl",
+    format = Documenter.HTML(;
+        prettyurls = get(ENV, "CI", nothing) == "true",
+        canonical = "https://evanhockings.github.io/QuantumACES.jl",
+        edit_link = "main",
+        assets = String[],
+    ),
+    pages = [
+        "Home" => "index.md",
+        "Manual" => "manual.md",
+        "Reference" => Any[
+            "Public API" => "public.md",
+            "Internal API" => Any[
+                "QuantumACES.jl" => "internal/QuantumACES.md",
+                "tableau.jl" => "internal/tableau.md",
+                "noise.jl" => "internal/noise.md",
+                "circuit.jl" => "internal/circuit.md",
+                "tuples.jl" => "internal/tuples.md",
+                "design.jl" => "internal/design.md",
+                "merit.jl" => "internal/merit.md",
+                "weights.jl" => "internal/weights.md",
+                "optimise.jl" => "internal/optimise.md",
+                "scaling.jl" => "internal/scaling.md",
+                "simulate.jl" => "internal/simulate.md",
+                "kwargs.jl" => "internal/kwargs.md",
+                "utils.jl" => "internal/utils.md",
+                "io.jl" => "internal/io.md",
+            ],
+        ],
+    ],
+)
 
-deploydocs(;
-           repo = "github.com/EvanHockings/ACES.jl",
-           devbranch = "main")
+deploydocs(; repo = "github.com/evanhockings/QuantumACES.jl", devbranch = "main")

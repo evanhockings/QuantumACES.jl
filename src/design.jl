@@ -1,9 +1,250 @@
 """
-PauliPreparationSet(gates::Vector{Gate}, n::Int)
+    Pauli
 
-Returns all weight-1 and weight-2 Paulis whose support coincides with the support of a gate in the provided circuit.
+Boolean representation of a Pauli operator.
+
+# Fields
+
+  - `pauli::Vector{Bool}`: The Pauli operator stored as a Boolean vector. The first `qubit_num` elements represent Pauli X on each qubit, the next `qubit_num` elements represent Pauli Z on each qubit, and the final element represents the sign.
+  - `qubit_num::Int16`: The number of qubits on which the Pauli operator acts; the length of the vector is `2 * qubit_num + 1`.
 """
-function PauliPreparationSet(gates::Vector{Gate}, n::Int)
+struct Pauli
+    pauli::Vector{Bool}
+    qubit_num::Int16
+    # Constructor
+    function Pauli(pauli::Vector{Bool}, n::Integer)
+        @assert length(pauli) == 2n + 1 "The Pauli $(pauli) does not have a length commensurate with the qubit number $(n)."
+        return new(pauli, n)::Pauli
+    end
+end
+
+Base.show(io::IO, p::Pauli) = print(io, get_pauli_string(p))
+
+function Base.:(+)(p₁::Pauli, p₂::Pauli)
+    @assert p₁.qubit_num == p₂.qubit_num "The Paulis $(p₁) and $(p₂) do not have the same number of qubits."
+    return Pauli(convert(Vector{Bool}, (p₁.pauli .+ p₂.pauli) .% 2), p₁.qubit_num)
+end
+
+@struct_hash_equal_isequal Pauli
+
+"""
+    Mapping
+
+Mapping of a Pauli operator by some circuit.
+
+# Fields
+
+  - `initial::Pauli`: Initial Pauli operator before the action of the circuit.
+  - `final::Pauli`: Final Pauli operator after the action of the circuit.
+  - `design_row::SparseVector{Int32, Int32}`: Design matrix row for the circuit eigenvalue corresponding to the initial Pauli and the circuit used for the mapping.
+  - `spread_track::Vector{Vector{Int16}}`: Track of the support of the Pauli as it is acted upon by the layers of the circuit.
+"""
+struct Mapping
+    initial::Pauli
+    final::Pauli
+    design_row::SparseVector{Int32, Int32}
+    spread_track::Vector{Vector{Int16}}
+    # Constructor
+    function Mapping(
+        initial::Pauli,
+        final::Pauli,
+        design_row::SparseVector{Int32, Int32},
+        spread_track::Vector{Vector{Int16}},
+    )
+        @assert initial.qubit_num == final.qubit_num "The initial Pauli $(initial) and final Pauli $(final) do not have the same number of qubits."
+        return new(initial, final, design_row, spread_track)::Mapping
+    end
+end
+
+function Base.show(io::IO, m::Mapping)
+    return print(io, get_pauli_string(m.initial) * " => " * get_pauli_string(m.final))
+end
+
+@struct_hash_equal_isequal Mapping
+
+"""
+    Design
+
+Experimental design for a noise characterisation experiment for a circuit.
+
+# Fields
+
+  - `c::AbstractCircuit`: Circuit characterised by the design.
+  - `full_covariance::Bool`: If `true`, generates parameters to construct the full covariance matrix in `covariance_dict_ensemble`, else if `false`, only generates parameters to construct the terms on the diagonal.
+  - `matrix::SparseMatrixCSC{Int32, Int32}`: Sparse M x N design matrix, corresponding to M circuit eigenvalues and N gate eigenvalues.
+  - `tuple_set::Vector{Vector{Int}}`: Set of tuples which arrange the circuit layers.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData`](@ref) object that generates the tuple set.
+  - `mapping_ensemble::Vector{Vector{Mapping}}`: Vector of the [`Mapping`](@ref) objects for each of the circuit eigenvalue for the Paulis corresponding to that tuple, for each tuple in the set.
+  - `experiment_ensemble::Vector{Vector{Vector{Int}}}`: Vector of the experiments that index [`Mapping`](@ref) objects, which correspond to simultaneously preparable and measurable circuit eigenvalues, for each tuple in the set.
+  - `covariance_dict_ensemble::Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}`: Dictionary of [`Mapping`](@ref) objects describing the non-zero entries of the sparse circuit eigenvalue estimator covariance matrix, alongside the number of times the entry is estimated by the experiment set, for each tuple in the set.
+  - `prep_ensemble::Vector{Vector{Vector{Layer}}}`: Vector of [`Layer`](@ref) objects that prepare qubits in Pauli eigenstates for each experiment in the set, indeed a vector preparing the necessary sign configurations, for each tuple in the set.
+  - `meas_ensemble::Vector{Vector{Layer}}`: Vector of [`Layer`](@ref) objects that measure qubits in Pauli bases for each experiment in the set, for each tuple in the set.
+  - `tuple_times::Vector{Float64}`: Time taken to implement the circuit arranged by each tuple in the set, normalised according to the time factor for the basic tuple set.
+  - `shot_weights::Vector{Float64}`: Shot weights for each tuple in the set, which add to 1.
+  - `experiment_numbers::Vector{Int}`: Number of experiments for each tuple in the set.
+  - `experiment_number::Int`: Total number of experiments.
+  - `calculation_times::Matrix{Float64}`: Time taken to generate components of the design for each tuple, which correspond to generating: the mappings, the sets of tuple-consistent Pauli preparations, the experiment sets, the covariance matrix dictionary, and the circuits.
+  - `overall_time::Float64`: Overall time taken to generate the design.
+  - `optimisation_time::Float64`: Time taken to optimise the design.
+  - `ls_type::Symbol`: Type of least squares for which the shot weights were optimised.
+"""
+struct Design
+    c::AbstractCircuit
+    full_covariance::Bool
+    matrix::SparseMatrixCSC{Int32, Int32}
+    tuple_set::Vector{Vector{Int}}
+    tuple_set_data::TupleSetData
+    mapping_ensemble::Vector{Vector{Mapping}}
+    experiment_ensemble::Vector{Vector{Vector{Int}}}
+    covariance_dict_ensemble::Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}
+    prep_ensemble::Vector{Vector{Vector{Layer}}}
+    meas_ensemble::Vector{Vector{Layer}}
+    tuple_times::Vector{Float64}
+    shot_weights::Vector{Float64}
+    experiment_numbers::Vector{Int}
+    experiment_number::Int
+    calculation_times::Matrix{Float64}
+    overall_time::Float64
+    optimisation_time::Float64
+    ls_type::Symbol
+    # Default constructor
+    function Design(
+        c::T,
+        full_covariance::Bool,
+        matrix::SparseMatrixCSC{Int32, Int32},
+        tuple_set::Vector{Vector{Int}},
+        tuple_set_data::TupleSetData,
+        mapping_ensemble::Vector{Vector{Mapping}},
+        experiment_ensemble::Vector{Vector{Vector{Int}}},
+        covariance_dict_ensemble::Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}},
+        prep_ensemble::Vector{Vector{Vector{Layer}}},
+        meas_ensemble::Vector{Vector{Layer}},
+        tuple_times::Vector{Float64},
+        shot_weights::Vector{Float64},
+        experiment_numbers::Vector{Int},
+        experiment_number::Int,
+        calculation_times::Matrix{Float64},
+        overall_time::Float64,
+        optimisation_time::Float64,
+        ls_type::Symbol,
+    ) where {T <: AbstractCircuit}
+        # Check parameters
+        tuple_number = length(tuple_set)
+        @assert tuple_set == unique(tuple_set) "The tuple set contains repeated tuples."
+        @assert tuple_set == get_tuple_set(tuple_set_data) "The tuple set doesn't align with the tuple set data."
+        @assert length(mapping_ensemble) == tuple_number "The size of the mapping ensemble does not match the tuple set."
+        @assert length(experiment_ensemble) == tuple_number "The size of the experiment ensemble does not match the tuple set."
+        @assert length(covariance_dict_ensemble) == tuple_number "The size of the covariance dictionary ensemble does not match the tuple set."
+        @assert length(prep_ensemble) == tuple_number "The size of the preparation ensemble does not match the tuple set."
+        @assert length(meas_ensemble) == tuple_number "The size of the measurement ensemble does not match the tuple set."
+        @assert length(tuple_times) == tuple_number "The number of tuple times does not match the tuple set."
+        @assert length(shot_weights) == tuple_number "The number of shot weights does not match the tuple set."
+        @assert sum(shot_weights) ≈ 1.0 "The shot weights are not appropriately normalised."
+        @assert all(shot_weights .> 0.0) "The shot weights are not all positive."
+        @assert length(experiment_numbers) == tuple_number "The number of experiment numbers does not match the tuple set."
+        @assert experiment_number == sum(experiment_numbers) "The experiment number $(experiment_number) does not match the sum of the experiment numbers $(sum(experiment_numbers))."
+        @assert size(calculation_times) == (tuple_number, 5) "The calculation times do not match the tuple set."
+        @assert ls_type ∈ [:none, :gls, :wls, :ols] "The least squares type $(ls_type) is not supported."
+        # Return the design
+        return new(
+            c,
+            full_covariance,
+            matrix,
+            tuple_set,
+            tuple_set_data,
+            mapping_ensemble,
+            experiment_ensemble,
+            covariance_dict_ensemble,
+            prep_ensemble,
+            meas_ensemble,
+            tuple_times,
+            shot_weights,
+            experiment_numbers,
+            experiment_number,
+            calculation_times,
+            overall_time,
+            optimisation_time,
+            ls_type,
+        )::Design
+    end
+    # Constructor
+    function Design(
+        c::T,
+        full_covariance::Bool,
+        matrix::SparseMatrixCSC{Int32, Int32},
+        tuple_set::Vector{Vector{Int}},
+        mapping_ensemble::Vector{Vector{Mapping}},
+        experiment_ensemble::Vector{Vector{Vector{Int}}},
+        covariance_dict_ensemble::Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}},
+        prep_ensemble::Vector{Vector{Vector{Layer}}},
+        meas_ensemble::Vector{Vector{Layer}},
+        tuple_times::Vector{Float64},
+        shot_weights::Vector{Float64},
+        calculation_times::Matrix{Float64},
+        overall_time::Float64;
+        ls_type::Symbol = :none,
+    ) where {T <: AbstractCircuit}
+        # Initialise parameters
+        tuple_number = length(tuple_set)
+        tuple_set_data = TupleSetData(tuple_set, Vector{Int}[], Int[], Int[])
+        experiment_numbers =
+            length.([vcat(prep_layer_set...) for prep_layer_set in prep_ensemble])
+        experiment_number = length(vcat(vcat(prep_ensemble...)...))
+        optimisation_time = 0.0
+        # Check parameters
+        @assert tuple_set == unique(tuple_set) "The tuple set contains repeated tuples."
+        @assert length(mapping_ensemble) == tuple_number "The size of the mapping ensemble does not match the tuple set."
+        @assert length(experiment_ensemble) == tuple_number "The size of the experiment ensemble does not match the tuple set."
+        @assert length(covariance_dict_ensemble) == tuple_number "The size of the covariance dictionary ensemble does not match the tuple set."
+        @assert length(prep_ensemble) == tuple_number "The size of the preparation ensemble does not match the tuple set."
+        @assert length(meas_ensemble) == tuple_number "The size of the measurement ensemble does not match the tuple set."
+        @assert length(tuple_times) == tuple_number "The number of tuple times does not match the tuple set."
+        @assert length(shot_weights) == tuple_number "The number of shot weights does not match the tuple set."
+        @assert sum(shot_weights) ≈ 1.0 "The shot weights are not appropriately normalised."
+        @assert all(shot_weights .> 0.0) "The shot weights are not all positive."
+        @assert length(experiment_numbers) == tuple_number "The number of experiment numbers does not match the tuple set."
+        @assert experiment_number == sum(experiment_numbers) "The experiment number $(experiment_number) does not match the sum of the experiment numbers $(sum(experiment_numbers))."
+        @assert size(calculation_times) == (tuple_number, 5) "The calculation times do not match the tuple set."
+        @assert ls_type ∈ [:none, :gls, :wls, :ols] "The least squares type $(ls_type) is not supported."
+        # Return the design
+        return new(
+            c,
+            full_covariance,
+            matrix,
+            tuple_set,
+            tuple_set_data,
+            mapping_ensemble,
+            experiment_ensemble,
+            covariance_dict_ensemble,
+            prep_ensemble,
+            meas_ensemble,
+            tuple_times,
+            shot_weights,
+            experiment_numbers,
+            experiment_number,
+            calculation_times,
+            overall_time,
+            optimisation_time,
+            ls_type,
+        )::Design
+    end
+end
+
+function Base.show(io::IO, d::Design)
+    return print(
+        io,
+        "Design for a $(d.c.circuit_param.circuit_name) circuit with $(length(d.tuple_set)) tuples and $(d.experiment_number) experiments.",
+    )
+end
+
+@struct_hash_equal_isequal Design
+
+"""
+    get_pauli_prep_set(gates::Vector{Gate}, n::Int)
+
+Returns all weight-1 Paulis on all `n` qubits, as well as the weight-2 Paulis supported on some gate in `gates`.
+"""
+function get_pauli_prep_set(gates::Vector{Gate}, n::Int)
     # Hard-coded weight-1 and weight-2 Pauli signatures
     # X, Z, Y
     weight_1_signature = [[1; 0], [0; 1], [1; 1]]
@@ -40,13 +281,13 @@ function PauliPreparationSet(gates::Vector{Gate}, n::Int)
     unique!(weight_2_supports)
     # Generate all combinations of Paulis
     l_2 = length(weight_2_supports)
-    pauli_preparation_set = Vector{Pauli}(undef, 3n + 9l_2)
+    pauli_prep_set = Vector{Pauli}(undef, 3n + 9l_2)
     for i in 1:n
         for a in 1:3
             pauli = zeros(Bool, 2n + 1)
             pauli[i] = weight_1_signature[a][1]
             pauli[n + i] = weight_1_signature[a][2]
-            pauli_preparation_set[3 * (i - 1) + a] = Pauli(pauli, n)
+            pauli_prep_set[3 * (i - 1) + a] = Pauli(pauli, n)
         end
     end
     for i in 1:l_2
@@ -54,28 +295,28 @@ function PauliPreparationSet(gates::Vector{Gate}, n::Int)
             pauli = zeros(Bool, 2n + 1)
             pauli[weight_2_supports[i]] = weight_2_signature[a][1:2]
             pauli[n .+ weight_2_supports[i]] = weight_2_signature[a][3:4]
-            pauli_preparation_set[3n + 9 * (i - 1) + a] = Pauli(pauli, n)
+            pauli_prep_set[3n + 9 * (i - 1) + a] = Pauli(pauli, n)
         end
     end
-    return pauli_preparation_set::Vector{Pauli}
+    return pauli_prep_set::Vector{Pauli}
 end
 
 """
-    PrepLayer(initial::Pauli, initial_support::Vector{Int})
+    get_prep_layer(initial::Pauli, initial_support::Vector{Int})
 
-Returns a layer which prepares the provided Pauli on a tableau, flipping the sign if appropriate.
+Returns a layer which prepares the Pauli `initial`, supported on the qubits in `initial_support`.
 """
-function PrepLayer(initial::Pauli, initial_support::Vector{Int})
+function get_prep_layer(initial::Pauli, initial_support::Vector{Int})
     n = initial.qubit_num
-    prep = Vector{Gate}(undef, 0)
-    for i in initial_support
+    prep = Vector{Gate}(undef, length(initial_support))
+    for (idx, i) in enumerate(initial_support)
         signature = Bool[initial.pauli[i]; initial.pauli[n + i]]
         if signature == Bool[0; 1]
-            push!(prep, Gate("PZ+", 0, [i]))
+            prep[idx] = Gate("PZ+", 0, [i])
         elseif signature == Bool[1; 0]
-            push!(prep, Gate("PX+", 0, [i]))
+            prep[idx] = Gate("PX+", 0, [i])
         elseif signature == Bool[1; 1]
-            push!(prep, Gate("PY+", 0, [i]))
+            prep[idx] = Gate("PY+", 0, [i])
         else
             throw(
                 error(
@@ -89,21 +330,21 @@ function PrepLayer(initial::Pauli, initial_support::Vector{Int})
 end
 
 """
-    MeasLayer(final::Pauli, final_support::Vector{Int})
+    get_meas_layer(final::Pauli, final_support::Vector{Int})
 
-Returns a circuit which measures the provided Pauli on a tableau.
+Returns a layer which measures the Pauli `final`, supported on the qubits in `final_support`.
 """
-function MeasLayer(final::Pauli, final_support::Vector{Int})
+function get_meas_layer(final::Pauli, final_support::Vector{Int})
     n = final.qubit_num
-    meas = Vector{Gate}(undef, 0)
-    for i in final_support
+    meas = Vector{Gate}(undef, length(final_support))
+    for (idx, i) in enumerate(final_support)
         signature = Bool[final.pauli[i]; final.pauli[n + i]]
         if signature == Bool[0; 1]
-            push!(meas, Gate("MZ", 0, [i]))
+            meas[idx] = Gate("MZ", 0, [i])
         elseif signature == Bool[1; 0]
-            push!(meas, Gate("MX", 0, [i]))
+            meas[idx] = Gate("MX", 0, [i])
         elseif signature == Bool[1; 1]
-            push!(meas, Gate("MY", 0, [i]))
+            meas[idx] = Gate("MY", 0, [i])
         else
             throw(
                 error(
@@ -117,18 +358,18 @@ function MeasLayer(final::Pauli, final_support::Vector{Int})
 end
 
 """
-    Update!(design_row::Vector{Int}, pauli::Pauli, l::Layer, gate_index::Dict{Gate, Int})
+    update_design_row!(design_row::Vector{Int}, pauli::Pauli, l::Layer, gate_index::Dict{Gate, Int})
 
-Updates the row of the design matrix according to the supplied Pauli for each of the gates in the layer.
+Updates the design matrix row `design_row` according to the Pauli `pauli` for each gate in the layer `l`, using the gate index `gate_index`.
 """
-function Update!(
+function update_design_row!(
     design_row::Vector{Int},
     pauli::Pauli,
     l::Layer,
     gate_index::Dict{Gate, Int},
 )
     n = pauli.qubit_num
-    support = Support(pauli)
+    support = get_support(pauli)
     # Calculate the relevant additions to the design matrix row for each gate in the layer
     for gate in l.layer
         if length(intersect(support, gate.targets)) > 0
@@ -141,7 +382,7 @@ function Update!(
                 wrong_Z = (signature == Bool[0; 1] && gate.type ∉ ["PZ+", "PZ-", "MZ"])
                 wrong_X = (signature == Bool[1; 0] && gate.type ∉ ["PX+", "PX-", "MX"])
                 wrong_Y = (signature == Bool[1; 1] && gate.type ∉ ["PY+", "PY-", "MY"])
-                @assert !wrong_Z && !wrong_X && !wrong_Y "The Pauli $(pauli) is not prepared or measured by the gate $(gate)."
+                @assert ~wrong_Z && ~wrong_X && ~wrong_Y "The Pauli $(pauli) is not prepared or measured by the gate $(gate)."
                 @assert signature != Bool[0; 0] "The Pauli $(pauli) is meant to be supported on qubit $(target_1) and yet has signature $(signature) there."
                 # Preparations and measurements get unique variables
                 pauli_index = 1
@@ -175,11 +416,11 @@ function Update!(
 end
 
 """
-    Mapping(initial::Pauli, c::AbstractCircuit)
+    calc_mapping(initial::Pauli, c::AbstractCircuit)
 
-Returns a `Mapping` object describing how the initial Pauli is mapped by the circuit, and its corresponding row in the design matrix.
+Returns a [`Mapping`](@ref) object for the Pauli `initial` when mapped by the circuit `c`.
 """
-function Mapping(initial::Pauli, c::AbstractCircuit)
+function calc_mapping(initial::Pauli, c::T) where {T <: AbstractCircuit}
     # Initialise variables
     n = c.qubit_num
     gate_index = c.gate_index
@@ -192,17 +433,17 @@ function Mapping(initial::Pauli, c::AbstractCircuit)
     design_row = zeros(Int, N)
     # Generate the layer which prepares the appropriate Pauli
     @assert initial.pauli[2n + 1] == 0 "This function requires an initial Pauli with positive sign."
-    initial_support = Support(initial)
-    prep_layer = PrepLayer(initial, initial_support)
+    initial_support = get_support(initial)
+    prep_layer = get_prep_layer(initial, initial_support)
     # Update the design matrix row if appropriate
     if add_prep
-        Update!(design_row, initial, prep_layer, gate_index)
+        update_design_row!(design_row, initial, prep_layer, gate_index)
     end
     # Prepare the tableau with the initial Pauli
-    Apply!(t, prep_layer)
+    apply!(t, prep_layer)
     # Store the Pauli in the row corresponding to the first element of the initial support
     for i in eachindex(initial_support[2:end])
-        RowSum!(t, n + initial_support[1], n + initial_support[i + 1])
+        row_sum!(t, n + initial_support[1], n + initial_support[i + 1])
     end
     @assert t.tableau[n + initial_support[1], :] == initial.pauli "The initial Pauli has not been appropriately initialised in the tableau."
     # Apply the main circuit
@@ -210,27 +451,27 @@ function Mapping(initial::Pauli, c::AbstractCircuit)
     for layer in c.circuit
         # Track the spread of the Pauli
         layer_pauli = Pauli(t.tableau[n + initial_support[1], :], n)
-        push!(spread_track, Support(layer_pauli))
+        push!(spread_track, get_support(layer_pauli))
         # Update the design matrix row
-        Update!(design_row, layer_pauli, layer, gate_index)
+        update_design_row!(design_row, layer_pauli, layer, gate_index)
         # Apply the circuit layer
-        Apply!(t, layer)
+        apply!(t, layer)
     end
     # Determine the final Pauli to which the initial Pauli is mapped
     final = Pauli(t.tableau[n + initial_support[1], :], n)
-    final_support = Support(final)
+    final_support = get_support(final)
     push!(spread_track, final_support)
     # Undo the initial RowSums
     for i in eachindex(initial_support[2:end])
-        RowSum!(t, n + initial_support[1], n + initial_support[i + 1])
+        row_sum!(t, n + initial_support[1], n + initial_support[i + 1])
     end
     # Generate the layer which measures the appropriate Pauli
-    meas_layer = MeasLayer(final, final_support)
+    meas_layer = get_meas_layer(final, final_support)
     if add_meas
-        Update!(design_row, final, meas_layer, gate_index)
+        update_design_row!(design_row, final, meas_layer, gate_index)
     end
     # Check that the measurement outcome is appropriate
-    measurements = Apply!(t, meas_layer; return_measurements = true)
+    measurements = apply!(t, meas_layer; return_measurements = true)
     @assert prod(meas[1] for meas in measurements) == (-1)^final.pauli[2n + 1] "The measurement does not match the final Pauli."
     # Generate a Mapping object
     design_row = convert(SparseVector{Int32, Int32}, dropzeros(sparse(design_row)))
@@ -239,18 +480,18 @@ function Mapping(initial::Pauli, c::AbstractCircuit)
 end
 
 """
-    MappingSet(c::AbstractCircuit)
+    calc_mapping_set(c::AbstractCircuit)
 
-Returns a vector of `Mapping` objects for each Pauli supported on some gate in the circuit which describes how that Pauli is mapped by the circuit, and its corresponding row in the design matrix.
+Returns a vector of [`Mapping`](@ref) objects for each single-qubit Pauli on the qubits in the circuit `c`, and each two-qubit Pauli supported on some gate in the circuit `c`.
 """
-function MappingSet(c::AbstractCircuit)
+function calc_mapping_set(c::T) where {T <: AbstractCircuit}
     # Determine the Paulis whose mapping set we will calculate
-    pauli_preparation_set = PauliPreparationSet(c.gates, c.qubit_num)
-    pauli_num = length(pauli_preparation_set)
+    pauli_prep_set = get_pauli_prep_set(c.gates, c.qubit_num)
+    pauli_num = length(pauli_prep_set)
     # Calculate the mapping set
     mapping_set = Vector{Mapping}(undef, pauli_num)
     @threads :static for idx in 1:pauli_num
-        mapping_set[idx] = Mapping(pauli_preparation_set[idx], c)
+        mapping_set[idx] = calc_mapping(pauli_prep_set[idx], c)
     end
     # Design matrix row corresponding to the mapping set
     mapping_matrix = convert(SparseMatrixCSC{Int32, Int32}, spzeros(Int32, pauli_num, c.N))
@@ -261,17 +502,17 @@ function MappingSet(c::AbstractCircuit)
 end
 
 """
-    ConsistencySet(mapping_set::Vector{Mapping})
+    calc_consistency_set(mapping_set::Vector{Mapping})
 
-Returns a list, for each element of the mapping set, of the indices of all the other elements of the mapping set with which it is compatible.
+Returns a list for each mapping in `mapping_set` of all other mappings with which it is simultaneously preparable and measurable, and hence tuple-consistent.
 """
-function ConsistencySet(mapping_set::Vector{Mapping})
+function calc_consistency_set(mapping_set::Vector{Mapping})
     L = length(mapping_set)
     n = mapping_set[1].initial.qubit_num
     initial_paulis = [m.initial for m in mapping_set]
-    initial_supports = [Support(initial) for initial in initial_paulis]
+    initial_supports = [get_support(initial) for initial in initial_paulis]
     final_paulis = [m.final for m in mapping_set]
-    final_supports = [Support(final) for final in final_paulis]
+    final_supports = [get_support(final) for final in final_paulis]
     # Determine all other simultaneously preparable and measurement mappings for each mapping in the set
     consistency_set = Vector{Vector{Int}}(undef, L)
     for i in 1:L
@@ -325,14 +566,17 @@ function ConsistencySet(mapping_set::Vector{Mapping})
 end
 
 """
-    PackPaulis(mapping_set::Vector{Mapping}, consistency_set::Vector{Vector{Int}})
+    calc_experiment_set(mapping_set::Vector{Mapping}, consistency_set::Vector{Vector{Int}})
 
-Returns a set of sets of simultaneously preparable and measurable initial-final Pauli pairs in the mapping set.
+Returns a set of experiments which simultaneously estimate the circuit eigenvalues corresponding to the mappings in `mapping_set`, whose tuple-consistency relations are described by `consistency_set`.
 """
-function PackPaulis(mapping_set::Vector{Mapping}, consistency_set::Vector{Vector{Int}})
+function calc_experiment_set(
+    mapping_set::Vector{Mapping},
+    consistency_set::Vector{Vector{Int}},
+)
     # Final Paulis
     final_paulis = [m.final for m in mapping_set]
-    final_supports = [Support(final) for final in final_paulis]
+    final_supports = [get_support(final) for final in final_paulis]
     # Greedily add the Paulis into sets of compatible Paulis
     experiment_set = Vector{Vector{Int}}(undef, 0)
     # Set up the Paulis and sort them by size of the final Paulis
@@ -396,16 +640,17 @@ function PackPaulis(mapping_set::Vector{Mapping}, consistency_set::Vector{Vector
 end
 
 """
-    CovarianceDict(c::AbstractCircuit, mapping_set::Vector{Mapping}, experiment_set::Vector{Vector{Int}}, full_covariance::Bool)
+    calc_covariance_dict(c::AbstractCircuit, mapping_set::Vector{Mapping}, experiment_set::Vector{Vector{Int}}, full_covariance::Bool)
 
-Generates a dictionary with the requisite information to calculate the covariance matrix for the circuit eigenvalue estimators given the `experiment_set`, which describe the sets of simultaneously measured circuit eigenvalue estimators, corresponding to the `mapping_set`, under the specified circuit.
+Returns a dictionary with the requisite information to calculate the sparse circuit eigenvalue estimator covariance matrix for the arranged circuit `c`, with mappings `mapping_set`, when estimated by the experiments in `experiment_set`.
+If `full_covariance` is `true`, then this constructs the full covariance matrix, whereas if `full_covariance` is `false`, then this constructs only the diagonal terms of the covariance matrix.
 """
-function CovarianceDict(
-    c::AbstractCircuit,
+function calc_covariance_dict(
+    c::T,
     mapping_set::Vector{Mapping},
     experiment_set::Vector{Vector{Int}},
     full_covariance::Bool,
-)
+) where {T <: AbstractCircuit}
     # Initialise variables
     tuple_circuit_number = length(experiment_set)
     trivial_pauli = Pauli(Bool[0], 0)
@@ -420,10 +665,15 @@ function CovarianceDict(
     for j in 1:tuple_circuit_number
         experiment = experiment_set[j]
         # Determine the number of sign configurations as generated by PackCircuit
-        experiment_prep_supports = [Support(initial_paulis[pauli]) for pauli in experiment]
+        experiment_prep_supports =
+            [get_support(initial_paulis[pauli]) for pauli in experiment]
         max_prep_support = maximum(length.(experiment_prep_supports))
         @assert max_prep_support ∈ [1; 2] "Currently only supports up to two-qubit Pauli preparations."
-        experiment_sign_factor = 2^max_prep_support
+        if hasproperty(c, :partition)
+            experiment_sign_factor = 2^max_prep_support
+        else
+            experiment_sign_factor = 1
+        end
         for index in experiment
             # Calculate the diagonal term
             diag_index = CartesianIndex(index, index)
@@ -451,10 +701,14 @@ function CovarianceDict(
             S = length(experiment)
             # Determine the number of sign configurations as generated by PackCircuit
             experiment_prep_supports =
-                [Support(initial_paulis[pauli]) for pauli in experiment]
+                [get_support(initial_paulis[pauli]) for pauli in experiment]
             max_prep_support = maximum(length.(experiment_prep_supports))
             @assert max_prep_support ∈ [1; 2] "Currently only supports up to two-qubit Pauli preparations."
-            experiment_sign_factor = 2^max_prep_support
+            if hasproperty(c, :partition)
+                experiment_sign_factor = 2^max_prep_support
+            else
+                experiment_sign_factor = 1
+            end
             @threads :static for s_1 in 1:S
                 # Get the first Pauli
                 index_1 = experiment[s_1]
@@ -492,7 +746,7 @@ function CovarianceDict(
                                 sum_pauli == initial for initial in initial_paulis
                             )
                             if sum_index === nothing
-                                sum_mapping = Mapping(sum_pauli, c)
+                                sum_mapping = calc_mapping(sum_pauli, c)
                             else
                                 sum_mapping = mapping_set[sum_index]
                             end
@@ -525,34 +779,35 @@ function CovarianceDict(
 end
 
 """
-    PackCircuits(code::Code, mapping_set::Vector{Mapping}, experiment_set::Vector{Vector{Int}})
+    get_experiment_layers(c::AbstractCircuit, mapping_set::Vector{Mapping}, experiment_set::Vector{Vector{Int}})
 
-Returns a set of circuits which prepares and measures the initial-final Pauli pairs, as dictated by the Pauli sets.
+Returns circuit layers that prepare and measure the initial and final Paulis as given by the mappings in `mapping_set`, for each experiment in `experiment set`.
+If `c` has a `partition` field, this is used to generate all necessary sign configurations for the preparation layers.
 """
-function PackCircuits(
-    code::Code,
+function get_experiment_layers(
+    c::T,
     mapping_set::Vector{Mapping},
     experiment_set::Vector{Vector{Int}},
-)
+) where {T <: AbstractCircuit}
     # Generate an appropriate set of circuits based on the experiment set
-    n = code.qubit_num
+    n = c.qubit_num
     tuple_circuit_number = length(experiment_set)
-    prep_set = Vector{Vector{Layer}}(undef, tuple_circuit_number)
-    meas_set = Vector{Layer}(undef, tuple_circuit_number)
+    prep_layer_set = Vector{Vector{Layer}}(undef, tuple_circuit_number)
+    meas_layer_set = Vector{Layer}(undef, tuple_circuit_number)
     for j in 1:tuple_circuit_number
         # Set up some variables
         experiment = experiment_set[j]
         S = length(experiment)
         initial_set = [mapping_set[pauli].initial for pauli in experiment]
-        initial_support_set = [Support(initial) for initial in initial_set]
+        initial_support_set = [get_support(initial) for initial in initial_set]
         final_set = [mapping_set[pauli].final for pauli in experiment]
-        final_support_set = [Support(final) for final in final_set]
+        final_support_set = [get_support(final) for final in final_set]
         # Collate the appropriate preparation and measurement circuits
         prep = Vector{Gate}(undef, 0)
         meas = Vector{Gate}(undef, 0)
         for s in 1:S
-            append!(prep, PrepLayer(initial_set[s], initial_support_set[s]).layer)
-            append!(meas, MeasLayer(final_set[s], final_support_set[s]).layer)
+            append!(prep, get_prep_layer(initial_set[s], initial_support_set[s]).layer)
+            append!(meas, get_meas_layer(final_set[s], final_support_set[s]).layer)
         end
         # Remove repeated gates
         unique!(prep)
@@ -561,119 +816,144 @@ function PackCircuits(
         sort!(prep)
         sort!(meas)
         # Store the measurement layer
-        meas_set[j] = Layer(meas, n)
+        meas_layer_set[j] = Layer(meas, n)
         # Set up the eigenstate sign combinations
-        max_prep_support = maximum(length.(initial_support_set))
-        if max_prep_support == 1
-            prep_2 = Vector{Gate}(undef, 0)
-            for gate in prep
-                negative_type = replace(gate.type, "+" => "-")
-                negative_gate = Gate(negative_type, gate.index, gate.targets)
-                @assert gate.type != negative_type "The preparation gate $(gate) is unsigned."
-                push!(prep_2, negative_gate)
-            end
-            @assert length(prep) == length(prep_2) "The constructed preparation layers do not have the same length as the original layer $(prep)."
-            # Store the preparation layers
-            prep_set[j] = [Layer(prep, n), Layer(prep_2, n)]
-        elseif max_prep_support == 2
-            prep_2 = Vector{Gate}(undef, 0)
-            prep_3 = Vector{Gate}(undef, 0)
-            prep_4 = Vector{Gate}(undef, 0)
-            for gate in prep
-                negative_type = replace(gate.type, "+" => "-")
-                negative_gate = Gate(negative_type, gate.index, gate.targets)
-                @assert gate.type != negative_type "The preparation gate $(gate) is unsigned."
-                if gate.targets[1] ∈ code.ancilla_indices
+        if hasproperty(c, :partition)
+            @assert length(unique([c.partition[1]; c.partition[2]])) == c.qubit_num "The partition does not contain the right number of qubits."
+            max_prep_support = maximum(length.(initial_support_set))
+            if max_prep_support == 1
+                prep_2 = Vector{Gate}(undef, 0)
+                for gate in prep
+                    negative_type = replace(gate.type, "+" => "-")
+                    negative_gate = Gate(negative_type, gate.index, gate.targets)
+                    @assert gate.type != negative_type "The preparation gate $(gate) is unsigned."
                     push!(prep_2, negative_gate)
-                    push!(prep_3, gate)
-                    push!(prep_4, negative_gate)
-                elseif gate.targets[1] ∈ code.data_indices
-                    push!(prep_2, gate)
-                    push!(prep_3, negative_gate)
-                    push!(prep_4, negative_gate)
-                else
-                    throw(
-                        error(
-                            "The preparation gate $(gate) targets neither an ancilla qubit nor a data qubit.",
-                        ),
-                    )
                 end
+                @assert length(prep) == length(prep_2) "The constructed preparation layers do not have the same length as the original layer $(prep)."
+                # Store the preparation layers
+                prep_layer_set[j] = [Layer(prep, n), Layer(prep_2, n)]
+            elseif max_prep_support == 2
+                prep_2 = Vector{Gate}(undef, 0)
+                prep_3 = Vector{Gate}(undef, 0)
+                prep_4 = Vector{Gate}(undef, 0)
+                for gate in prep
+                    negative_type = replace(gate.type, "+" => "-")
+                    negative_gate = Gate(negative_type, gate.index, gate.targets)
+                    @assert gate.type != negative_type "The preparation gate $(gate) is unsigned."
+                    if gate.targets[1] ∈ c.partition[1]
+                        push!(prep_2, gate)
+                        push!(prep_3, negative_gate)
+                        push!(prep_4, negative_gate)
+                    elseif gate.targets[1] ∈ c.partition[2]
+                        push!(prep_2, negative_gate)
+                        push!(prep_3, gate)
+                        push!(prep_4, negative_gate)
+                    else
+                        throw(
+                            error(
+                                "The preparation gate $(gate) targets neither an ancilla qubit nor a data qubit.",
+                            ),
+                        )
+                    end
+                end
+                @assert (
+                    (length(prep) == length(prep_2)) &&
+                    (length(prep) == length(prep_3)) &&
+                    (length(prep) == length(prep_4))
+                ) "The constructed preparation layers do not have the same length as the original layer $(prep)."
+                # Store the preparation layers
+                prep_layer_set[j] =
+                    [Layer(prep, n), Layer(prep_2, n), Layer(prep_3, n), Layer(prep_4, n)]
+            else
+                throw(error("Currently only supports up to two-qubit Pauli preparations."))
             end
-            @assert (
-                (length(prep) == length(prep_2)) &&
-                (length(prep) == length(prep_3)) &&
-                (length(prep) == length(prep_4))
-            ) "The constructed preparation layers do not have the same length as the original layer $(prep)."
-            # Store the preparation layers
-            prep_set[j] =
-                [Layer(prep, n), Layer(prep_2, n), Layer(prep_3, n), Layer(prep_4, n)]
         else
-            throw(error("Currently only supports up to two-qubit Pauli preparations."))
+            # If the circuit cannot partition two qubit gates such that they always act 
+            # between two sets of qubits, such as with data (partition[1]) and ancilla
+            # (partition[2]) qubits, then we don't bother with the sign configurations.
+            prep_layer_set[j] = [Layer(prep, n)]
         end
     end
-    return (prep_set::Vector{Vector{Layer}}, meas_set::Vector{Layer})
+    return (prep_layer_set::Vector{Vector{Layer}}, meas_layer_set::Vector{Layer})
 end
 
 """
-    GenerateDesign(code::Code, tuple_set::Vector{Vector{Int}}; shot_weights::Union{Vector{Float64}, Nothing} = nothing, full_covariance::Bool = true, save_data::Bool = false, diagnostics::Bool = false)
+    generate_design(c::AbstractCircuit, tuple_set::Vector{Vector{Int}}; kwargs...)
+    generate_design(c::AbstractCircuit, tuple_set_data::TupleSetData; kwargs...)
+    generate_design(c::AbstractCircuit; kwargs...)
 
-Generates a design matrix as well as the collection of circuits required to measure all the requisite initial-final Pauli pairs using the supplied tuple set.
+Returns a [`Design`](@ref) object containing all relevant information describing the experimental design, including the design matrix.
+
+# Arguments
+
+  - `c::AbstractCircuit`: Circuit for which the design matrix is to be generated.
+  - `tuple_set::Vector{Vector{Int}}`: Tuple set arranging the circuit layers that is used to generate the experimental design.
+  - `tuple_set_data::TupleSetData`: [`TupleSetData`](@ref) object that generates the tuple set.
+
+# Keyword arguments
+
+  - `shot_weights::Union{Vector{Float64}, Nothing} = nothing`: Shot weights for each tuple in the set, which must add to 1. When `nothing`, automatically generates the default shot weights.
+  - `full_covariance::Bool = true`: If `true`, generates parameters to construct the full covariance matrix, else if `false`, only generates parameters to construct the terms on the diagonal.
+  - `N_warn::Int = 3 * 10^4`: Number of circuit eigenvalues above which to warn the user about certain keyword argument choices.
+  - `diagnostics::Bool = false`: Whether to print diagnostic information.
+  - `save_data::Bool = false`: Whether to save the design data.
 """
-function GenerateDesign(
-    code::Code,
+function generate_design(
+    c::T,
     tuple_set::Vector{Vector{Int}};
     shot_weights::Union{Vector{Float64}, Nothing} = nothing,
     full_covariance::Bool = true,
+    N_warn::Int = 3 * 10^4,
     diagnostics::Bool = false,
     save_data::Bool = false,
-    suppress_warnings::Bool = false,
-)
+) where {T <: AbstractCircuit}
     # Set some parameters
     start_time = time()
-    T = length(tuple_set)
-    N = code.N
+    tuple_number = length(tuple_set)
+    N = c.N
     @assert tuple_set == unique(tuple_set) "The tuple set contains repeated tuples."
     if shot_weights !== nothing
-        @assert length(shot_weights) == T "The number of shot weights does not match the tuple set."
+        @assert length(shot_weights) == tuple_number "The number of shot weights does not match the tuple set."
         @assert sum(shot_weights) ≈ 1.0 "The shot weights are not appropriately normalised."
         @assert all(shot_weights .> 0.0) "The shot weights are not all positive."
     end
     # Warn the user if they have unadvisable settings for a large circuit
-    if N >= 10^4 && !suppress_warnings
+    if N >= N_warn
         if full_covariance
             @warn "This design is for a very large circuit: generating the full covariance matrix is unadvised."
         end
-        if !diagnostics
+        if ~diagnostics
             @warn "This design is for a very large circuit: turning on diagnostics is advised."
         end
-        if !save_data
+        if ~save_data
             @warn "This design is for a very large circuit: saving the data is advised."
         end
     end
     # Initialise the variables
     design_matrix = convert(SparseMatrixCSC{Int32, Int32}, spzeros(Int32, 0, N))
-    mapping_ensemble = Vector{Vector{Mapping}}(undef, T)
-    experiment_ensemble = Vector{Vector{Vector{Int}}}(undef, T)
+    mapping_ensemble = Vector{Vector{Mapping}}(undef, tuple_number)
+    experiment_ensemble = Vector{Vector{Vector{Int}}}(undef, tuple_number)
     covariance_dict_ensemble =
-        Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}(undef, T)
-    prep_ensemble = Vector{Vector{Vector{Layer}}}(undef, T)
-    meas_ensemble = Vector{Vector{Layer}}(undef, T)
-    calculation_times = Matrix{Float64}(undef, T, 5)
-    for t in 1:T
+        Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}(undef, tuple_number)
+    prep_ensemble = Vector{Vector{Vector{Layer}}}(undef, tuple_number)
+    meas_ensemble = Vector{Vector{Layer}}(undef, tuple_number)
+    calculation_times = Matrix{Float64}(undef, tuple_number, 5)
+    for idx in 1:tuple_number
         # Determine the design data for the tuple
-        circuit_tuple = tuple_set[t]
-        code_tuple = ApplyTuple(code, circuit_tuple)
+        circuit_tuple = tuple_set[idx]
+        c_tuple = apply_tuple(c, circuit_tuple)
         time_1 = time()
-        (mapping_set, mapping_matrix) = MappingSet(code_tuple)
+        (mapping_set, mapping_matrix) = calc_mapping_set(c_tuple)
         time_2 = time()
-        consistency_set = ConsistencySet(mapping_set)
+        consistency_set = calc_consistency_set(mapping_set)
         time_3 = time()
-        experiment_set = PackPaulis(mapping_set, consistency_set)
+        experiment_set = calc_experiment_set(mapping_set, consistency_set)
         time_4 = time()
         covariance_dict =
-            CovarianceDict(code_tuple, mapping_set, experiment_set, full_covariance)
+            calc_covariance_dict(c_tuple, mapping_set, experiment_set, full_covariance)
         time_5 = time()
-        (prep_set, meas_set) = PackCircuits(code_tuple, mapping_set, experiment_set)
+        (prep_layer_set, meas_layer_set) =
+            get_experiment_layers(c_tuple, mapping_set, experiment_set)
         time_6 = time()
         # Track the times taken
         mapping_time = time_2 - time_1
@@ -683,31 +963,37 @@ function GenerateDesign(
         circuit_time = time_6 - time_5
         if diagnostics
             println(
-                "For tuple $(t), the mappings took $(round(mapping_time, digits = 3)) s, the consistency sets took $(round(consistency_time, digits = 3)) s, packing the Paulis took $(round(pauli_time, digits = 3)) s, the covariance dictionary took $(round(covariance_time, digits = 3)) s, and the circuits took $(round(circuit_time, digits = 3)) s. Since starting, $(round(time_5 - start_time, digits = 3)) s have elapsed.",
+                "For tuple $(idx), the mappings took $(round(mapping_time, digits = 3)) s, the consistency sets took $(round(consistency_time, digits = 3)) s, packing the Paulis took $(round(pauli_time, digits = 3)) s, the covariance dictionary took $(round(covariance_time, digits = 3)) s, and the circuits took $(round(circuit_time, digits = 3)) s. Since starting, $(round(time_5 - start_time, digits = 3)) s have elapsed.",
             )
         end
         # Store the data
-        tuple_set[t] = circuit_tuple
+        tuple_set[idx] = circuit_tuple
         design_matrix = vcat(design_matrix, mapping_matrix)
-        mapping_ensemble[t] = mapping_set
-        experiment_ensemble[t] = experiment_set
-        covariance_dict_ensemble[t] = covariance_dict
-        prep_ensemble[t] = prep_set
-        meas_ensemble[t] = meas_set
-        calculation_times[t, :] =
-            [mapping_time; consistency_time; pauli_time; covariance_time; circuit_time]
+        mapping_ensemble[idx] = mapping_set
+        experiment_ensemble[idx] = experiment_set
+        covariance_dict_ensemble[idx] = covariance_dict
+        prep_ensemble[idx] = prep_layer_set
+        meas_ensemble[idx] = meas_layer_set
+        calculation_times[idx, :] = [
+            mapping_time
+            consistency_time
+            pauli_time
+            covariance_time
+            circuit_time
+        ]
     end
     # Calculate the tuple times and shot weights
-    experiment_numbers = length.([vcat(prep_set...) for prep_set in prep_ensemble])
+    experiment_numbers =
+        length.([vcat(prep_layer_set...) for prep_layer_set in prep_ensemble])
     (tuple_times, tuple_shot_weights) =
-        TupleSetParameters(code, tuple_set, experiment_numbers)
+        get_tuple_set_params(c, tuple_set, experiment_numbers)
     if shot_weights === nothing
         shot_weights = tuple_shot_weights
     end
     # Save and return the results
     overall_time = time() - start_time
     d = Design(
-        code,
+        c,
         full_covariance,
         design_matrix,
         tuple_set,
@@ -726,44 +1012,29 @@ function GenerateDesign(
     end
     if diagnostics
         println(
-            "Generated the design for all $(T) tuples in $(round(overall_time, digits = 3)) s.",
+            "Generated the design for all $(tuple_number) tuples in $(round(overall_time, digits = 3)) s.",
         )
     end
     return d::Design
 end
 
-#
-function GenerateDesign(
-    code::Code,
+function generate_design(
+    c::T,
     tuple_set_data::TupleSetData;
     shot_weights::Union{Vector{Float64}, Nothing} = nothing,
     full_covariance::Bool = true,
     diagnostics::Bool = false,
     save_data::Bool = false,
-)
-    # Save the results
-    suppress_warnings = false
-    if code.N >= 10^4
-        suppress_warnings = true
-        if full_covariance
-            @warn "This design is for a very large circuit: generating the full covariance matrix is unadvised."
-        end
-        if !diagnostics
-            @warn "This design is for a very large circuit: turning on diagnostics is advised."
-        end
-        if !save_data
-            @warn "This design is for a very large circuit: saving the data is advised."
-        end
-    end
+) where {T <: AbstractCircuit}
     # Generate the design
-    tuple_set = TupleSet(tuple_set_data)
-    d = GenerateDesign(
-        code,
+    tuple_set = get_tuple_set(tuple_set_data)
+    d = generate_design(
+        c,
         tuple_set;
         shot_weights = shot_weights,
         full_covariance = full_covariance,
         diagnostics = diagnostics,
-        suppress_warnings = suppress_warnings,
+        save_data = save_data,
     )
     @reset d.tuple_set_data = tuple_set_data
     # Save and return the results
@@ -773,12 +1044,33 @@ function GenerateDesign(
     return d::Design
 end
 
-"""
-    CompleteDesign(d::Design; diagnostics::Bool = false)
+function generate_design(
+    c::T;
+    shot_weights::Union{Vector{Float64}, Nothing} = nothing,
+    full_covariance::Bool = true,
+    diagnostics::Bool = false,
+    save_data::Bool = false,
+) where {T <: AbstractCircuit}
+    # Generate the design
+    tuple_set_data = get_tuple_set_data(c)
+    d = generate_design(
+        c,
+        tuple_set_data;
+        shot_weights = shot_weights,
+        full_covariance = full_covariance,
+        diagnostics = diagnostics,
+        save_data = save_data,
+    )
+    # Return the results
+    return d::Design
+end
 
-Completes the covariance dictionary for the design if it does not already have a full covariance matrix.
 """
-function CompleteDesign(d::Design; diagnostics::Bool = false)
+    complete_design(d::Design; diagnostics::Bool = false)
+
+Returns a copy of the design `d` where the covariance matrix dictionary generates the full covariance matrix. Prints diagnostics if `diagnostics` is `true`.
+"""
+function complete_design(d::Design; diagnostics::Bool = false)
     if d.full_covariance
         if diagnostics
             println("The supplied design matrix already has a full covariance matrix.")
@@ -788,20 +1080,20 @@ function CompleteDesign(d::Design; diagnostics::Bool = false)
         # Set some parameters
         start_time = time()
         full_covariance = true
-        T = length(d.tuple_set)
+        tuple_number = length(d.tuple_set)
         # Regenerate the covariance dictionary set with a full covariance matrix
         covariance_dict_ensemble =
-            Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}(undef, T)
-        covariance_times = Vector{Float64}(undef, T)
-        for t in 1:T
-            circuit_tuple = d.tuple_set[t]
-            code_tuple = ApplyTuple(d.code, circuit_tuple)
-            mapping_set_tuple = d.mapping_ensemble[t]
-            experiment_set_tuple = d.experiment_ensemble[t]
+            Vector{Dict{CartesianIndex{2}, Tuple{Mapping, Int}}}(undef, tuple_number)
+        covariance_times = Vector{Float64}(undef, tuple_number)
+        for idx in 1:tuple_number
+            circuit_tuple = d.tuple_set[idx]
+            c_tuple = apply_tuple(d.c, circuit_tuple)
+            mapping_set_tuple = d.mapping_ensemble[idx]
+            experiment_set_tuple = d.experiment_ensemble[idx]
             # Calculate the covariance dictionary
             time_4 = time()
-            covariance_dict_tuple = CovarianceDict(
-                code_tuple,
+            covariance_dict_tuple = calc_covariance_dict(
+                c_tuple,
                 mapping_set_tuple,
                 experiment_set_tuple,
                 full_covariance,
@@ -811,12 +1103,12 @@ function CompleteDesign(d::Design; diagnostics::Bool = false)
             covariance_time = time_5 - time_4
             if diagnostics
                 println(
-                    "For tuple $(t), generating the covariance dictionary took $(round(covariance_time, digits = 3)) s. Since starting, $(round(time_5 - start_time, digits = 3)) s have elapsed.",
+                    "For tuple $(idx), generating the covariance dictionary took $(round(covariance_time, digits = 3)) s. Since starting, $(round(time_5 - start_time, digits = 3)) s have elapsed.",
                 )
             end
             # Store the data
-            covariance_dict_ensemble[t] = covariance_dict_tuple
-            covariance_times[t] = covariance_time
+            covariance_dict_ensemble[idx] = covariance_dict_tuple
+            covariance_times[idx] = covariance_time
         end
         overall_time = time() - start_time
         # Set the new variables 
@@ -828,9 +1120,27 @@ function CompleteDesign(d::Design; diagnostics::Bool = false)
         @reset d_complete.calculation_times[:, 4] = covariance_times
         if diagnostics
             println(
-                "Generated the full covariance dictionaries for all $(T) tuples in $(round(overall_time, digits = 3)) s.",
+                "Generated the full covariance dictionaries for all $(tuple_number) tuples in $(round(overall_time, digits = 3)) s.",
             )
         end
         return d_complete::Design
     end
+end
+
+"""
+    update_noise(d::Design, noise_param::AbstractNoiseParameters)
+
+Returns a copy of `design` where the circuit has been updated with noise generated according to `noise_param`.
+"""
+function update_noise(d::Design, noise_param::T) where {T <: AbstractNoiseParameters}
+    # Generate the noise
+    gate_probabilities = get_gate_probabilities(d.c.total_gates, noise_param)
+    gate_eigenvalues =
+        get_gate_eigenvalues(gate_probabilities, d.c.total_gates, d.c.gate_index, d.c.N)
+    # Update the circuit
+    d_update = deepcopy(d)
+    @reset d_update.c.noise_param = noise_param
+    @reset d_update.c.gate_probabilities = gate_probabilities
+    @reset d_update.c.gate_eigenvalues = gate_eigenvalues
+    return d_update::Design
 end

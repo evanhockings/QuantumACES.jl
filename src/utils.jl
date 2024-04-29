@@ -1,13 +1,13 @@
 """
-    SimplexProject(probabilities::Vector{Float64})
+    project_simplex(probabilities::Vector{Float64})
 
-Projects a probability distribution onto the probability simplex in the Euclidean norm.
+Returns a copy of the probability distribution `probabilities` projected into the probability simplex according to the Euclidean norm.
 """
-function SimplexProject(probabilities::Vector{Float64})
+function project_simplex(probabilities::Vector{Float64})
     @assert any(isnan.(probabilities)) == false "The supplied vector contains NaN."
     sorted_probabilities = sort(probabilities; rev = true)
     sum_probabilities =
-        [1 / i for i in 1:length(probabilities)] .* (1 .- cumsum(sorted_probabilities))
+        [1 / i for i in eachindex(probabilities)] .* (1 .- cumsum(sorted_probabilities))
     projected_probabilities =
         max.(
             probabilities .+
@@ -18,11 +18,11 @@ function SimplexProject(probabilities::Vector{Float64})
 end
 
 """
-    Support(p::Pauli)
+    get_support(p::Pauli)
 
-Returns the support of the Pauli.
+Returns the support of the Pauli `p`.
 """
-function Support(p::Pauli)
+function get_support(p::Pauli)
     n = p.qubit_num
     pauli = p.pauli
     support = sort(findall(pauli[1:n] + pauli[(n + 1):(2n)] .> 0))
@@ -30,11 +30,12 @@ function Support(p::Pauli)
 end
 
 """
-    WHTMatrix(n::Int)
+    wht_matrix(n::Int)
 
-Returns the symplectically ordered Walsh-Hadamard transform matrix of order n; to perform the inverse transform, divide the transform matrix by a scalar factor 4^n.
+Returns the symplectically ordered Walsh-Hadamard transform matrix of order `n`, which maps an n-qubit Pauli error probability distribution to its eigenvalues.
+The inverse transform is obtained by dividing the transform by the factor ``4^n``.
 """
-function WHTMatrix(n::Int)
+function wht_matrix(n::Int)
     a = BitArray(undef, 2n)
     b = BitArray(undef, 2n)
     WHT_matrix = Matrix{Int}(undef, 4^n, 4^n)
@@ -49,11 +50,138 @@ function WHTMatrix(n::Int)
 end
 
 """
-    PauliString(p::Pauli)
+    pretty_print(merit_array::Matrix{Float64})
 
-Returns the string corresponding to the input Pauli.
+Prints `merit_array`, produced by [`compare_ls_optimise_weights`](@ref), in a readable format.
 """
-function PauliString(p::Pauli)
+function pretty_print(merit_array::Matrix{Float64})
+    # Check the input parameters
+    @assert size(merit_array) == (3, 6) "The input array should be of size (3, 6) and formatted as produced by the function compare_ls_optimise_weights."
+    if merit_array[1, 1] > merit_array[2, 1]
+        @warn "The GLS merit is better with shot weights optimised for WLS than for GLS."
+    end
+    if merit_array[1, 1] > merit_array[3, 1]
+        @warn "The GLS merit is better with shot weights optimised for OLS than for GLS."
+    end
+    if merit_array[2, 2] > merit_array[1, 2]
+        @warn "The WLS merit is better with shot weights optimised for GLS than for WLS."
+    end
+    if merit_array[2, 2] > merit_array[3, 2]
+        @warn "The WLS merit is better with shot weights optimised for OLS than for WLS."
+    end
+    if merit_array[3, 3] > merit_array[1, 3]
+        @warn "The OLS merit is better with shot weights optimised for GLS than for OLS."
+    end
+    if merit_array[3, 3] > merit_array[2, 3]
+        @warn "The OLS merit is better with shot weights optimised for WLS than for OLS."
+    end
+    # Print the data
+    shot_types = ["GLS"; "WLS"; "OLS"]
+    header = [
+        "Shot optim."
+        "GLS expectation"
+        "WLS expectation"
+        "OLS expectation"
+        "GLS std. dev."
+        "WLS std. dev."
+        "OLS std. dev."
+    ]
+    pretty_table(hcat(shot_types, merit_array); header = header, alignment = :l)
+    return nothing
+end
+
+"""
+    pretty_print(d::Design)
+
+Prints the tuple set and shot weight data of the design `d` in a readable format.
+"""
+function pretty_print(d::Design)
+    # Initialise data
+    tuple_set_data = d.tuple_set_data
+    repeat_tuple_set = tuple_set_data.repeat_tuple_set
+    repeat_numbers = tuple_set_data.repeat_numbers
+    repeat_indices = tuple_set_data.repeat_indices
+    nonrepeat_tuple_set = tuple_set_data.tuple_set
+    repeat_tuple_num = length(repeat_tuple_set)
+    nonrepeat_tuple_num = length(nonrepeat_tuple_set)
+    @assert length(d.tuple_set) == nonrepeat_tuple_num + repeat_tuple_num
+    # Set up the repeat tuple set data
+    formatted_repeat_numbers = [
+        repeat_numbers[repeat_indices[idx]] for
+        idx in eachindex(repeat_tuple_set) if repeat_numbers[repeat_indices[idx]] > 0
+    ]
+    repeat_tuple_set_data = hcat(
+        round.(d.shot_weights[1:repeat_tuple_num], digits = 7),
+        repeat_tuple_set,
+        formatted_repeat_numbers,
+    )
+    tuple_set_data = hcat(
+        round.(d.shot_weights[(repeat_tuple_num + 1):end], digits = 7),
+        nonrepeat_tuple_set,
+        ones(Int, nonrepeat_tuple_num),
+    )
+    header = [
+        "Shot weight"
+        "Tuple"
+        "Repeat number"
+    ]
+    pretty_table(
+        vcat(repeat_tuple_set_data, tuple_set_data);
+        header = header,
+        alignment = :l,
+        formatters = ft_printf("%.6f", 1),
+    )
+    return nothing
+end
+
+"""
+    pretty_print(aces_data::ACESData, merit_set::Tuple{Merit, Merit, Merit})
+
+Prints the z-scores of the normalised RMS errors of the gate eigenvalue estimator vector for the GLS, WLS, and OLS estimators in `aces_data` using the predicted means and variances for each in `merit_set`.
+"""
+function pretty_print(aces_data::ACESData, merit_set::Tuple{Merit, Merit, Merit})
+    # Set up parameters
+    repetition_count = aces_data.repetitions
+    budget_count = length(aces_data.budget_set)
+    gls_gate_norm_coll = aces_data.fgls_gate_norm_coll
+    wls_gate_norm_coll = aces_data.wls_gate_norm_coll
+    ols_gate_norm_coll = aces_data.ols_gate_norm_coll
+    @assert size(gls_gate_norm_coll) == (repetition_count, budget_count) "The GLS gate norm collection has the wrong size $(size(gls_gate_norm_coll))."
+    @assert size(wls_gate_norm_coll) == (repetition_count, budget_count) "The WLS gate norm collection has the wrong size $(size(wls_gate_norm_coll))."
+    @assert size(ols_gate_norm_coll) == (repetition_count, budget_count) "The OLS gate norm collection has the wrong size $(size(ols_gate_norm_coll))."
+    (gls_merit, wls_merit, ols_merit) = merit_set
+    @assert gls_merit.ls_type == :gls "The GLS merit has the wrong type $(gls_merit.ls_type)."
+    @assert wls_merit.ls_type == :wls "The WLS merit has the wrong type $(wls_merit.ls_type)."
+    @assert ols_merit.ls_type == :ols "The OLS merit has the wrong type $(ols_merit.ls_type)."
+    # Calculate the z-scores
+    gls_z_scores = (gls_gate_norm_coll .- gls_merit.expectation) ./ sqrt(gls_merit.variance)
+    wls_z_scores = (wls_gate_norm_coll .- wls_merit.expectation) ./ sqrt(wls_merit.variance)
+    ols_z_scores = (ols_gate_norm_coll .- ols_merit.expectation) ./ sqrt(ols_merit.variance)
+    # Print the data
+    repetitions = convert(Vector{Int}, collect(1:repetition_count))
+    shot_number =
+        ["10^$(round(log10(aces_data.budget_set[i]), digits = 3))" for i in 1:budget_count]
+    header = [
+        "Repetition"
+        "GLS S = " .* shot_number
+        "WLS S = " .* shot_number
+        "OLS S = " .* shot_number
+    ]
+    pretty_table(
+        hcat(repetitions, gls_z_scores, wls_z_scores, ols_z_scores);
+        header = header,
+        alignment = :l,
+        formatters = (ft_printf("%i", 1), ft_printf("%.4f")),
+    )
+    return nothing
+end
+
+"""
+    get_pauli_string(p::Pauli)
+
+Returns the string representation of the Pauli `p`.
+"""
+function get_pauli_string(p::Pauli)
     pauli = p.pauli
     n = p.qubit_num
     if pauli[2n + 1] == 0
@@ -83,11 +211,19 @@ function PauliString(p::Pauli)
     return pauli_string::String
 end
 
-#
-function MappingString(m::Mapping, c::AbstractCircuit; two_qubit_only::Bool = false)
+"""
+    get_mapping_string(m::Mapping, c::AbstractCircuit; two_qubit_only::Bool = false)
+
+Returns the string representation of the mapping `m` for the circuit `c`, including eigenvalues.
+"""
+function get_mapping_string(
+    m::Mapping,
+    c::T;
+    two_qubit_only::Bool = false,
+) where {T <: AbstractCircuit}
     # Construct the Pauli string for the mapping
-    initial_string = PauliString(m.initial)
-    final_string = PauliString(m.final)
+    initial_string = get_pauli_string(m.initial)
+    final_string = get_pauli_string(m.final)
     mapping_string = initial_string * " => " * final_string * " : "
     # We order our one-qubit Paulis as
     # X, Z, Y
@@ -128,9 +264,9 @@ function MappingString(m::Mapping, c::AbstractCircuit; two_qubit_only::Bool = fa
             throw(error("The gate $(g) does not operate on either 1 or 2 qubits."))
         end
         eigenvalue_power = m.design_row[nz_idx]
-        gate_string = "($(g.type)-$(Int(g.index)):$(Int.(g.targets)))"
+        gate_string = "($(g.type):$(Int(g.index)):$(Int.(g.targets)))"
         eigenvalue_string = pauli_string * " ^$(Int(eigenvalue_power))"
-        if !two_qubit_only || length(g.targets) == 2
+        if ~two_qubit_only || length(g.targets) == 2
             push!(gate_eigenvalue_strings, (gate_string, eigenvalue_string))
         end
     end
@@ -150,119 +286,4 @@ function MappingString(m::Mapping, c::AbstractCircuit; two_qubit_only::Bool = fa
         mapping_string *= ";"
     end
     return mapping_string::String
-end
-
-#
-function PrettyPrint(merit_array::Matrix{Float64})
-    # Check the input parameters
-    @assert size(merit_array) == (3, 6) "The input array should be of size (3, 6) and formatted as produced by the function CompareDescents."
-    if merit_array[1, 1] > merit_array[2, 1]
-        @warn "The GLS merit is better with shot weights optimised for WLS than for GLS."
-    end
-    if merit_array[1, 1] > merit_array[3, 1]
-        @warn "The GLS merit is better with shot weights optimised for OLS than for GLS."
-    end
-    if merit_array[2, 2] > merit_array[1, 2]
-        @warn "The WLS merit is better with shot weights optimised for GLS than for WLS."
-    end
-    if merit_array[2, 2] > merit_array[3, 2]
-        @warn "The WLS merit is better with shot weights optimised for OLS than for WLS."
-    end
-    if merit_array[3, 3] > merit_array[1, 3]
-        @warn "The OLS merit is better with shot weights optimised for GLS than for OLS."
-    end
-    if merit_array[3, 3] > merit_array[2, 3]
-        @warn "The OLS merit is better with shot weights optimised for WLS than for OLS."
-    end
-    # Print the data
-    shot_types = ["GLS"; "WLS"; "OLS"]
-    header = [
-        "Shot optim."
-        "GLS expectation"
-        "WLS expectation"
-        "OLS expectation"
-        "GLS std. dev."
-        "WLS std. dev."
-        "OLS std. dev."
-    ]
-    pretty_table(hcat(shot_types, merit_array); header = header, alignment = :l)
-    return nothing
-end
-
-#
-function PrettyPrint(d::Design)
-    # Initialise data
-    tuple_set_data = d.tuple_set_data
-    repeat_tuple_set = tuple_set_data.repeat_tuple_set
-    repeat_numbers = tuple_set_data.repeat_numbers
-    repeat_indices = tuple_set_data.repeat_indices
-    nonrepeat_tuple_set = tuple_set_data.tuple_set
-    repeat_tuple_num = length(repeat_tuple_set)
-    nonrepeat_tuple_num = length(nonrepeat_tuple_set)
-    @assert length(d.tuple_set) == nonrepeat_tuple_num + repeat_tuple_num
-    # Set up the repeat tuple set data
-    formatted_repeat_numbers = [
-        repeat_numbers[repeat_indices[idx]] for
-        idx in 1:length(repeat_tuple_set) if repeat_numbers[repeat_indices[idx]] > 0
-    ]
-    repeat_tuple_set_data = hcat(
-        round.(d.shot_weights[1:repeat_tuple_num], digits = 7),
-        repeat_tuple_set,
-        formatted_repeat_numbers,
-    )
-    tuple_set_data = hcat(
-        round.(d.shot_weights[(repeat_tuple_num + 1):end], digits = 7),
-        nonrepeat_tuple_set,
-        ones(Int, nonrepeat_tuple_num),
-    )
-    header = [
-        "Shot weight"
-        "Tuple"
-        "Repeat number"
-    ]
-    pretty_table(
-        vcat(repeat_tuple_set_data, tuple_set_data);
-        header = header,
-        alignment = :l,
-        formatters = ft_printf("%.6f", 1),
-    )
-    return nothing
-end
-
-#
-function PrettyPrint(aces_data::ACESData, merit_set::Tuple{Merit, Merit, Merit})
-    # Set up parameters
-    repetition_count = aces_data.repetitions
-    shot_count = length(aces_data.shots_set)
-    gls_gate_norm_coll = aces_data.fgls_gate_norm_coll
-    wls_gate_norm_coll = aces_data.wls_gate_norm_coll
-    ols_gate_norm_coll = aces_data.ols_gate_norm_coll
-    @assert size(gls_gate_norm_coll) == (repetition_count, shot_count) "The GLS gate norm collection has the wrong size $(size(gls_gate_norm_coll))."
-    @assert size(wls_gate_norm_coll) == (repetition_count, shot_count) "The WLS gate norm collection has the wrong size $(size(wls_gate_norm_coll))."
-    @assert size(ols_gate_norm_coll) == (repetition_count, shot_count) "The OLS gate norm collection has the wrong size $(size(ols_gate_norm_coll))."
-    (gls_merit, wls_merit, ols_merit) = merit_set
-    @assert gls_merit.ls_type == :gls "The GLS merit has the wrong type $(gls_merit.ls_type)."
-    @assert wls_merit.ls_type == :wls "The WLS merit has the wrong type $(wls_merit.ls_type)."
-    @assert ols_merit.ls_type == :ols "The OLS merit has the wrong type $(ols_merit.ls_type)."
-    # Calculate the z-scores
-    gls_z_scores = (gls_gate_norm_coll .- gls_merit.expectation) ./ sqrt(gls_merit.variance)
-    wls_z_scores = (wls_gate_norm_coll .- wls_merit.expectation) ./ sqrt(wls_merit.variance)
-    ols_z_scores = (ols_gate_norm_coll .- ols_merit.expectation) ./ sqrt(ols_merit.variance)
-    # Print the data
-    repetitions = convert(Vector{Int}, collect(1:repetition_count))
-    shot_number =
-        ["10^$(round(log10(aces_data.shots_set[i]), digits = 3))" for i in 1:shot_count]
-    header = [
-        "Repetition"
-        "GLS S = " .* shot_number
-        "WLS S = " .* shot_number
-        "OLS S = " .* shot_number
-    ]
-    pretty_table(
-        hcat(repetitions, gls_z_scores, wls_z_scores, ols_z_scores);
-        header = header,
-        alignment = :l,
-        formatters = (ft_printf("%i", 1), ft_printf("%.4f")),
-    )
-    return nothing
 end

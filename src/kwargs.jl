@@ -1,259 +1,209 @@
-# This provides a number of functions that parse keyword arguments
-# These simplify the otherwise messy keyword argument passing in gradient.jl and optimise.jl
+"""
+    OptimOptions
 
-#
-function LeastSquaresType(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :ls_type)
-        ls_type = kwarg_dict[:ls_type]
+Keyword arguments for [`optimise_design`](@ref), and specifically the optimisation functions within it, including for the gradient descent function [`optimise_weights`](@ref), the repetition number optimisation function [`optimise_repetitions`](@ref), and the tuple set optimisation function [`optimise_tuple_set`](@ref).
+
+# General options
+
+  - `ls_type::Symbol = :wls`: The type of least squares estimator for which we optimise the design, which can be `:gls`, `:wls`, or `:ols`.
+  - `save_data::Bool = false`: Whether to automatically save the optimised design.
+
+# Gradient descent options
+
+  - `learning_rate::Float64 = (ls_type == :ols ? 1.0 : 10.0^(3/4))`: Learning rate for the gradient descent algorithm.
+  - `momentum::Float64 = 0.99`: Momentum for the gradient descent algorithm.
+  - `learning_rate_scale_factor::Float64 = 10.0^(1/4)`: Factor by which to reduce the learning rate if the gradient descent algorithm repeatedly steps in directions that reduce the figure of merit.
+  - `shot_weights_clip::Float64 = 1e-5`: If any tuple has shot weight below this threshold, the algorithm greedily considers pruning it from the tuple set.
+  - `max_steps::Int = 400`: Maximum number of gradient descent steps to take.
+  - `convergence_threshold::Float64 = 1e-5`: Convergence threshold for the gradient descent algorithm.
+  - `convergence_steps::Int = 5`: Number of steps over which to check convergence.
+  - `grad_diagnostics::Bool = false`: Whether to display gradient descent diagnostics.
+
+# Reptition number optimisation options
+
+  - `max_cycles::Int = 50`: Maximum number of cycles to use in the cyclic coordinate descent algorithm for optimising repetition numbers.
+  - `rep_diagnostics::Bool = true`: Whether to display repetition number optimisation diagnostics.
+
+# Tuple set optimisation options
+
+  - `excursion_number::Int = 5`: Number of excurisons used to optimise the tuple set.
+  - `excursion_length::Int = 5`: Number of tuples added by each excursion past the `max_tuple_number`, so that at the end of an excursion the tuple set will have up to `max_tuple_number + excursion_length` tuples.
+  - `max_tuple_number::Int = 35`: Maximum number of tuples in the optimised tuple set.
+  - `max_tuple_length::Int = 20`: Maximum length of random tuples.
+  - `tuple_length_zipf_power::Float64 = 1.0`: Zipf power to use when Zipf-randomly choosing the length of random tuples.
+  - `repeat_zipf_powers::Vector{Float64} = [Inf; 2.0]`: Zipf power to use, chosen uniformly at random from the vector, when Zipf-randomly choosing how many times to repeat entries that will be appended to the end of a random tuple during its generation.
+  - `mirror_values::Vector{Bool} = [false; true]`: Whether to mirror the tuple, chosen uniformly at random from the vector, when generating random tuples.
+  - `trial_factor::Int = 20`: Number of random tuples trialled for each tuple the excursion needs to add to the tuple set to grow it to the `max_tuple_number`.
+  - `grow_greedy::Bool = true`: Whether the excursions add tuples to the set greedily according to the figure of merit, or to add them even if this reduces the figure of merit.
+  - `seed::Union{UInt64, Nothing} = nothing`: Seed used to randomly generate tuples.
+  - `tuple_diagnostics::Bool = true`: Whether to display tuple set optimisation diagnostics.
+"""
+struct OptimOptions
+    # General options
+    ls_type::Symbol
+    save_data::Bool
+    # Gradient descent options
+    learning_rate::Float64
+    momentum::Float64
+    learning_rate_scale_factor::Float64
+    shot_weights_clip::Float64
+    max_steps::Int
+    convergence_threshold::Float64
+    convergence_steps::Int
+    grad_diagnostics::Bool
+    # Reptition options
+    max_cycles::Int
+    rep_diagnostics::Bool
+    # Tuple set options
+    excursion_number::Int
+    excursion_length::Int
+    max_tuple_number::Int
+    max_tuple_length::Int
+    tuple_length_zipf_power::Float64
+    repeat_zipf_powers::Vector{Float64}
+    mirror_values::Vector{Bool}
+    trial_factor::Int
+    grow_greedy::Bool
+    seed::Union{UInt64, Nothing}
+    tuple_diagnostics::Bool
+    # Default constructor
+    function OptimOptions(
+        ls_type::Symbol,
+        save_data::Bool,
+        learning_rate::Float64,
+        momentum::Float64,
+        learning_rate_scale_factor::Float64,
+        shot_weights_clip::Float64,
+        max_steps::Int,
+        convergence_threshold::Float64,
+        convergence_steps::Int,
+        grad_diagnostics::Bool,
+        max_cycles::Int,
+        rep_diagnostics::Bool,
+        excursion_number::Int,
+        excursion_length::Int,
+        max_tuple_number::Int,
+        max_tuple_length::Int,
+        tuple_length_zipf_power::Float64,
+        repeat_zipf_powers::Vector{Float64},
+        mirror_values::Vector{Bool},
+        trial_factor::Int,
+        grow_greedy::Bool,
+        seed::Union{UInt64, Nothing},
+        tuple_diagnostics::Bool,
+    )
         @assert ls_type ∈ [:gls; :wls; :ols] "Must use a valid least squares type."
-    else
-        ls_type = :wls
-    end
-    return ls_type::Symbol
-end
-
-#
-function LearningRate(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :learning_rate)
-        learning_rate = kwarg_dict[:learning_rate]
         @assert learning_rate > 0.0 "The learning rate must be positive."
-    else
-        learning_rate = 1e-1
-    end
-    return learning_rate
-end
-
-#
-function Momentum(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :momentum)
-        momentum = kwarg_dict[:momentum]
         @assert momentum >= 0.0 && momentum <= 1.0 "The momentum must be non-negative and less than or equal to 1."
-    else
-        momentum = 0.9
-    end
-    return momentum
-end
-
-#
-function ConvergenceThreshold(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :convergence_threshold)
-        convergence_threshold = kwarg_dict[:convergence_threshold]
-        @assert convergence_threshold > 0.0 "The convergence threshold must be positive."
-    else
-        convergence_threshold = 1e-5
-    end
-    return convergence_threshold
-end
-
-#
-function ConvergenceSteps(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :convergence_steps)
-        convergence_steps = kwarg_dict[:convergence_steps]
-        @assert typeof(convergence_steps) <: Integer && convergence_steps >= 1 "The number of steps over which to check convergence must be a positive integer."
-    else
-        convergence_steps = 5
-    end
-    return convergence_steps::Int
-end
-
-#
-function MaxSteps(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :max_steps)
-        max_steps = kwarg_dict[:max_steps]
-        @assert typeof(max_steps) <: Integer && max_steps >= 0 "The number of gradient descent steps must be a non-negative integer."
-    else
-        max_steps = 200
-    end
-    return max_steps::Int
-end
-
-#
-function LearningRateScaleFactor(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :learning_rate_scale_factor)
-        learning_rate_scale_factor = kwarg_dict[:learning_rate_scale_factor]
         @assert learning_rate_scale_factor > 1.0 "The learning rate scale factor must be greater than 1."
-    else
-        learning_rate_scale_factor = 2.0
-    end
-    return learning_rate_scale_factor
-end
-
-#
-function ShotWeightsNoise(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :shot_weights_noise)
-        shot_weights_noise = kwarg_dict[:shot_weights_noise]
-        @assert shot_weights_noise >= 0.0 "The shot weight noise scaling factor must be non-negative."
-    else
-        shot_weights_noise = 0.0
-    end
-    return shot_weights_noise
-end
-
-#
-function ShotWeightsClip(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :shot_weights_clip)
-        shot_weights_clip = kwarg_dict[:shot_weights_clip]
         @assert shot_weights_clip >= 0.0 "The minimum shot weight must be non-negative."
-    else
-        shot_weights_clip = 1e-5
+        @assert max_steps >= 0 "The number of gradient descent steps must be a non-negative integer."
+        @assert convergence_threshold > 0.0 "The convergence threshold must be positive."
+        @assert convergence_steps >= 1 "The number of steps over which to check convergence must be a positive integer."
+        @assert max_cycles >= 0 "The number of cycles must be a non-negative integer."
+        @assert excursion_number >= 0 "The excursion number must be a non-negative integer."
+        @assert excursion_length >= 1 "The excursion length must be a positive integer."
+        @assert max_tuple_number > 0 "The maximum number of tuples must be positive, and if the number is too small the optimisation routine will not produce a full-rank design."
+        @assert max_tuple_length >= 2 "The maximum tuple length must be an integer that is at least 2."
+        @assert tuple_length_zipf_power >= 0.0 "The tuple length Zipf power must be a non-negative float."
+        @assert repeat_zipf_powers == unique(repeat_zipf_powers) "The repeat Zipf powers must be a vector of unique floats."
+        @assert all(repeat_zipf_powers .>= 0.0) "The repeat Zipf powers must be non-negative."
+        @assert mirror_values == unique(mirror_values) "The mirror values flags must be a vector of unique booleans."
+        @assert trial_factor >= 1 "The trial factor must be a positive integer."
+        new(
+            ls_type,
+            save_data,
+            learning_rate,
+            momentum,
+            learning_rate_scale_factor,
+            shot_weights_clip,
+            max_steps,
+            convergence_threshold,
+            convergence_steps,
+            grad_diagnostics,
+            max_cycles,
+            rep_diagnostics,
+            excursion_number,
+            excursion_length,
+            max_tuple_number,
+            max_tuple_length,
+            tuple_length_zipf_power,
+            repeat_zipf_powers,
+            mirror_values,
+            trial_factor,
+            grow_greedy,
+            seed,
+            tuple_diagnostics,
+        )
     end
-    return shot_weights_clip
-end
-
-#
-function MaxCycles(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :max_cycles)
-        max_cycles = kwarg_dict[:max_cycles]
-        @assert typeof(max_cycles) <: Integer && max_cycles >= 0 "The number of cycles must be a non-negative integer."
-    else
-        max_cycles = 100
+    # Keyword constructor
+    function OptimOptions(;
+        ls_type::Symbol = :wls,
+        save_data::Bool = false,
+        learning_rate::Float64 = (ls_type == :ols ? 1.0 : (10.0)^(3 / 4)),
+        momentum::Float64 = 0.99,
+        learning_rate_scale_factor::Float64 = 10.0^(1 / 4),
+        shot_weights_clip::Float64 = 1e-5,
+        max_steps::Int = 400,
+        convergence_threshold::Float64 = 1e-5,
+        convergence_steps::Int = 5,
+        grad_diagnostics::Bool = false,
+        max_cycles::Int = 50,
+        rep_diagnostics::Bool = true,
+        excursion_number::Int = 5,
+        excursion_length::Int = 5,
+        max_tuple_number::Int = 35,
+        max_tuple_length::Int = 20,
+        tuple_length_zipf_power::Float64 = 1.0,
+        repeat_zipf_powers::Vector{Float64} = [Inf; 2.0],
+        mirror_values::Vector{Bool} = [false; true],
+        trial_factor::Int = 20,
+        grow_greedy::Bool = true,
+        seed::Union{UInt64, Nothing} = nothing,
+        tuple_diagnostics::Bool = true,
+    )
+        @assert ls_type ∈ [:gls; :wls; :ols] "Must use a valid least squares type."
+        @assert learning_rate > 0.0 "The learning rate must be positive."
+        @assert momentum >= 0.0 && momentum <= 1.0 "The momentum must be non-negative and less than or equal to 1."
+        @assert learning_rate_scale_factor > 1.0 "The learning rate scale factor must be greater than 1."
+        @assert shot_weights_clip >= 0.0 "The minimum shot weight must be non-negative."
+        @assert max_steps >= 0 "The number of gradient descent steps must be a non-negative integer."
+        @assert convergence_threshold > 0.0 "The convergence threshold must be positive."
+        @assert convergence_steps >= 1 "The number of steps over which to check convergence must be a positive integer."
+        @assert max_cycles >= 0 "The number of cycles must be a non-negative integer."
+        @assert excursion_number >= 0 "The excursion number must be a non-negative integer."
+        @assert excursion_length >= 1 "The excursion length must be a positive integer."
+        @assert max_tuple_number > 0 "The maximum number of tuples must be positive, and if the number is too small the optimisation routine will not produce a full-rank design."
+        @assert max_tuple_length >= 2 "The maximum tuple length must be an integer that is at least 2."
+        @assert tuple_length_zipf_power >= 0.0 "The tuple length Zipf power must be a non-negative float."
+        @assert repeat_zipf_powers == unique(repeat_zipf_powers) "The repeat Zipf powers must be a vector of unique floats."
+        @assert all(repeat_zipf_powers .>= 0.0) "The repeat Zipf powers must be non-negative."
+        @assert mirror_values == unique(mirror_values) "The mirror values flags must be a vector of unique booleans."
+        @assert trial_factor >= 1 "The trial factor must be a positive integer."
+        return new(
+            ls_type,
+            save_data,
+            learning_rate,
+            momentum,
+            learning_rate_scale_factor,
+            shot_weights_clip,
+            max_steps,
+            convergence_threshold,
+            convergence_steps,
+            grad_diagnostics,
+            max_cycles,
+            rep_diagnostics,
+            excursion_number,
+            excursion_length,
+            max_tuple_number,
+            max_tuple_length,
+            tuple_length_zipf_power,
+            repeat_zipf_powers,
+            mirror_values,
+            trial_factor,
+            grow_greedy,
+            seed,
+            tuple_diagnostics,
+        )
     end
-    return max_cycles::Int
-end
-
-#
-function Diagnostics(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :diagnostics)
-        diagnostics = kwarg_dict[:diagnostics]
-        @assert typeof(diagnostics) <: Bool "The diagnostics flag must be a boolean."
-    else
-        diagnostics = nothing
-    end
-    return diagnostics
-end
-
-#
-function GradDiagnostics(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :grad_diagnostics)
-        grad_diagnostics = kwarg_dict[:grad_diagnostics]
-        @assert typeof(grad_diagnostics) <: Bool "The gradient diagnostics flag must be a boolean."
-    else
-        grad_diagnostics = nothing
-    end
-    return grad_diagnostics
-end
-
-#
-function SaveData(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :save_data)
-        save_data = kwarg_dict[:save_data]
-        @assert typeof(save_data) <: Bool "The save data flag must be a boolean."
-    else
-        save_data = nothing
-    end
-    return save_data
-end
-
-#
-function TupleNumber(kwarg_dict::Dict{Symbol, Any}, code::Code)
-    if haskey(kwarg_dict, :tuple_num)
-        tuple_num = kwarg_dict[:tuple_num]
-        @assert typeof(tuple_num) <: Integer && tuple_num >= length(code.circuit) + 3 "The number of tuples must be a positive integer that is at least two larger than the number required for a trivial full-rank design."
-    else
-        tuple_num = 5 * length(code.unique_layer_indices)
-    end
-    return tuple_num::Int
-end
-
-#
-function ExcursionLength(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :excursion_len)
-        excursion_len = kwarg_dict[:excursion_len]
-        @assert typeof(excursion_len) <: Integer && excursion_len >= 1 "The excursion length must be a positive integer."
-    else
-        excursion_len = 10
-    end
-    return excursion_len::Int
-end
-
-#
-function ExcursionNumber(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :excursion_num)
-        excursion_num = kwarg_dict[:excursion_num]
-        @assert typeof(excursion_num) <: Integer && excursion_num >= 0 "The excursion number must be a non-negative integer."
-    else
-        excursion_num = 3
-    end
-    return excursion_num::Int
-end
-
-#
-function MaxTupleLength(kwarg_dict::Dict{Symbol, Any}, code::Code)
-    if haskey(kwarg_dict, :max_tuple_len)
-        max_tuple_len = kwarg_dict[:max_tuple_len]
-        @assert typeof(max_tuple_len) <: Integer && max_tuple_len >= 2 "The maximum tuple length must be an integer greater than or equal to 2."
-    else
-        max_tuple_len = 2 * length(code.circuit)
-    end
-    return max_tuple_len::Int
-end
-
-#
-function TupleLengthZipfPower(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :tuple_length_zipf_power)
-        tuple_length_zipf_power = kwarg_dict[:tuple_length_zipf_power]
-        @assert typeof(tuple_length_zipf_power) <: Float64 && tuple_length_zipf_power >= 0.0 "The tuple length Zipf power must be a non-negative float."
-    else
-        tuple_length_zipf_power = 1.0
-    end
-    return tuple_length_zipf_power::Float64
-end
-
-#
-function RepeatZipfPowers(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :repeat_zipf_powers)
-        repeat_zipf_powers = kwarg_dict[:repeat_zipf_powers]
-        @assert typeof(repeat_zipf_powers) <: Vector{Float64} &&
-                length(repeat_zipf_powers) >= 1 &&
-                repeat_zipf_powers == unique(repeat_zipf_powers) "The repeat Zipf powers must be a vector of unique floats."
-    else
-        repeat_zipf_powers = [Inf, 2.0]
-    end
-    return repeat_zipf_powers::Vector{Float64}
-end
-
-#
-function MirrorValues(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :mirror_values)
-        mirror_values = kwarg_dict[:mirror_values]
-        @assert typeof(mirror_values) <: Vector{Bool} &&
-                length(mirror_values) >= 1 &&
-                mirror_values == unique(mirror_values) "The mirror values flags must be a vector of unique booleans."
-    else
-        mirror_values = [false; true]
-    end
-    return mirror_values::Vector{Bool}
-end
-
-#
-function TrialFactor(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :trial_factor)
-        trial_factor = kwarg_dict[:trial_factor]
-        @assert typeof(trial_factor) <: Integer && trial_factor >= 1 "The trial factor must be a positive integer."
-    else
-        trial_factor = 20
-    end
-    return trial_factor::Int
-end
-
-#
-function GrowGreedy(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :grow_greedy)
-        grow_greedy = kwarg_dict[:grow_greedy]
-        @assert typeof(grow_greedy) <: Bool "The greedy growth flag must be a boolean."
-    else
-        grow_greedy = true
-    end
-    return grow_greedy::Bool
-end
-
-#
-function Seed(kwarg_dict::Dict{Symbol, Any})
-    if haskey(kwarg_dict, :seed)
-        seed = kwarg_dict[:seed]
-        @assert typeof(seed) <: UInt64 "The seed must be a UInt64."
-    else
-        seed = nothing
-    end
-    return seed
 end

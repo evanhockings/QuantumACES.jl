@@ -1,0 +1,3 @@
+[deps]
+QuantumACES = "57b1db7a-c9fc-4178-b66e-6b8364be52bb"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
