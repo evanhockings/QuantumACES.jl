@@ -1,5 +1,4 @@
-using QuantumACES,
-    LinearAlgebra, ForwardDiff, Random, Distributions, Plots, StatsPlots, LaTeXStrings, Test
+using QuantumACES, LinearAlgebra, ForwardDiff, Random, Distributions, Test
 # Set up codes
 dist = 3
 r_1 = 0.075 / 100
@@ -343,21 +342,23 @@ end
     (d_rot_set, rot_covariance_log_set, rot_merit_descent_set, rot_merit_array) =
         compare_ls_optimise_weights(d_rot, rot_covariance_log)
     # Plot the loss curves
+    #=
     rot_merit_descent_plot = scatter(
         rot_merit_descent_set[1];
-        yticks = 2.4:0.4:4.0,
-        ylims = (2.4, 4.0),
-        ylabel = L"\mathcal{F}",
-        xlabel = "Steps",
-        xticks = 0:5:30,
-        xlims = (0, 32),
-        grid = false,
-        markersize = 3.0,
-        label = "gls",
+        yticks=2.4:0.4:4.0,
+        ylims=(2.4, 4.0),
+        ylabel=L"\mathcal{F}",
+        xlabel="Steps",
+        xticks=0:5:30,
+        xlims=(0, 32),
+        grid=false,
+        markersize=3.0,
+        label="gls",
     )
-    scatter!(rot_merit_descent_set[2]; markersize = 3.0, label = "wls")
-    scatter!(rot_merit_descent_set[3]; markersize = 3.0, label = "ols")
+    scatter!(rot_merit_descent_set[2]; markersize=3.0, label="wls")
+    scatter!(rot_merit_descent_set[3]; markersize=3.0, label="ols")
     display(rot_merit_descent_plot)
+    =#
     # Test that the GLS merit is best with shot weights optimised for GLS
     @test rot_merit_array[1, 1] <= rot_merit_array[2, 1]
     @test rot_merit_array[1, 1] <= rot_merit_array[3, 1]
@@ -487,6 +488,7 @@ end
     (gls_rot_merit, wls_rot_merit, ols_rot_merit) = calc_merit_set(d_rot)
     wls_rot_nrmse_pdf = nrmse_pdf(wls_rot_merit.eigenvalues, x_values)
     # Plot the empirical and predicted distributions
+    #=
     wls_nrmse_test = histogram(
         wls_gate_norm_coll;
         xlabel = "NRMSE",
@@ -502,6 +504,7 @@ end
     )
     plot!(x_values, wls_rot_nrmse_pdf; label = "pred. dist.")
     display(wls_nrmse_test)
+    =#
     # The start and end values of the probability distribution should be zero
     @test wls_rot_nrmse_pdf[1] ≈ 0.0
     @test wls_rot_nrmse_pdf[end] ≈ 0.0
