@@ -35,7 +35,13 @@ rotated_param = get_rotated_param(dist)
 rotated_planar = get_circuit(rotated_param, dep_param)
 ```
 
-Optimise an experimental design for these parameters.
+Next, generate an experimental design for this circuit.
+
+```julia
+d = generate_design(rotated_planar)
+```
+
+Alternatively, optimise an experimental design to improve its sample efficiency.
 
 ```julia
 d = optimise_design(rotated_planar, options = OptimOptions(; ls_type = :wls, seed = seed))

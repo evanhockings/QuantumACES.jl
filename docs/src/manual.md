@@ -18,30 +18,31 @@ Typical usage of this package involves a few steps:
 
 ## Installation and setup
 
-This is not currently a registered package, so to add it you can run
+To install this package, run the following command in the Julia REPL.
 
 ```
-julia> # press ] to enter the Pkg REPL
-
-pkg> add https://github.com/evanhockings/QuantumACES.jl
+] add QuantumACES
 ```
 
-This package relies on the Python package [Stim](https://github.com/quantumlib/Stim) to perform stabiliser simulations.
-It calls stim with [PythonCall](https://github.com/JuliaPy/PythonCall.jl), which can be a little tricky to set up.
-One helpful method for managing Python versions is [pyenv](https://github.com/pyenv/pyenv), or for Windows, [pyenv-win](https://github.com/pyenv-win/pyenv-win), which is analogous to [Juliaup](https://github.com/JuliaLang/juliaup) for Julia.
+This package relies on the Python package [Stim](https://github.com/quantumlib/Stim) to perform stabiliser circuit simulations.
+It calls Stim with [PythonCall](https://github.com/JuliaPy/PythonCall.jl).
+By default, PythonCall creates its own Python environment, but you may wish to use an existing Python installation.
+
+One helpful method for managing Python versions is [pyenv](https://github.com/pyenv/pyenv), or for Windows, [pyenv-win](https://github.com/pyenv-win/pyenv-win); these are analogous to [Juliaup](https://github.com/JuliaLang/juliaup) for Julia.
+The following assumes you are using pyenv or pyenv-win.
 
 On Windows, to instruct PythonCall to use the Python version set by pyenv, configure PythonCall's environment variables by adding the following to your `~/.julia/config/startup.jl` file
 
-```
+```julia
 ENV["JULIA_CONDAPKG_BACKEND"] = "Null"
 python_exe = readchomp(`cmd /C pyenv which python`)
 ENV["JULIA_PYTHONCALL_EXE"] = python_exe
 ```
 
-On Unix systems, shell commands are parsed directly by Julia and appear to be unaware of your PATH variable.
-I am not sure how to fix this, so you may need to manually supply `python_exe` for the Python version `<version>` as
+On Unix systems, shell commands are parsed directly by Julia and appear to be unaware of your PATH variable, and I am not sure how to work around this.
+Therefore, you may need to manually supply `python_exe` for the Python version `<version>` as
 
-```
+```julia
 python_exe = homedir() * "/.pyenv/versions/<version>/bin/python"
 ```
 
@@ -74,7 +75,13 @@ rotated_param = get_rotated_param(dist)
 rotated_planar = get_circuit(rotated_param, dep_param)
 ```
 
-Optimise an experimental design for these parameters, configuring the optimisation with the parameters associated with [`OptimOptions`](@ref).
+Next, generate an experimental design for this circuit.
+
+```julia
+d = generate_design(rotated_planar)
+```
+
+Alternatively, optimise an experimental design to improve its sample efficiency, configuring the optimisation with the parameters associated with [`OptimOptions`](@ref).
 
 ```julia
 d = optimise_design(rotated_planar, options = OptimOptions(; ls_type = :wls, seed = seed))
