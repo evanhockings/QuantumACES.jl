@@ -906,6 +906,7 @@ function generate_design(
     N_warn::Int = 3 * 10^4,
     diagnostics::Bool = false,
     save_data::Bool = false,
+    suppress_save_warning::Bool = false,
 ) where {T <: AbstractCircuit}
     # Set some parameters
     start_time = time()
@@ -925,7 +926,7 @@ function generate_design(
         if ~diagnostics
             @warn "This design is for a very large circuit: turning on diagnostics is advised."
         end
-        if ~save_data
+        if ~save_data && ~suppress_save_warning
             @warn "This design is for a very large circuit: saving the data is advised."
         end
     end
@@ -1034,7 +1035,8 @@ function generate_design(
         shot_weights = shot_weights,
         full_covariance = full_covariance,
         diagnostics = diagnostics,
-        save_data = save_data,
+        save_data = false,
+        suppress_save_warning = true,
     )
     @reset d.tuple_set_data = tuple_set_data
     # Save and return the results
