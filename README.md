@@ -1,6 +1,6 @@
 # QuantumACES.jl
 
-<!--[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://evanhockings.github.io/QuantumACES.jl/stable/)-->
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://evanhockings.github.io/QuantumACES.jl/stable/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://evanhockings.github.io/QuantumACES.jl/dev/)
 [![Build Status](https://github.com/evanhockings/QuantumACES.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/evanhockings/QuantumACES.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/evanhockings/QuantumACES.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/evanhockings/QuantumACES.jl)
@@ -9,7 +9,7 @@
 `QuantumACES.jl` is a package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits with averaged circuit eigenvalue sampling (ACES).
 It is particularly interested in characterising the noise associated with fault-tolerant gadgets in the context of topological quantum error correcting codes, such as surface code syndrome extraction circuits.
 
-The methods used in this package are detailed in [arXiv:2404.06545](https://arxiv.org/abs/2404.06545).<!--, and the code generating the data for this paper can be found in the `scalable_aces` folder on the [scalable_aces](https://github.com/evanhockings/QuantumACES.jl/tree/scalable_aces) branch.{:/comment}-->
+The methods used in this package are detailed in [arXiv:2404.06545](https://arxiv.org/abs/2404.06545), and the code generating the data for this paper can be found in the `scalable_aces` folder on the [scalable_aces](https://github.com/evanhockings/QuantumACES.jl/tree/scalable_aces) branch.
 These methods build on the original ACES protocol presented in [arXiv:2108.05803](https://arxiv.org/abs/2108.05803).
 This package relies on [Stim](https://github.com/quantumlib/Stim) for stabiliser circuit simulations.
 
@@ -94,30 +94,31 @@ fgls_z_scores_big =
 
 ## Installation and setup
 
-This is not currently a registered package, so to add it you can run
+To install this package, run the following command in the Julia REPL.
 
 ```
-julia> # press ] to enter the Pkg REPL
-
-pkg> add https://github.com/evanhockings/QuantumACES.jl
+] add QuantumACES
 ```
 
-This package relies on the Python package [Stim](https://github.com/quantumlib/Stim) to perform stabiliser simulations.
-It calls stim with [PythonCall](https://github.com/JuliaPy/PythonCall.jl), which can be a little tricky to set up.
-One helpful method for managing Python versions is [pyenv](https://github.com/pyenv/pyenv), or for Windows, [pyenv-win](https://github.com/pyenv-win/pyenv-win), which is analogous to [Juliaup](https://github.com/JuliaLang/juliaup) for Julia.
+This package relies on the Python package [Stim](https://github.com/quantumlib/Stim) to perform stabiliser circuit simulations.
+It calls Stim with [PythonCall](https://github.com/JuliaPy/PythonCall.jl).
+By default, PythonCall creates its own Python environment, but you may wish to use an existing Python installation.
+
+One helpful method for managing Python versions is [pyenv](https://github.com/pyenv/pyenv), or for Windows, [pyenv-win](https://github.com/pyenv-win/pyenv-win); these are analogous to [Juliaup](https://github.com/JuliaLang/juliaup) for Julia.
+The following assumes you are using pyenv or pyenv-win.
 
 On Windows, to instruct PythonCall to use the Python version set by pyenv, configure PythonCall's environment variables by adding the following to your `~/.julia/config/startup.jl` file
 
-```
+```julia
 ENV["JULIA_CONDAPKG_BACKEND"] = "Null"
 python_exe = readchomp(`cmd /C pyenv which python`)
 ENV["JULIA_PYTHONCALL_EXE"] = python_exe
 ```
 
-On Unix systems, shell commands are parsed directly by Julia and appear to be unaware of your PATH variable.
-I am not sure how to fix this, so you may need to manually supply `python_exe` for the Python version `<version>` as
+On Unix systems, shell commands are parsed directly by Julia and appear to be unaware of your PATH variable, and I am not sure how to work around this.
+Therefore, you may need to manually supply `python_exe` for the Python version `<version>` as
 
-```
+```julia
 python_exe = homedir() * "/.pyenv/versions/<version>/bin/python"
 ```
 

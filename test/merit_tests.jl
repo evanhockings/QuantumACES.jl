@@ -375,6 +375,9 @@ end
         rot_covariance_log_basic,
         rotated_planar.circuit_tuple,
     )
+    # Test printing functionality
+    pretty_print(d_rot_grow)
+    println(get_mapping_string(d_rot_grow.mapping_ensemble[end][end], d_rot_grow.c))
     # Test that the grown design and covariance matrix are correct
     rot_grow = [rot_basic; [rotated_planar.circuit_tuple]]
     d_rot_grow_test = generate_design(rotated_planar, rot_grow)

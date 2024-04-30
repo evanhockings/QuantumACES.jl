@@ -265,7 +265,7 @@ function get_mapping_string(
         end
         eigenvalue_power = m.design_row[nz_idx]
         gate_string = "($(g.type):$(Int(g.index)):$(Int.(g.targets)))"
-        eigenvalue_string = pauli_string * " ^$(Int(eigenvalue_power))"
+        eigenvalue_string = pauli_string * " ($(Int(eigenvalue_power)))"
         if ~two_qubit_only || length(g.targets) == 2
             push!(gate_eigenvalue_strings, (gate_string, eigenvalue_string))
         end
@@ -283,7 +283,6 @@ function get_mapping_string(
             mapping_string *= eigenvalue_string * ", "
         end
         mapping_string = mapping_string[1:(end - 2)]
-        mapping_string *= ";"
     end
     return mapping_string::String
 end
