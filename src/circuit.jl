@@ -593,13 +593,11 @@ function rotated_planar_circuit(rotated_param::RotatedPlanarParameters)
     single_qubit_type = :single_qubit
     two_qubit_type = :two_qubit
     dynamical_decoupling_type = :dynamical
-    # Generate the qubit indices
+    # Generate the qubits
     data_qubits = vcat([(2i, 2j) for i in 1:v, j in 1:h]...)
     data_num = length(data_qubits)
-    @assert data_num == v * h
     inner_ancilla_qubits = vcat([(2i + 1, 2j + 1) for i in 1:(v - 1), j in 1:(h - 1)]...)
     inner_num = length(inner_ancilla_qubits)
-    @assert inner_num == (v - 1) * (h - 1)
     boundary_locations = vcat(
         [(2i + 1, 1) for i in 1:(v - 1)],
         [(2v + 1, 2j + 1) for j in 1:(h - 1)],
@@ -608,14 +606,19 @@ function rotated_planar_circuit(rotated_param::RotatedPlanarParameters)
     )
     boundary_ancilla_qubits = boundary_locations[1:2:end]
     boundary_num = length(boundary_ancilla_qubits)
-    @assert boundary_num == v + h - 2
     ancilla_qubits = vcat(inner_ancilla_qubits, boundary_ancilla_qubits)
     ancilla_num = length(ancilla_qubits)
-    @assert ancilla_num == inner_num + boundary_num
     qubits = vcat(data_qubits, ancilla_qubits)
     qubit_num = length(qubits)
-    @assert qubit_num == data_num + ancilla_num
+    # Check qubit numbers
+    @assert data_num == v * h
+    @assert inner_num == (v - 1) * (h - 1)
+    @assert boundary_num == v + h - 2
+    @assert ancilla_num == v * h - 1
     @assert qubit_num == 2v * h - 1
+    @assert ancilla_num == inner_num + boundary_num
+    @assert qubit_num == data_num + ancilla_num
+    # Generate the qubit indices
     data_indices = collect(1:data_num)
     ancilla_indices = collect((data_num + 1):qubit_num)
     ancilla_X_indices = ancilla_indices[(sum.(ancilla_qubits) .% 4) .== 0]
@@ -624,13 +627,13 @@ function rotated_planar_circuit(rotated_param::RotatedPlanarParameters)
     # Generate the qubit layout
     qubit_layout = [" " for i in 1:(2v + 1), j in 1:(2h + 1)]
     for (i, j) in qubits[data_indices]
-        qubit_layout[i, j] = "o"
+        qubit_layout[i, j] = "o($(inverse_indices[(i, j)]))"
     end
     for (i, j) in qubits[ancilla_X_indices]
-        qubit_layout[i, j] = "x"
+        qubit_layout[i, j] = "x($(inverse_indices[(i, j)]))"
     end
     for (i, j) in qubits[ancilla_Z_indices]
-        qubit_layout[i, j] = "z"
+        qubit_layout[i, j] = "z($(inverse_indices[(i, j)]))"
     end
     # Generate the X-type ancilla gate layers
     layers_X = Vector{Vector{Int}}[[], [], [], []]
@@ -979,32 +982,34 @@ function unrotated_planar_circuit(unrotated_param::UnrotatedPlanarParameters)
     layer_time_dict = unrotated_param.layer_time_dict
     single_qubit_type = :single_qubit
     two_qubit_type = :two_qubit
-    # Generate the qubit indices
+    # Generate the qubits and qubit indices
     qubits = vcat([(i, j) for i in 1:(2v - 1), j in 1:(2h - 1)]...)
     qubit_num = length(qubits)
     qubit_indices = collect(1:qubit_num)
-    @assert qubit_num == (2v - 1) * (2h - 1)
     data_indices = qubit_indices[(sum.(qubits) .% 2) .== 0]
     data_num = length(data_indices)
-    @assert data_num == v * h + (v - 1) * (h - 1)
     ancilla_indices = qubit_indices[(sum.(qubits) .% 2) .== 1]
     ancilla_num = length(ancilla_indices)
-    @assert ancilla_num == v * (h - 1) + (v - 1) * h
     ancilla_X_indices =
         ancilla_indices[([qubits[ancilla_indices][i][1] for i in 1:ancilla_num] .% 2) .== 0]
     ancilla_Z_indices =
         ancilla_indices[([qubits[ancilla_indices][i][2] for i in 1:ancilla_num] .% 2) .== 0]
     inverse_indices = Dict(qubits[i] => i for i in 1:qubit_num)
+    # Check qubit numbers
+    @assert data_num == v * h + (v - 1) * (h - 1)
+    @assert ancilla_num == v * (h - 1) + (v - 1) * h
+    @assert qubit_num == (2v - 1) * (2h - 1)
+    @assert qubit_num == data_num + ancilla_num
     # Generate the qubit layout
     qubit_layout = [" " for i in 1:(2v - 1), j in 1:(2h - 1)]
     for (i, j) in qubits[data_indices]
-        qubit_layout[i, j] = "o"
+        qubit_layout[i, j] = "o($(inverse_indices[(i, j)]))"
     end
     for (i, j) in qubits[ancilla_X_indices]
-        qubit_layout[i, j] = "x"
+        qubit_layout[i, j] = "x($(inverse_indices[(i, j)]))"
     end
     for (i, j) in qubits[ancilla_Z_indices]
-        qubit_layout[i, j] = "z"
+        qubit_layout[i, j] = "z($(inverse_indices[(i, j)]))"
     end
     # Generate the X-type ancilla gate layers
     layers_X = Vector{Vector{Int}}[[], [], [], []]

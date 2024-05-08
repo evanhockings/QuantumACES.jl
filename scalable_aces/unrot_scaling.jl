@@ -1,4 +1,4 @@
-using QuantumACES, JLD2, Random
+using QuantumACES, JLD2, Random, StatsBase
 enter_folder("scalable_aces")
 # Set up the parameters
 dist = 3

@@ -40,13 +40,13 @@ A gate in a stabiliser circuit.
 
   - `type::String`: String describing the gate type.
   - `index::Int32`: The index labelling the unique layer occurrences of the gate in a circuit.
-  - `targets::Vector{Int16}`: The qubit targets of the gate.
+  - `targets::Vector{Int16}`: The qubit target or targets of the gate.
 
 # Supported gates
 
   - `H`: Hadamard gate.
   - `S`: Phase gate.
-  - `CX` or `CNOT`: Controlled-X gate.
+  - `CX` or `CNOT`: Controlled-X gate; the first qubit is the control and the second qubit is the target.
   - `CZ`: Controlled-Z gate.
   - `I`: Identity gate.
   - `Z`: Pauli Z gate.
@@ -401,7 +401,6 @@ function apply!(t::Tableau, l::Layer; return_measurements::Bool = false)
             phase!(t, g.targets[1])
             z!(t, g.targets[1])
         elseif g.type == "I"
-            continue
         elseif g.type == "X"
             x!(t, g.targets[1])
         elseif g.type == "Z"
@@ -442,7 +441,6 @@ function apply!(t::Tableau, l::Layer; return_measurements::Bool = false)
         elseif g.type == "R"
             reset!(t, g.targets[1])
         elseif g.type == "II"
-            continue
         elseif g.type ∈ pauli_rot
             # Set up variables
             pauli_1 = g.type[1]
@@ -477,7 +475,6 @@ function apply!(t::Tableau, l::Layer; return_measurements::Bool = false)
                 z!(t, g.targets[1])
                 hadamard!(t, g.targets[1])
             elseif pauli_1 == 'Z'
-                continue
             else
                 throw(error("There's a problem with $(g)."))
             end
@@ -488,7 +485,6 @@ function apply!(t::Tableau, l::Layer; return_measurements::Bool = false)
                 z!(t, g.targets[2])
                 hadamard!(t, g.targets[2])
             elseif pauli_2 == 'Z'
-                continue
             else
                 throw(error("There's a problem with $(g)."))
             end
@@ -507,7 +503,6 @@ function apply!(t::Tableau, l::Layer; return_measurements::Bool = false)
                 hadamard!(t, g.targets[1])
                 phase!(t, g.targets[1])
             elseif pauli_1 == 'Z'
-                continue
             else
                 throw(error("There's a problem with $(g)."))
             end
@@ -517,7 +512,6 @@ function apply!(t::Tableau, l::Layer; return_measurements::Bool = false)
                 hadamard!(t, g.targets[2])
                 phase!(t, g.targets[2])
             elseif pauli_2 == 'Z'
-                continue
             else
                 throw(error("There's a problem with $(g)."))
             end

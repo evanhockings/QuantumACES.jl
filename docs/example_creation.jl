@@ -8,7 +8,7 @@ struct ExampleParameters <: AbstractCircuitParameters
 end
 
 # Construct the example parameters
-function get_example_parameters(;
+function get_example_param(;
     pad_identity = true,
     single_qubit_time::Float64 = 29.0,
     two_qubit_time::Float64 = 29.0,
@@ -27,7 +27,7 @@ function get_example_parameters(;
     if pad_identity != true
         circuit_name *= "_pad_identity_$(pad_identity)"
     end
-    example_param = ExampleParameters(pad_identity, layer_time_dict, "example_circuit")
+    example_param = ExampleParameters(pad_identity, layer_time_dict, circuit_name)
     return example_param::ExampleParameters
 end
 
@@ -171,7 +171,7 @@ r_m = m
 phen_param = get_phen_param(p, m)
 dep_param = get_dep_param(r_1, r_2, r_m)
 # Generate the circuit
-example_param = get_example_parameters()
+example_param = get_example_param()
 circuit_example = get_circuit(example_param, dep_param)
 # Optimise the experimental design
 seed = UInt(0)
