@@ -800,7 +800,7 @@ function simulate_aces(
     # Generate synthetic ACES data
     N = size(d.matrix, 2)
     gate_eigenvalues = d.c.gate_eigenvalues
-    (eigenvalues, covariance) = calc_eigenvalues_covariance(d)
+    (eigenvalues, covariance) = calc_eigenvalues_covariance(d; warning = (d.c.N < N_warn))
     # Normalise the sampled shot count by the amount of time taken to perform the circuits
     budget_count = length(budget_set)
     tuple_times_factor = sum(d.shot_weights .* d.tuple_times)

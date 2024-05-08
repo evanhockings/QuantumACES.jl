@@ -145,7 +145,7 @@ dep_planar_scaling_gls =
 dep_planar_scaling_ols =
     calc_depolarising_planar_scaling(d_ols, dist_max; ls_type = :ols, save_data = true)
 # Badly optimised WLS design
-dep_worst_idx = findmin(vec(mean(expectation_array; dims = 2)))[2]
+dep_worst_idx = findmax(vec(mean(expectation_array; dims = 2)))[2]
 d_wls_worst = load_design(
     unrotated_param,
     dep_param_set[dep_worst_idx],

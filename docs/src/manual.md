@@ -193,7 +193,7 @@ function example_circuit(example_param::ExampleParameters)
     qubit_num = 3
     circuit = [
         Layer([Gate("CZ", 0, [2; 3])], qubit_num),
-        Layer([Gate("CX", 0, [1; 2]), Gate("H", 0, [3])], qubit_num),
+        Layer([Gate("CZ", 0, [1; 2]), Gate("H", 0, [3])], qubit_num),
         Layer([Gate("H", 0, [1]), Gate("S", 0, [2]), Gate("H", 0, [3])], qubit_num),
     ]
     layer_types = [two_qubit_type, two_qubit_type, single_qubit_type]
@@ -361,30 +361,26 @@ This is because the circuit acts on only three qubits and, unlike the surface co
 ```julia
 seed = UInt(0)
 d = optimise_design(circuit_example; options = OptimOptions(; ls_type = :gls, seed = seed))
+pretty_print(d)
 ```
 
 Create a copy of the optimised design that associates phenomenological noise with the circuit, and compare the predicted performance of the experimental design with depolarising and phenomenological noise.
+In particular, we can predict the expectation and mean of the normalised root-mean-square (RMS) error between the estimated and true gate eigenvalues.
 
 ```julia
 d_phen = update_noise(d, phen_param)
-merit_dep = calc_gls_merit(d)
-merit_phen = calc_gls_merit(d_phen)
+merit_set_dep = calc_merit_set(d)
+merit_set_phen = calc_merit_set(d_phen)
 ```
 
-We can also simulate the performance of the experimental design with phenomenological noise.
+We can also simulate noise characterisation experiments with this experimental design and phenomenological noise, and compare the performance to predictions by computing z-scores for the normalised RMS error with respect to the predicted expectation and variance.
+Note that the generalised least squares (GLS) estimator is the most performant and interesting here, and is implemented as an iterative feasible generalised least squares (FGLS) method.
 
 ```julia
 budget_set = [10^6; 10^7; 10^8]
 repetitions = 20
 aces_data = simulate_aces(d_phen, budget_set; repetitions = repetitions, seed = seed)
-```
-
-Finally, compare the performance to predictions at the largest measurement budget.
-
-```julia
-fgls_z_scores_phen =
-    (aces_data.fgls_gate_norm_coll[:, 3] .- merit_phen.expectation) /
-    sqrt(merit_phen.variance)
+pretty_print(aces_data, merit_set_phen)
 ```
 
 As before, note that the distribution of the normalised RMS error between the estimated and true gate eigenvalues is not quite normally distributed.
