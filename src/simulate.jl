@@ -1,7 +1,8 @@
 # Import Stim
 const stim = PythonCall.pynew()
 function __init__()
-    return PythonCall.pycopy!(stim, pyimport("stim"))
+    PythonCall.pycopy!(stim, pyimport("stim"))
+    return nothing
 end
 
 """
@@ -72,6 +73,15 @@ end
     get_stim_circuit_string(circuit::Vector{Layer}, gate_probabilities::Dict{Gate, Vector{Float64}}, add_prep::Bool, add_meas::Bool)
 
 Returns a Stim string representation of the circuit `circuit` alongside error probabilities specified by `gate_probabilities`, as well as noisy preparations if `add_prep` is `true`, and noisy measurements if `add_meas` is `true`.
+
+Stim orders one-qubit Paulis as: X, Y, Z.
+We order one-qubit Paulis as: X, Z, Y.
+The indexing to transform between these orderings is: 1, 3, 2.
+
+Stim orders two-qubit Paulis as: IX, IY, IZ, XI, XX, XY, XZ, YI, YX, YY, YZ, ZI, ZX, ZY, ZZ.
+We order two-qubit Paulis as: XI, IX, XX, ZI, YI, ZX, YX, IZ, XZ, IY, XY, ZZ, YZ, ZY, YY.
+The indexing to transform from the Stim ordering to ours is: 4, 1, 5, 12, 8, 13, 9, 3, 7, 2, 6, 15, 11, 14, 10.
+The indexing to transform from our ordering to the Stim ordering is: 2, 10, 8, 1, 3, 11, 9, 5, 7, 15, 13, 4, 6, 14, 12.
 """
 function get_stim_circuit_string(
     circuit::Vector{Layer},
@@ -276,12 +286,12 @@ function estimate_eigenvalues(
         stim_seeds = Vector{Vector{Vector{Vector{UInt64}}}}(undef, tuple_number)
         for i in 1:tuple_number
             batches = length(batch_shots(shots_maximum[i], n, max_samples))
-            tuple_circuit_number = length(d.prep_ensemble[i])
-            stim_seeds[i] = Vector{Vector{Vector{UInt64}}}(undef, tuple_circuit_number)
-            for j in 1:tuple_circuit_number
-                sign_circuit_number = length(d.prep_ensemble[i][j])
-                stim_seeds[i][j] = Vector{Vector{UInt64}}(undef, sign_circuit_number)
-                for k in 1:sign_circuit_number
+            tuple_experiment_number = length(d.prep_ensemble[i])
+            stim_seeds[i] = Vector{Vector{Vector{UInt64}}}(undef, tuple_experiment_number)
+            for j in 1:tuple_experiment_number
+                sign_number = length(d.prep_ensemble[i][j])
+                stim_seeds[i][j] = Vector{Vector{UInt64}}(undef, sign_number)
+                for k in 1:sign_number
                     stim_seeds[i][j][k] = rand(UInt64, batches)
                 end
             end
@@ -289,11 +299,11 @@ function estimate_eigenvalues(
     else
         stim_seeds = Vector{Vector{Vector{UInt64}}}(undef, tuple_number)
         for i in 1:tuple_number
-            tuple_circuit_number = length(d.prep_ensemble[i])
-            stim_seeds[i] = Vector{Vector{UInt64}}(undef, tuple_circuit_number)
-            for j in 1:tuple_circuit_number
-                sign_circuit_number = length(d.prep_ensemble[i][j])
-                stim_seeds[i][j] = rand(UInt64, sign_circuit_number)
+            tuple_experiment_number = length(d.prep_ensemble[i])
+            stim_seeds[i] = Vector{Vector{UInt64}}(undef, tuple_experiment_number)
+            for j in 1:tuple_experiment_number
+                sign_number = length(d.prep_ensemble[i][j])
+                stim_seeds[i][j] = rand(UInt64, sign_number)
             end
         end
     end
@@ -333,11 +343,11 @@ function estimate_eigenvalues(
         eigenvalues = [zeros(Float64, L) for _ in 1:budget_count]
         shots = [zeros(Int, L) for _ in 1:budget_count]
         # Generate the circuits and estimate the eigenvalues
-        tuple_circuit_number = length(d.meas_ensemble[i])
-        for j in 1:tuple_circuit_number
+        tuple_experiment_number = length(d.meas_ensemble[i])
+        for j in 1:tuple_experiment_number
             # Initialise variables
             prep_layers = d.prep_ensemble[i][j]
-            sign_circuit_number = length(prep_layers)
+            sign_number = length(prep_layers)
             meas_layer = d.meas_ensemble[i][j]
             meas_layer_string = get_stim_circuit_string(
                 [meas_layer],
@@ -346,14 +356,12 @@ function estimate_eigenvalues(
                 add_meas,
             )
             # Determine the qubits prepared and measured by the circuit
-            prep_qubits = [
-                [gate.targets[1] for gate in prep_layers[k].layer] for
-                k in 1:sign_circuit_number
-            ]
+            prep_qubits =
+                [[gate.targets[1] for gate in prep_layers[k].layer] for k in 1:sign_number]
             meas_qubits = [gate.targets[1] for gate in d.meas_ensemble[i][j].layer]
             # Sample the data for all the different sign configurations
-            sign_data = Vector{Matrix{UInt8}}(undef, sign_circuit_number)
-            for k in 1:sign_circuit_number
+            sign_data = Vector{Matrix{UInt8}}(undef, sign_number)
+            for k in 1:sign_number
                 # Initialise variables
                 prep_layer_string = get_stim_circuit_string(
                     [prep_layers[k]],
@@ -397,7 +405,7 @@ function estimate_eigenvalues(
                     [
                         findfirst(qubit .== prep_qubits[k]) for
                         qubit in initial_support_set[pauli_index]
-                    ] for k in 1:sign_circuit_number
+                    ] for k in 1:sign_number
                 ]
                 prep_signs = [
                     iseven(
@@ -405,7 +413,7 @@ function estimate_eigenvalues(
                             gate.type[end] == '-' for
                             gate in prep_layers[k].layer[prep_indices[k]]
                         ),
-                    ) for k in 1:sign_circuit_number
+                    ) for k in 1:sign_number
                 ]
                 # Determine the measured qubits over which to marginalise
                 meas_indices = [
@@ -413,7 +421,7 @@ function estimate_eigenvalues(
                     qubit in final_support_set[pauli_index]
                 ]
                 # Marginalise the sign data to estimate the eigenvalue
-                for k in 1:sign_circuit_number
+                for k in 1:sign_number
                     for idx in 1:budget_count
                         shots_value = shots_divided[i, idx]
                         pauli_shots = 0
@@ -439,7 +447,7 @@ function estimate_eigenvalues(
             end
             if detailed_diagnostics
                 println(
-                    "Simulated sampling experiment $(j) of $(tuple_circuit_number) for tuple $(i) of $(tuple_number). The time elapsed since simulation started is $(round(time() - start_time, digits = 3)) s.",
+                    "Simulated sampling experiment $(j) of $(tuple_experiment_number) for tuple $(i) of $(tuple_number). The time elapsed since simulation started is $(round(time() - start_time, digits = 3)) s.",
                 )
             end
         end
@@ -792,7 +800,7 @@ function simulate_aces(
     # Generate synthetic ACES data
     N = size(d.matrix, 2)
     gate_eigenvalues = d.c.gate_eigenvalues
-    (eigenvalues, covariance) = calc_eigenvalues_covariance(d)
+    (eigenvalues, covariance) = calc_eigenvalues_covariance(d; warning = (d.c.N < N_warn))
     # Normalise the sampled shot count by the amount of time taken to perform the circuits
     budget_count = length(budget_set)
     tuple_times_factor = sum(d.shot_weights .* d.tuple_times)

@@ -18,30 +18,31 @@ Typical usage of this package involves a few steps:
 
 ## Installation and setup
 
-This is not currently a registered package, so to add it you can run
+To install this package, run the following command in the Julia REPL.
 
 ```
-julia> # press ] to enter the Pkg REPL
-
-pkg> add https://github.com/evanhockings/QuantumACES.jl
+] add QuantumACES
 ```
 
-This package relies on the Python package [Stim](https://github.com/quantumlib/Stim) to perform stabiliser simulations.
-It calls stim with [PythonCall](https://github.com/JuliaPy/PythonCall.jl), which can be a little tricky to set up.
-One helpful method for managing Python versions is [pyenv](https://github.com/pyenv/pyenv), or for Windows, [pyenv-win](https://github.com/pyenv-win/pyenv-win), which is analogous to [Juliaup](https://github.com/JuliaLang/juliaup) for Julia.
+This package relies on the Python package [Stim](https://github.com/quantumlib/Stim) to perform stabiliser circuit simulations.
+It calls Stim with [PythonCall](https://github.com/JuliaPy/PythonCall.jl).
+By default, PythonCall creates its own Python environment, but you may wish to use an existing Python installation.
+
+One helpful method for managing Python versions is [pyenv](https://github.com/pyenv/pyenv), or for Windows, [pyenv-win](https://github.com/pyenv-win/pyenv-win); these are analogous to [Juliaup](https://github.com/JuliaLang/juliaup) for Julia.
+The following assumes you are using pyenv or pyenv-win.
 
 On Windows, to instruct PythonCall to use the Python version set by pyenv, configure PythonCall's environment variables by adding the following to your `~/.julia/config/startup.jl` file
 
-```
+```julia
 ENV["JULIA_CONDAPKG_BACKEND"] = "Null"
 python_exe = readchomp(`cmd /C pyenv which python`)
 ENV["JULIA_PYTHONCALL_EXE"] = python_exe
 ```
 
-On Unix systems, shell commands are parsed directly by Julia and appear to be unaware of your PATH variable.
-I am not sure how to fix this, so you may need to manually supply `python_exe` for the Python version `<version>` as
+On Unix systems, shell commands are parsed directly by Julia and appear to be unaware of your PATH variable, and I am not sure how to work around this.
+Therefore, you may need to manually supply `python_exe` for the Python version `<version>` as
 
-```
+```julia
 python_exe = homedir() * "/.pyenv/versions/<version>/bin/python"
 ```
 
@@ -74,7 +75,13 @@ rotated_param = get_rotated_param(dist)
 rotated_planar = get_circuit(rotated_param, dep_param)
 ```
 
-Optimise an experimental design for these parameters, configuring the optimisation with the parameters associated with [`OptimOptions`](@ref).
+Next, generate an experimental design for this circuit.
+
+```julia
+d = generate_design(rotated_planar)
+```
+
+Alternatively, optimise an experimental design to improve its sample efficiency, configuring the optimisation with the parameters associated with [`OptimOptions`](@ref).
 
 ```julia
 d = optimise_design(rotated_planar, options = OptimOptions(; ls_type = :wls, seed = seed))
@@ -149,7 +156,7 @@ end
 We need a function to construct the parameter struct.
 
 ```julia
-function get_example_parameters(;
+function get_example_param(;
     pad_identity = true,
     single_qubit_time::Float64 = 29.0,
     two_qubit_time::Float64 = 29.0,
@@ -168,7 +175,7 @@ function get_example_parameters(;
     if pad_identity != true
         circuit_name *= "_pad_identity_$(pad_identity)"
     end
-    example_param = ExampleParameters(pad_identity, layer_time_dict, "example_circuit")
+    example_param = ExampleParameters(pad_identity, layer_time_dict, circuit_name)
     return example_param::ExampleParameters
 end
 ```
@@ -186,7 +193,7 @@ function example_circuit(example_param::ExampleParameters)
     qubit_num = 3
     circuit = [
         Layer([Gate("CZ", 0, [2; 3])], qubit_num),
-        Layer([Gate("CX", 0, [1; 2]), Gate("H", 0, [3])], qubit_num),
+        Layer([Gate("CZ", 0, [1; 2]), Gate("H", 0, [3])], qubit_num),
         Layer([Gate("H", 0, [1]), Gate("S", 0, [2]), Gate("H", 0, [3])], qubit_num),
     ]
     layer_types = [two_qubit_type, two_qubit_type, single_qubit_type]
@@ -343,8 +350,8 @@ dep_param = get_dep_param(r_1, r_2, r_m)
 
 Then construct the circuit
 
-```
-example_param = get_example_parameters()
+```julia
+example_param = get_example_param()
 circuit_example = get_circuit(example_param, dep_param)
 ```
 
@@ -354,30 +361,26 @@ This is because the circuit acts on only three qubits and, unlike the surface co
 ```julia
 seed = UInt(0)
 d = optimise_design(circuit_example; options = OptimOptions(; ls_type = :gls, seed = seed))
+pretty_print(d)
 ```
 
 Create a copy of the optimised design that associates phenomenological noise with the circuit, and compare the predicted performance of the experimental design with depolarising and phenomenological noise.
+In particular, we can predict the expectation and mean of the normalised root-mean-square (RMS) error between the estimated and true gate eigenvalues.
 
 ```julia
 d_phen = update_noise(d, phen_param)
-merit_dep = calc_gls_merit(d)
-merit_phen = calc_gls_merit(d_phen)
+merit_set_dep = calc_merit_set(d)
+merit_set_phen = calc_merit_set(d_phen)
 ```
 
-We can also simulate the performance of the experimental design with phenomenological noise.
+We can also simulate noise characterisation experiments with this experimental design and phenomenological noise, and compare the performance to predictions by computing z-scores for the normalised RMS error with respect to the predicted expectation and variance.
+Note that the generalised least squares (GLS) estimator is the most performant and interesting here, and is implemented as an iterative feasible generalised least squares (FGLS) method.
 
 ```julia
 budget_set = [10^6; 10^7; 10^8]
 repetitions = 20
 aces_data = simulate_aces(d_phen, budget_set; repetitions = repetitions, seed = seed)
-```
-
-Finally, compare the performance to predictions at the largest measurement budget.
-
-```julia
-fgls_z_scores_phen =
-    (aces_data.fgls_gate_norm_coll[:, 3] .- merit_phen.expectation) /
-    sqrt(merit_phen.variance)
+pretty_print(aces_data, merit_set_phen)
 ```
 
 As before, note that the distribution of the normalised RMS error between the estimated and true gate eigenvalues is not quite normally distributed.

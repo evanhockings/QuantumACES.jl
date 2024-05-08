@@ -8,7 +8,7 @@ struct ExampleParameters <: AbstractCircuitParameters
 end
 
 # Construct the example parameters
-function get_example_parameters(;
+function get_example_param(;
     pad_identity = true,
     single_qubit_time::Float64 = 29.0,
     two_qubit_time::Float64 = 29.0,
@@ -27,7 +27,7 @@ function get_example_parameters(;
     if pad_identity != true
         circuit_name *= "_pad_identity_$(pad_identity)"
     end
-    example_param = ExampleParameters(pad_identity, layer_time_dict, "example_circuit")
+    example_param = ExampleParameters(pad_identity, layer_time_dict, circuit_name)
     return example_param::ExampleParameters
 end
 
@@ -42,7 +42,7 @@ function example_circuit(example_param::ExampleParameters)
     qubit_num = 3
     circuit = [
         Layer([Gate("CZ", 0, [2; 3])], qubit_num),
-        Layer([Gate("CX", 0, [1; 2]), Gate("H", 0, [3])], qubit_num),
+        Layer([Gate("CZ", 0, [1; 2]), Gate("H", 0, [3])], qubit_num),
         Layer([Gate("H", 0, [1]), Gate("S", 0, [2]), Gate("H", 0, [3])], qubit_num),
     ]
     layer_types = [two_qubit_type, two_qubit_type, single_qubit_type]
@@ -171,19 +171,18 @@ r_m = m
 phen_param = get_phen_param(p, m)
 dep_param = get_dep_param(r_1, r_2, r_m)
 # Generate the circuit
-example_param = get_example_parameters()
+example_param = get_example_param()
 circuit_example = get_circuit(example_param, dep_param)
 # Optimise the experimental design
 seed = UInt(0)
 d = optimise_design(circuit_example; options = OptimOptions(; ls_type = :gls, seed = seed))
+pretty_print(d)
 # Updat the noise to the phenomenological noise model
 d_phen = update_noise(d, phen_param)
-merit_dep = calc_gls_merit(d)
-merit_phen = calc_gls_merit(d_phen)
+merit_set_dep = calc_merit_set(d)
+merit_set_phen = calc_merit_set(d_phen)
 # Simulate ACES experiments
 budget_set = [10^6; 10^7; 10^8]
 repetitions = 20
 aces_data = simulate_aces(d_phen, budget_set; repetitions = repetitions, seed = seed)
-fgls_z_scores_phen =
-    (aces_data.fgls_gate_norm_coll[:, 3] .- merit_phen.expectation) /
-    sqrt(merit_phen.variance)
+pretty_print(aces_data, merit_set_phen)
