@@ -1,7 +1,7 @@
 name = "QuantumACES"
 uuid = "57b1db7a-c9fc-4178-b66e-6b8364be52bb"
 authors = ["Evan Hockings"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
