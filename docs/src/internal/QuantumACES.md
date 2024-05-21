@@ -4,14 +4,6 @@ CollapsedDocStrings = true
 
 # QuantumACES.jl
 
-## Public functions
-
-```@autodocs; canonical = false
-Modules = [QuantumACES]
-Pages = ["QuantumACES.jl"]
-Private = false
-```
-
 ## Private functions
 
 ```@autodocs
