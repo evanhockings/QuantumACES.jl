@@ -14,7 +14,7 @@ import QuantumACES as ACES
 
 ## QuantumACES.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["QuantumACES.jl"]
 Private = false
@@ -22,7 +22,7 @@ Private = false
 
 ## tableau.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["tableau.jl"]
 Private = false
@@ -30,7 +30,7 @@ Private = false
 
 ## noise.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["noise.jl"]
 Private = false
@@ -38,7 +38,7 @@ Private = false
 
 ## circuit.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["circuit.jl"]
 Private = false
@@ -46,7 +46,7 @@ Private = false
 
 ## tuples.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["tuples.jl"]
 Private = false
@@ -54,7 +54,7 @@ Private = false
 
 ## design.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["design.jl"]
 Private = false
@@ -62,7 +62,7 @@ Private = false
 
 ## merit.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["merit.jl"]
 Private = false
@@ -70,7 +70,7 @@ Private = false
 
 ## weights.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["weights.jl"]
 Private = false
@@ -78,7 +78,7 @@ Private = false
 
 ## optimise.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["optimise.jl"]
 Private = false
@@ -86,7 +86,7 @@ Private = false
 
 ## scaling.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["scaling.jl"]
 Private = false
@@ -94,7 +94,7 @@ Private = false
 
 ## simulate.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["simulate.jl"]
 Private = false
@@ -102,7 +102,7 @@ Private = false
 
 ## kwargs.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["kwargs.jl"]
 Private = false
@@ -110,7 +110,7 @@ Private = false
 
 ## utils.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["utils.jl"]
 Private = false
@@ -118,7 +118,7 @@ Private = false
 
 ## io.jl
 
-```@autodocs; canonical = false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["io.jl"]
 Private = false
