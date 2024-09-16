@@ -22,15 +22,15 @@ bibliography: paper.bib
 `QuantumACES.jl` is a Julia [@bezanson_julia_2017] package for designing, optimising, and simulating scalable and performant noise characterisation experiments for quantum computers.
 
 Noise in quantum devices is the key obstacle to large-scale quantum computation. 
-Consequently, quantum computers will require fault-tolerant architectures that encode quantum information in quantum error correcting codes [@shor_faulttolerant_1996, @gottesman_introduction_2010].
+Consequently, quantum computers will require fault-tolerant architectures that encode quantum information in quantum error correcting codes [@shor_faulttolerant_1996; @gottesman_introduction_2010].
 Detailed characterisation of the noise in prototype quantum computers can demonstrate that the device is performing correctly, and improve the performance of error correction by identifying which physical configurations of errors are more and less likely [@sundaresan_demonstrating_2023].
 
 `QuantumACES.jl` designs experiments with the framework of averaged circuit eigenvalue sampling (ACES) [@flammia_averaged_2022] that characterise Pauli noise in stabiliser circuits, following theory outlined in [@hockings_scalable_2024].
-Stabiliser circuits are a restricted class of quantum circuits that admit efficient classical simulation [@aaronson_improved_2004, @gottesman_stabilizer_1997].
+Stabiliser circuits are a restricted class of quantum circuits that admit efficient classical simulation [@aaronson_improved_2004; @gottesman_stabilizer_1997].
 
 In a typical fault-tolerant quantum computing architecture, syndrome extraction circuits, which are stabiliser circuits that measure the parity checks of quantum error correcting codes, comprise the bulk of the physical qubits and gate operations.
 Moreover, the theory of quantum error correction and fault-tolerance generally relies on modelling noise as Pauli noise [@terhal_quantum_2015].
-Quantum noise is tailored into Pauli noise by techniques such as Pauli frame randomisation or randomised compiling [@knill_quantum_2005, @wallman_noise_2016], or quantum error correction itself [@beale_coherence_2018].
+Quantum noise is tailored into Pauli noise by techniques such as Pauli frame randomisation or randomised compiling [@knill_quantum_2005; @wallman_noise_2016], or quantum error correction itself [@beale_coherence_2018].
 
 Accordingly, `QuantumACES.jl` focuses on characterising Pauli noise in syndrome extraction circuits and fault-tolerant logical circuits.
 It contains routines for creating and optimising experimental designs according to their predicted performance.
