@@ -21,7 +21,7 @@ bibliography: paper.bib
 
 `QuantumACES.jl` is a Julia [@bezanson_julia_2017] package for designing, optimising, and simulating scalable and performant noise characterisation experiments for quantum computers.
 
-Noise in quantum devices is the key obstacle to large-scale quantum computation. 
+Noise in quantum devices is the key obstacle to large-scale quantum computation.
 Consequently, quantum computers will require fault-tolerant architectures that encode quantum information in quantum error correcting codes [@shor_faulttolerant_1996; @gottesman_introduction_2010].
 Detailed characterisation of the noise in prototype quantum computers can demonstrate that the device is performing correctly, and improve the performance of error correction by identifying which physical configurations of errors are more and less likely [@sundaresan_demonstrating_2023].
 
@@ -48,6 +48,7 @@ Cycle error reconstruction (CER) [@carignan-dugas_error_2023] is a noise charact
 
 # Acknowledgements
 
-ETH is supported by an Australian Government Research Training Program (RTP) Scholarship. This work was supported by the Australian Research Council Centre of Excellence for Engineered Quantum Systems (EQUS, CE170100009).
+ETH is supported by an Australian Government Research Training Program (RTP) Scholarship.
+This work was supported by the Australian Research Council Centre of Excellence for Engineered Quantum Systems (EQUS, CE170100009).
 
 # References
