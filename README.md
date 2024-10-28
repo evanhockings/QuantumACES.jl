@@ -5,6 +5,7 @@
 [![Build Status](https://github.com/evanhockings/QuantumACES.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/evanhockings/QuantumACES.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/evanhockings/QuantumACES.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/evanhockings/QuantumACES.jl)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
+[![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=for-the-badge)](https://unitary.fund)
 
 `QuantumACES.jl` is a package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits with averaged circuit eigenvalue sampling (ACES).
 It is particularly interested in characterising the noise associated with fault-tolerant gadgets in the context of topological quantum error correcting codes, such as surface code syndrome extraction circuits.
