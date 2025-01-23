@@ -35,7 +35,7 @@ These noise characterisation experiments are simulated with the open-source Pyth
 
 In a typical fault-tolerant quantum computing architecture, the bulk of the physical qubits and gate operations are dedicated to performing the syndrome extraction circuits that measure the parity checks of quantum error correcting codes.
 These syndrome extraction circuits, which are stabiliser circuits, are therefore the key target for noise characterisation experiments.
-QuantumACES.jl is tailored to characterising Pauli noise in syndrome extraction circuits, particularly for topological quantum error correcting codes such as the surface code&nbsp;[@bravyi_quantum_1998; @dennis_topological_2002; @kitaev_faulttolerant_2003; fowler_surface_2012].
+QuantumACES.jl is tailored to characterising Pauli noise in syndrome extraction circuits, particularly for topological quantum error correcting codes such as the surface code&nbsp;[@bravyi_quantum_1998; @dennis_topological_2002; @kitaev_faulttolerant_2003; @fowler_surface_2012].
 It leverages the fact that the simple structures of the syndrome extraction circuits of topological quantum codes remain similar across code sizes, enabling the optimised experimental design for the syndrome extraction circuit of a small-scale code to be transferred to syndrome extraction circuits of larger-scale versions of the same code.
 QuantumACES.jl is capable of calculating and precisely fitting the performance scaling of these experimental designs as a function of the code size, enabling performance predictions at scales where explicit calculation becomes intractable.
 
@@ -48,7 +48,7 @@ The utility of detailed and scalable Pauli noise characterisation methods grows 
 QuantumACES.jl enables noise characterisation in this context, as demonstrated in&nbsp;[@hockings_scalable_2024].
 While there are several software packages for benchmarking and noise characterisation, there are no open-source packages capable of detailed and scalable Pauli noise characterisation of quantum devices.
 Forest-Benchmarking&nbsp;[@combes_forest_2019], is an open-source Python package containing many routines for quantum characterisation, verification, and validation (QCVV), but its detailed noise characterisation techniques are not scalable.
-Gate set tomography (GST)&nbsp;[@nielsen_gate_2021], is a principled and extremely detailed noise characterisation protocol implemented by the open-source Python package pyGSTi&nbsp;[@nielsen_pygstio_2022], but it is limited to characterising extremely small numbers of qubits.
+Gate set tomography (GST)&nbsp;[@nielsen_gate_2021], is a principled and extremely detailed noise characterisation protocol implemented by the open-source Python package pyGSTi&nbsp;[@nielsen_pygsti_2022], but it is limited to characterising extremely small numbers of qubits.
 Cycle error reconstruction (CER)&nbsp;[@carignan-dugas_error_2023] is the noise characterisation protocol whose capabilities are most similar to ACES, but it is implemented by the commercial software True-Q&nbsp;[@beale_trueq_2020].
 
 # Acknowledgements
