@@ -34,3 +34,6 @@ data/
 # VS Code
 *.code-workspace
 .vscode
+
+# Ignore CondaPkg if it is present 
+.CondaPkg/
