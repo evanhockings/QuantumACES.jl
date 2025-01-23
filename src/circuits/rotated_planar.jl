@@ -1,7 +1,7 @@
 """
     RotatedPlanarParameters
 
-Parameters for the syndrome extraction circuit of a rotated surface code.
+Parameters for the syndrome extraction circuit of a rotated planar code.
 
 # Fields
 
@@ -88,7 +88,7 @@ end
     get_rotated_param(vertical_dist::Integer, horizontal_dist::Integer; kwargs...)
     get_rotated_param(dist::Integer; kwargs...)
 
-Returns a [`RotatedPlanarParameters`](@ref) object that parameterises the syndrome extraction circuit of a rotated surface code.
+Returns a [`RotatedPlanarParameters`](@ref) object that parameterises the syndrome extraction circuit of a rotated planar code.
 
 Default gate layer times are estimated from `Suppressing quantum errors by scaling a surface code logical qubit` by Google Quantum AI (2023).
 
@@ -182,7 +182,7 @@ end
 """
     rotated_planar_circuit(rotated_param::RotatedPlanarParameters)
 
-Returns fields used to construct the syndrome extraction circuit of a rotated surface code in the form of a [`RotatedPlanarCircuit`](@ref) object, based on the supplied parameters `rotated_param`.
+Returns fields used to construct the syndrome extraction circuit of a rotated planar code based on the supplied parameters `rotated_param`.
 """
 function rotated_planar_circuit(rotated_param::RotatedPlanarParameters)
     # Set up variables
@@ -410,11 +410,11 @@ end
 """
     get_circuit(rotated_param::RotatedPlanarParameters, noise_param::AbstractNoiseParameters; kwargs...)
 
-Returns a [`RotatedPlanarCircuit`](@ref) circuit object parameterised by the supplied circuit and noise parameters.
+Returns a rotated planar code syndrome extraction circuit in the form of a [`Circuit`](@ref) object parameterised by the supplied circuit and noise parameters.
 
 # Arguments
 
-  - `rotated_param::RotatedPlanarParameters`: Parameters for a rotated surface code.
+  - `rotated_param::RotatedPlanarParameters`: Parameters for a rotated planar code.
   - `noise_param::AbstractNoiseParameters`: Noise parameters for the circuit.
 
 # Keyword arguments

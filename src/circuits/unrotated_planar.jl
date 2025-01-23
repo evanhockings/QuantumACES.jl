@@ -1,7 +1,7 @@
 """
     UnrotatedPlanarParameters
 
-Parameters for the syndrome extraction circuit of an unrotated surface code.
+Parameters for the syndrome extraction circuit of an unrotated planar code.
 
 # Fields
 
@@ -68,7 +68,7 @@ end
     get_unrotated_param(vertical_dist::Integer, horizontal_dist::Integer; kwargs...)
     get_unrotated_param(dist::Integer; kwargs...)
 
-Returns an [`UnrotatedPlanarParameters`](@ref) object that parameterises the syndrome extraction circuit of a unrotated surface code.
+Returns an [`UnrotatedPlanarParameters`](@ref) object that parameterises the syndrome extraction circuit of an unrotated planar code.
 
 Default gate layer times are estimated from `Suppressing quantum errors by scaling a surface code logical qubit` by Google Quantum AI (2023).
 
@@ -147,7 +147,7 @@ end
 """
     unrotated_planar_circuit(unrotated_param::UnrotatedPlanarParameters)
 
-Returns fields used to construct the syndrome extraction circuit of an unrotated surface code in the form of a [`UnrotatedPlanarCircuit`](@ref) object, based on the supplied parameters `unrotated_param`.
+Returns fields used to construct the syndrome extraction circuit of an unrotated planar code based on the supplied parameters `unrotated_param`.
 """
 function unrotated_planar_circuit(unrotated_param::UnrotatedPlanarParameters)
     # Set up variables
@@ -304,11 +304,11 @@ end
 """
     get_circuit(unrotated_param::UnrotatedPlanarParameters, noise_param::AbstractNoiseParameters; kwargs...)
 
-Returns an [`UnrotatedPlanarCircuit`](@ref) circuit object parameterised by the supplied circuit and noise parameters.
+Returns an unrotated planar code syndrome extraction circuit in the form of a [`Circuit`](@ref) object parameterised by the supplied circuit and noise parameters.
 
 # Arguments
 
-  - `unrotated_param::UnrotatedPlanarParameters`: Parameters for an unrotated surface code.
+  - `unrotated_param::UnrotatedPlanarParameters`: Parameters for an unrotated planar code.
   - `noise_param::AbstractNoiseParameters`: Noise parameters for the circuit.
 
 # Keyword arguments

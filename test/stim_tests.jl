@@ -79,6 +79,7 @@ shots = 256
 reset_type_list = [:meas_reset; :meas]
 @testset "Memory circuits" begin
     for circuit_param in circuit_param_list
+        is_last_circuit = (circuit_param == circuit_param_list[end])
         # Get parameters
         vertical_dist = circuit_param.params[:vertical_dist]
         horizontal_dist = circuit_param.params[:horizontal_dist]
@@ -89,6 +90,7 @@ reset_type_list = [:meas_reset; :meas]
         decoder_gate_probabilities =
             [circuit_log.gate_probabilities, circuit_dep.gate_probabilities]
         for reset_type in reset_type_list
+            is_last_reset = (reset_type == reset_type_list[end])
             if reset_type == :meas_reset
                 rounds_list = [0; max(vertical_dist, horizontal_dist)]
             elseif reset_type == :meas
@@ -98,9 +100,8 @@ reset_type_list = [:meas_reset; :meas]
             end
             # Simulate memory experiments and decoding
             for rounds in rounds_list
-                if circuit_param == circuit_param_list[end] &&
-                   reset_type == reset_type_list[end] &&
-                   rounds == rounds_list[end]
+                is_last_round = (rounds == rounds_list[end])
+                if is_last_circuit && is_last_reset && is_last_round
                     memory_data = simulate_memory(
                         circuit_log,
                         rounds,
@@ -111,6 +112,9 @@ reset_type_list = [:meas_reset; :meas]
                         max_samples = shots,
                         diagnostics = true,
                     )
+                    memory_summary = get_memory_summary(memory_data)
+                    display(memory_data)
+                    display(memory_summary)
                 else
                     memory_data = simulate_memory(
                         circuit_log,
@@ -120,6 +124,7 @@ reset_type_list = [:meas_reset; :meas]
                         reset_type = reset_type,
                         decoder_gate_probabilities = decoder_gate_probabilities,
                     )
+                    memory_summary = get_memory_summary(memory_data)
                 end
             end
             # Test the code distances

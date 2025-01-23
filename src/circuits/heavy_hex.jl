@@ -158,7 +158,7 @@ end
 """
     heavy_hex_circuit(hex_param::HeavyHexParameters)
 
-Returns fields used to construct the syndrome extraction circuit of a heavy hex code in the form of a [`HeavyHexCircuit`](@ref) object, based on the supplied parameters `hex_param`.
+Returns fields used to construct the syndrome extraction circuit of a heavy hex code based on the supplied parameters `hex_param`.
 """
 function heavy_hex_circuit(hex_param::HeavyHexParameters)
     # Set up variables
@@ -516,7 +516,7 @@ end
 """
     get_circuit(hex_param::HeavyHexParameters, noise_param::AbstractNoiseParameters; kwargs...)
 
-Returns a `HeavyHexCircuit` circuit object parameterised by the supplied circuit and noise parameters.
+Returns a heavy hex code syndrome extraction circuit in the form of a [`Circuit`](@ref) object parameterised by the supplied circuit and noise parameters.
 
 # Arguments
 

@@ -63,6 +63,7 @@ d_hex_rand = generate_rand_design(
     experiment_shots;
     seed = seed,
 )
+display(d_hex_rand)
 total_randomisations = sum(d_hex_rand.randomisations)
 meas_budget = round(Int, get_meas_budget(d_hex_rand))
 # Test saving and loading a randomised design

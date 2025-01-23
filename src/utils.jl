@@ -323,42 +323,6 @@ function string_to_pauli(pauli_string::String)
 end
 
 """
-    get_commuted_pauli(gate::Gate, pauli_before::String)
-
-Returns the string representation of the Pauli `pauli_before` after it has been commuted past the gate `gate`.
-"""
-function get_commuted_pauli(gate::Gate, pauli_before::String)
-    # Initialise parameters
-    targets = gate.targets
-    n = length(targets)
-    # Convert the string into a Pauli
-    initial = string_to_pauli(pauli_before)
-    initial_support = get_support(initial)
-    # Check that the initial Pauli is supported on at least one qubit
-    if length(initial_support) == 0
-        pauli_after = "+" * join(["I" for j in 1:n])
-        @assert pauli_after == pauli_before "The identity Pauli has somehow been changed."
-    else
-        # Prepare the tableau with the initial Pauli
-        t = Tableau(n)
-        prep_layer = get_prep_layer(initial, initial_support)
-        apply!(t, prep_layer)
-        # Store the Pauli in the row corresponding to the first element of the initial support
-        for i in eachindex(initial_support[2:end])
-            row_sum!(t, n + initial_support[1], n + initial_support[i + 1])
-        end
-        @assert t.tableau[n + initial_support[1], :] == initial.pauli "The initial Pauli has not been appropriately initialised in the tableau."
-        # Apply the gate
-        apply!(t, Layer([Gate(gate.type, 0, collect(1:n))], n))
-        # Determine the final Pauli to which the initial Pauli is mapped
-        final = Pauli(t.tableau[n + initial_support[1], :], n)
-        # Convert the final Pauli into a string
-        pauli_after = pauli_to_string(final)
-    end
-    return pauli_after::String
-end
-
-"""
     calc_pauli(initial::Pauli, circuit::Vector{Layer})
 
 Returns the Pauli to which the initial Pauli `initial` is mapped after the circuit `circuit` is applied.
@@ -367,22 +331,42 @@ function calc_pauli(initial::Pauli, circuit::Vector{Layer})
     # Set up the tableau
     n = initial.qubit_num
     t = Tableau(n)
-    # Prepare the tableau with the initial Pauli
+    # Generate the layer which prepares the appropriate Pauli
     @assert initial.pauli[2n + 1] == 0 "This function requires an initial Pauli with positive sign."
     initial_support = get_support(initial)
+    @assert length(initial_support) > 0 "The initial Pauli is not supported on any qubits."
     prep_layer = get_prep_layer(initial, initial_support)
+    # Prepare the tableau with the initial Pauli
     apply!(t, prep_layer)
-    # Store the Pauli in the row corresponding to the first element of the initial support
+    # Use row_sum! to assemble the Pauli
     for i in eachindex(initial_support[2:end])
         row_sum!(t, n + initial_support[1], n + initial_support[i + 1])
     end
     @assert t.tableau[n + initial_support[1], :] == initial.pauli "The initial Pauli has not been appropriately initialised in the tableau."
+    # Use row_sum! to disassemble the Pauli
+    for i in eachindex(initial_support[2:end])
+        row_sum!(t, n + initial_support[1], n + initial_support[i + 1])
+    end
     # Apply the main circuit
     for l in circuit
         apply!(t, l)
     end
+    # Use row_sum! to assemble the Pauli
+    for i in eachindex(initial_support[2:end])
+        row_sum!(t, n + initial_support[1], n + initial_support[i + 1])
+    end
     # Determine the final Pauli to which the initial Pauli is mapped
     final = Pauli(t.tableau[n + initial_support[1], :], n)
+    final_support = get_support(final)
+    # Use row_sum! to disassemble the Pauli
+    for i in eachindex(initial_support[2:end])
+        row_sum!(t, n + initial_support[1], n + initial_support[i + 1])
+    end
+    # Generate the layer which measures the appropriate Pauli
+    meas_layer = get_meas_layer(final, final_support)
+    # Check that the measurement outcome is appropriate
+    measurements = apply!(t, meas_layer; return_measurements = true)
+    @assert prod(meas[1] for meas in measurements) == (-1)^final.pauli[2n + 1] "The measurement does not match the final Pauli."
     return final::Pauli
 end
 

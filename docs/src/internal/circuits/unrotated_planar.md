@@ -6,7 +6,7 @@ CollapsedDocStrings = true
 
 ## Public functions
 
-```@autodocs; canonical = false
+```@autodocs; canonical=false
 Modules = [QuantumACES]
 Pages = ["circuits/unrotated_planar.jl"]
 Private = false

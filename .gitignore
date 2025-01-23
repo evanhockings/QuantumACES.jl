@@ -28,6 +28,7 @@ Manifest.toml
 *.DS_Store
 
 # Ignore the data folders, as they can contain large files
+data/
 */data/
 
 # VS Code

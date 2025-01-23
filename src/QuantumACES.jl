@@ -228,6 +228,7 @@ export
     # noises/lognormal.jl functions
     get_log_param,
     # circuit.jl functions
+    update_noise,
     get_layer_times,
     get_circuit,
     get_combined_circuit,
@@ -261,7 +262,6 @@ export
     get_full_design,
     get_diag_design,
     get_combined_design,
-    update_noise,
     # rand_design.jl functions
     get_randomisations,
     generate_rand_design,
@@ -326,7 +326,6 @@ export
     get_random_pauli,
     pauli_to_string,
     string_to_pauli,
-    get_commuted_pauli,
     calc_pauli,
     display_circuit,
     parse_uint8_vector,

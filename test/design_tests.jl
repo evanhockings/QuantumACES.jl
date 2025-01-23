@@ -86,11 +86,29 @@ rot_opt_merit = calc_merit(d_rot_opt)
         throw(error("Unsupported least squares type $(ls_type)."))
     end
 end
-# Test eigenvalue conversion utility
+# Test conversion utilities
 rand_eigenvalue_indices = randperm(sum(length.(d_rot_opt.mapping_ensemble)))
-@testset "Eigenvalue index conversion" begin
+@testset "Conversion utilities" begin
+    # Test index conversion
     @test rand_eigenvalue_indices ==
           pair_to_eig_idx(d_rot_opt, eig_to_pair_idx(d_rot_opt, rand_eigenvalue_indices))
+    for (idx, circuit_tuple) in pairs(d_rot_opt.tuple_set)
+        tuple_circuit = d_rot_opt.c.circuit[circuit_tuple]
+        # Test mapping calculation
+        mapping_set = d_rot_opt.mapping_ensemble[idx]
+        initial_paulis = [m.initial for m in mapping_set]
+        final_paulis = [m.final for m in mapping_set]
+        test_final_paulis =
+            [calc_pauli(initial, tuple_circuit) for initial in initial_paulis]
+        @test final_paulis == test_final_paulis
+        # Test Pauli string conversion
+        string_initial_paulis =
+            [string_to_pauli(pauli_to_string(initial)) for initial in initial_paulis]
+        string_final_paulis =
+            [string_to_pauli(pauli_to_string(final)) for final in final_paulis]
+        @test initial_paulis == string_initial_paulis
+        @test final_paulis == string_final_paulis
+    end
 end
 # Test saving and loading and deletion
 @testset "Design IO" begin
