@@ -13,13 +13,12 @@ function get_shot_weights_factor(
     @assert length(shot_weights) == tuple_number
     @assert length(tuple_times) == tuple_number
     # Calculate the shot weights factor
-    tuple_times_factor = sum(shot_weights .* tuple_times)
+    times_factor = sum(shot_weights .* tuple_times)
     shot_weights_factor =
-        tuple_times_factor * Diagonal(
+        times_factor * Diagonal(
             vcat(
                 [
-                    (1 / shot_weights[idx]) * ones(mapping_lengths[idx]) for
-                    idx in 1:tuple_number
+                    (1 / shot_weights[i]) * ones(mapping_lengths[i]) for i in 1:tuple_number
                 ]...,
             ),
         )
@@ -41,14 +40,10 @@ function get_shot_weights_factor_inv(
     @assert length(shot_weights) == tuple_number
     @assert length(tuple_times) == tuple_number
     # Calculate the shot weights factor inverse
-    tuple_times_factor = sum(shot_weights .* tuple_times)
+    times_factor = sum(shot_weights .* tuple_times)
     shot_weights_factor_inv =
-        (1 / tuple_times_factor) * Diagonal(
-            vcat(
-                [
-                    shot_weights[idx] * ones(mapping_lengths[idx]) for idx in 1:tuple_number
-                ]...,
-            ),
+        (1 / times_factor) * Diagonal(
+            vcat([shot_weights[i] * ones(mapping_lengths[i]) for i in 1:tuple_number]...),
         )
     return shot_weights_factor_inv::Diagonal{Float64, Vector{Float64}}
 end
@@ -63,13 +58,13 @@ function get_shot_weights_local_grad(
     tuple_times::Vector{Float64},
 )
     # The local gradient applies only tuple's portion of the covariance matrix
-    tuple_times_factor = sum(shot_weights .* tuple_times)
-    shot_weights_local_grad = -tuple_times_factor ./ (shot_weights .^ 2)
+    times_factor = sum(shot_weights .* tuple_times)
+    shot_weights_local_grad = -times_factor ./ (shot_weights .^ 2)
     return shot_weights_local_grad::Vector{Float64}
 end
 
 """
-    get_merit_grad(sigma_tr::Float64, sigma_tr_grad::Vector{Float64}, sigma_sq_tr::Float64, sigma_sq_tr_grad::Vector{Float64}, N::Int)
+    get_merit_grad(sigma_tr::Float64, sigma_tr_grad::Vector{Float64}, sigma_sq_tr::Float64, sigma_sq_tr_grad::Vector{Float64}, N::Integer)
 
 Returns the gradient of the figure of merit with respect to the shot weights given the trace of the gate eigenvalue estimator covariance matrix `sigma_tr` and its square `sigma_sq_tr`, the gradient with respect to the shot weights `sigma_tr_grad` and the gradient of the square `sigma_sq_tr_grad`, and the number of gate eigenvalues `N`.
 """
@@ -78,7 +73,7 @@ function get_merit_grad(
     sigma_tr_grad::Vector{Float64},
     sigma_sq_tr::Float64,
     sigma_sq_tr_grad::Vector{Float64},
-    N::Int,
+    N::Integer,
 )
     # Calculate the gradient of the figure of merit, or expected NRMSE, with respect to the shot weights
     merit_grad =
@@ -101,47 +96,50 @@ function get_shot_weights_log_matrix(shot_weights::Vector{Float64})
 end
 
 """
-    calc_gls_merit_grad_log(d::Design, shot_weights::Vector{Float64}, covariance_log_unweighted_inv::SparseMatrixCSC{Float64, Int})
+    calc_gls_merit_grad_log(d::Design, shot_weights::Vector{Float64}, covariance_log_unweighted_inv::SparseMatrixCSC{Float64, Int}, gate_transform_matrix::SparseMatrixCSC{Float64, Int})
 
-Returns the gradient of the generalised least squares (GLS) figure of merit for the design `d` with respect to the logarithms of the shot weights `shot_weights`, using the inverse of the unweighted (by the shot weights factor) covariance matrix of the circuit log-eigenvalue estimator `covariance_log_unweighted_inv`.
+Returns the gradient of the generalised least squares (GLS) figure of merit for the design `d` with respect to the logarithms of the shot weights `shot_weights`, using the inverse of the unweighted (by the shot weights factor) covariance matrix of the circuit log-eigenvalue estimator `covariance_log_unweighted_inv`, with the estimator type implicitly specified by the gate eigenvalue transform matrix `gate_transform_matrix`.
 """
 function calc_gls_merit_grad_log(
     d::Design,
     shot_weights::Vector{Float64},
     covariance_log_unweighted_inv::SparseMatrixCSC{Float64, Int},
+    gate_transform_matrix::SparseMatrixCSC{Float64, Int},
 )
     # Initialise data
-    N = d.c.N
     mapping_lengths = length.(d.mapping_ensemble)
     mapping_lower = cumsum([1; mapping_lengths[1:(end - 1)]])
     mapping_upper = cumsum(mapping_lengths)
     mapping_indices =
         [mapping_lower[idx]:mapping_upper[idx] for idx in 1:length(d.tuple_set)]
-    gate_eigenvalues = d.c.gate_eigenvalues
-    gate_eigenvalues_diag = Diagonal(gate_eigenvalues)
     shot_weights_factor_inv =
         get_shot_weights_factor_inv(shot_weights, d.tuple_times, mapping_lengths)
     shot_weights_local_grad = get_shot_weights_local_grad(shot_weights, d.tuple_times)
-    # Compute the trace of the covariance matrix and its square
+    shot_weights_log_matrix = get_shot_weights_log_matrix(shot_weights)
+    # Precompute useful quantities
     covariance_log_inv = covariance_log_unweighted_inv * shot_weights_factor_inv
     sigma_prime = Symmetric(
         inv(cholesky(Symmetric(Array(d.matrix' * covariance_log_inv * d.matrix)))),
     )
-    sigma = Symmetric(gate_eigenvalues_diag * sigma_prime * gate_eigenvalues_diag)
+    design_weights = d.matrix' * shot_weights_factor_inv
+    covariance_sigma_prime = covariance_log_inv * d.matrix * sigma_prime
+    # Calculate gate transform quantities
+    N = size(gate_transform_matrix, 1)
+    sigma = Symmetric(gate_transform_matrix * sigma_prime * gate_transform_matrix')
+    gate_sigma_prime = gate_transform_matrix' * gate_transform_matrix * sigma_prime
+    gls_matrix = covariance_sigma_prime * gate_sigma_prime
+    # Compute the trace of the covariance matrix and its square
     sigma_tr = tr(sigma)
     sigma_sq_tr = tr(sigma^2)
     merit = sqrt(sigma_tr) * (1 - sigma_sq_tr / (4 * sigma_tr^2)) / sqrt(N)
     # Compute the gradient of the trace of the covariance matrix
-    gate_sigma_prime = gate_eigenvalues_diag^2 * sigma_prime
-    gls_matrix = covariance_log_inv * d.matrix * sigma_prime * gate_sigma_prime
-    sigma_tr_diag = diag(gls_matrix * d.matrix' * shot_weights_factor_inv)
+    sigma_tr_diag = diag(gls_matrix * design_weights)
     sigma_tr_partial = [sum(sigma_tr_diag[indices]) for indices in mapping_indices]
     sigma_tr_grad =
         sum(sigma_tr_partial ./ shot_weights) * d.tuple_times +
         sigma_tr_partial .* shot_weights_local_grad
     # Compute the gradient of the trace of the square of the covariance matrix
-    sigma_sq_tr_diag =
-        2 * diag(gls_matrix * gate_sigma_prime * d.matrix' * shot_weights_factor_inv)
+    sigma_sq_tr_diag = 2 * diag(gls_matrix * gate_sigma_prime * design_weights)
     sigma_sq_tr_partial = [sum(sigma_sq_tr_diag[indices]) for indices in mapping_indices]
     sigma_sq_tr_grad =
         sum(sigma_sq_tr_partial ./ shot_weights) * d.tuple_times +
@@ -149,7 +147,6 @@ function calc_gls_merit_grad_log(
     # Calculate the gradient of the figure of merit with respect to the shot weights
     merit_grad = get_merit_grad(sigma_tr, sigma_tr_grad, sigma_sq_tr, sigma_sq_tr_grad, N)
     # Calculate the gradient of the figure of merit with respect to the log shot weights
-    shot_weights_log_matrix = get_shot_weights_log_matrix(shot_weights)
     merit_grad_log = shot_weights_log_matrix * merit_grad
     return (merit_grad_log::Vector{Float64}, merit::Float64)
 end
@@ -166,17 +163,18 @@ function gls_optimise_weights(
     options::OptimOptions = OptimOptions(),
 )
     # Get the keyword arguments
-    @assert options.ls_type == :gls "Inappropriate least squares optimisation type $(options.ls_type) supplied."
+    ls_type = options.ls_type
+    @assert ls_type == :gls "Inappropriate least squares optimisation type $(ls_type) supplied."
+    est_type = options.est_type
+    est_weight = options.est_weight
     learning_rate = options.learning_rate
     momentum = options.momentum
     learning_rate_scale_factor = options.learning_rate_scale_factor
-    shot_weights_clip = options.shot_weights_clip
     max_steps = options.max_steps
     convergence_threshold = options.convergence_threshold
     convergence_steps = options.convergence_steps
     diagnostics = options.grad_diagnostics
     # Initialise data
-    N = d.c.N
     tuple_number = length(d.tuple_set)
     shot_weights = project_simplex(d.shot_weights)
     mapping_lengths = length.(d.mapping_ensemble)
@@ -185,23 +183,62 @@ function gls_optimise_weights(
     covariance_log_unweighted = covariance_log * shot_weights_factor_inv
     covariance_log_unweighted_inv =
         sparse_covariance_inv(covariance_log_unweighted, mapping_lengths)
+    gate_eigenvalues_diag = sparse(Diagonal(get_gate_eigenvalues(d)))
+    if est_type == :sum || est_type == :prod
+        ord_gate_transform_matrix = get_transform(d, :ordinary) * gate_eigenvalues_diag
+        rel_gate_transform_matrix = get_transform(d, :relative) * gate_eigenvalues_diag
+    else
+        gate_transform_matrix = get_transform(d, est_type) * gate_eigenvalues_diag
+    end
     # Perform gradient descent
     stepping = true
     step = 1
     recently_pruned = 0
     recently_zeroed = 0
     scaled_learning_rate = learning_rate
-    unprunable = Int[]
     old_shot_weights = deepcopy(shot_weights)
     velocity = zeros(tuple_number)
-    merit_descent = Vector{Float64}(undef, 0)
+    merit_descent = Vector{Float64}()
     while stepping
         # Calculate the gradient of the figure of merit
         nesterov_log_shot_weights = -log.(shot_weights) + momentum * velocity
         nesterov_shot_weights =
             exp.(-nesterov_log_shot_weights) / sum(exp.(-nesterov_log_shot_weights))
-        (merit_grad_log, merit) =
-            calc_gls_merit_grad_log(d, nesterov_shot_weights, covariance_log_unweighted_inv)
+        if est_type == :sum || est_type == :prod
+            (ord_merit_grad_log, ord_merit) = calc_gls_merit_grad_log(
+                d,
+                nesterov_shot_weights,
+                covariance_log_unweighted_inv,
+                ord_gate_transform_matrix,
+            )
+            (rel_merit_grad_log, rel_merit) = calc_gls_merit_grad_log(
+                d,
+                nesterov_shot_weights,
+                covariance_log_unweighted_inv,
+                rel_gate_transform_matrix,
+            )
+            if est_type == :sum
+                merit = est_weight * ord_merit + (1 - est_weight) * rel_merit
+                merit_grad_log =
+                    est_weight * ord_merit_grad_log + (1 - est_weight) * rel_merit_grad_log
+            elseif est_type == :prod
+                merit = ord_merit^(est_weight) * rel_merit^(1 - est_weight)
+                merit_grad_log =
+                    merit * (
+                        est_weight * ord_merit_grad_log / ord_merit +
+                        (1 - est_weight) * rel_merit_grad_log / rel_merit
+                    )
+            else
+                throw(error("Unsupported estimator type $(est_type)."))
+            end
+        else
+            (merit_grad_log, merit) = calc_gls_merit_grad_log(
+                d,
+                nesterov_shot_weights,
+                covariance_log_unweighted_inv,
+                gate_transform_matrix,
+            )
+        end
         push!(merit_descent, merit)
         # Update the shot weights, ensuring both they and the gradient are appropriately normalised
         velocity = momentum * velocity - scaled_learning_rate * merit_grad_log
@@ -225,72 +262,18 @@ function gls_optimise_weights(
             old_shot_weights = deepcopy(nesterov_shot_weights)
             shot_weights = shot_weights_update
         end
-        # Prune a tuple from the design if one has a shot weight below the minimum
-        weights_below_min = findall(shot_weights .< shot_weights_clip)
-        if length(weights_below_min) > 0 && recently_pruned == 0
-            min_weight_idx = findmin(shot_weights[weights_below_min])[2]
-            prune_idx = weights_below_min[min_weight_idx]
-            if prune_idx ∉ unprunable
-                (d_prune, covariance_log_unweighted_prune) = prune_design(
-                    d,
-                    covariance_log_unweighted,
-                    prune_idx;
-                    update_weights = false,
-                )
-                # The pruned design must still achieve full rank
-                if rank(Array(d_prune.matrix)) == N
-                    prune_indices = setdiff(1:tuple_number, prune_idx)
-                    prune_shot_weights_factor = get_shot_weights_factor(
-                        d_prune.shot_weights,
-                        d_prune.tuple_times,
-                        mapping_lengths[prune_indices],
-                    )
-                    covariance_log_prune =
-                        covariance_log_unweighted_prune * prune_shot_weights_factor
-                    prune_merit = calc_gls_moments(d_prune, covariance_log_prune)[1]
-                    prune_improve = all([
-                        prune_merit < merit_descent[idx] for
-                        idx in max(1, step - convergence_steps):step
-                    ])
-                    # Prune the tuple only if doing so improves the figure of merit
-                    if prune_improve
-                        # Prune the quantities
-                        prune_indices = setdiff(1:tuple_number, prune_idx)
-                        mapping_lengths = mapping_lengths[prune_indices]
-                        d = d_prune
-                        covariance_log_unweighted = covariance_log_unweighted_prune
-                        covariance_log_unweighted_inv = sparse_covariance_inv(
-                            covariance_log_unweighted,
-                            mapping_lengths,
-                        )
-                        # Update the shot weights and reset the velocity
-                        tuple_number -= 1
-                        shot_weights =
-                            shot_weights[prune_indices] / sum(shot_weights[prune_indices])
-                        old_shot_weights = deepcopy(shot_weights)
-                        velocity = velocity[prune_indices]
-                        recently_pruned = convergence_steps
-                        if diagnostics
-                            println(
-                                "Pruned tuple $(prune_idx) of $(tuple_number + 1) in step $(step); the velocity has been reset.",
-                            )
-                        end
-                    end
-                else
-                    push!(unprunable, prune_idx)
-                end
-            end
-        end
         # Check the step count and convergence
-        if step > convergence_steps
+        if step >= convergence_steps
             merit_converged =
                 all([
-                    abs(merit_descent[idx_1] - merit_descent[idx_2]) <
+                    abs(1 - merit_descent[idx_2] / merit_descent[idx_1]) <
                     convergence_steps * convergence_threshold for
-                    idx_1 in (step - convergence_steps):step for
-                    idx_2 in (step - convergence_steps):step
-                ]) &&
-                (abs(merit_descent[end] - merit_descent[end - 1]) < convergence_threshold)
+                    idx_1 in (step - convergence_steps + 1):step for
+                    idx_2 in (step - convergence_steps + 1):step
+                ]) && (
+                    abs(1 - merit_descent[end - 1] / merit_descent[end]) <
+                    convergence_threshold
+                )
         else
             merit_converged = false
         end
@@ -299,18 +282,18 @@ function gls_optimise_weights(
             if diagnostics
                 if merit_converged
                     println(
-                        "Converged after $(step) steps. The GLS figure of merit is $(round(merit_descent[step], sigdigits = 5)).",
+                        "Converged after $(step) steps. The $(ls_type) $(est_type) figure of merit is $(round(merit_descent[step], sigdigits = 5)).",
                     )
                 else
                     println(
-                        "The maximum number of steps $(max_steps) has been reached without convergence. The GLS figure of merit is $(round(merit_descent[step], sigdigits = 5)), which differs from the previous step by $(round(abs(merit_descent[step] - merit_descent[step-1]), sigdigits=5)), whereas the threshold for convergence is $(convergence_threshold).",
+                        "The maximum number of steps $(max_steps) has been reached without convergence. The $(ls_type) $(est_type) figure of merit is $(round(merit_descent[step], sigdigits = 5))$(max_steps > 1 ? ", which differs from the previous step by $(round(abs(merit_descent[step] - merit_descent[step - 1]), sigdigits = 5)), whereas the threshold for convergence is $(convergence_threshold)" : "").",
                     )
                 end
             end
         else
             if diagnostics
                 println(
-                    "The GLS figure of merit was $(round(merit_descent[step], sigdigits = 5)) prior to step $(step).",
+                    "The $(ls_type) $(est_type) figure of merit was $(round(merit_descent[step], sigdigits = 5)) prior to step $(step).",
                 )
             end
             step += 1
@@ -327,7 +310,7 @@ function gls_optimise_weights(
         get_shot_weights_factor(shot_weights, d.tuple_times, mapping_lengths)
     covariance_log = covariance_log_unweighted * shot_weights_factor
     # Update the design
-    @reset d.shot_weights = shot_weights
+    @reset d.shot_weights = project_simplex(shot_weights)
     @reset d.ls_type = :gls
     return (
         d::Design,
@@ -337,60 +320,64 @@ function gls_optimise_weights(
 end
 
 """
-    calc_wls_merit_grad_log(d::Design, shot_weights::Vector{Float64}, covariance_log_unweighted::SparseMatrixCSC{Float64, Int})
+    calc_wls_merit_grad_log(d::Design, shot_weights::Vector{Float64}, covariance_log_unweighted::SparseMatrixCSC{Float64, Int}, gate_transform_matrix::SparseMatrixCSC{Float64, Int})
 
-Returns the gradient of the weighted least squares (WLS) figure of merit for the design `d` with respect to the logarithms of the shot weights `shot_weights`, using the unweighted (by the shot weights factor) covariance matrix of the circuit log-eigenvalue estimator `covariance_log_unweighted`.
+Returns the gradient of the weighted least squares (WLS) figure of merit for the design `d` with respect to the logarithms of the shot weights `shot_weights`, using the unweighted (by the shot weights factor) covariance matrix of the circuit log-eigenvalue estimator `covariance_log_unweighted`, with the estimator type implicitly specified by the gate eigenvalue transform matrix `gate_transform_matrix`.
 """
 function calc_wls_merit_grad_log(
     d::Design,
     shot_weights::Vector{Float64},
     covariance_log_unweighted::SparseMatrixCSC{Float64, Int},
+    gate_transform_matrix::SparseMatrixCSC{Float64, Int},
 )
     # Initialise data
-    N = d.c.N
     mapping_lengths = length.(d.mapping_ensemble)
     mapping_lower = cumsum([1; mapping_lengths[1:(end - 1)]])
     mapping_upper = cumsum(mapping_lengths)
     mapping_indices =
         [mapping_lower[idx]:mapping_upper[idx] for idx in 1:length(d.tuple_set)]
-    gate_eigenvalues = d.c.gate_eigenvalues
-    gate_eigenvalues_diag = Diagonal(gate_eigenvalues)
     shot_weights_factor =
         get_shot_weights_factor(shot_weights, d.tuple_times, mapping_lengths)
     shot_weights_local_grad = get_shot_weights_local_grad(shot_weights, d.tuple_times)
-    # Compute the trace of the covariance matrix and its square
+    shot_weights_log_matrix = get_shot_weights_log_matrix(shot_weights)
+    # Precompute useful quantities
+    covariance_log_unweighted_matrix = Symmetric(Array(covariance_log_unweighted))
     covariance_log = covariance_log_unweighted * shot_weights_factor
     covariance_log_matrix = Symmetric(Array(covariance_log))
-    covariance_log_diag_inv = Diagonal(covariance_log)^(-1)
-    covariance_combined = Array(covariance_log * covariance_log_diag_inv)
+    covariance_log_diag_inv = sparse(Diagonal(covariance_log)^(-1))
+    covariance_combined = covariance_log * covariance_log_diag_inv
     conjugated_inv = Symmetric(
         inv(cholesky(Symmetric(Array(d.matrix' * covariance_log_diag_inv * d.matrix)))),
     )
     wls_estimator_prime = conjugated_inv * Array(d.matrix' * covariance_log_diag_inv)
-    wls_estimator_prime_commutant = d.matrix * wls_estimator_prime - I
-    wls_estimator = gate_eigenvalues_diag * wls_estimator_prime
+    wls_estimator_prime_commutant =
+        covariance_combined * d.matrix * wls_estimator_prime - covariance_combined
+    # Calculate gate transform quantities
+    N = size(gate_transform_matrix, 1)
+    wls_estimator = gate_transform_matrix * wls_estimator_prime
     sigma = Symmetric(wls_estimator * covariance_log_matrix * wls_estimator')
+    wls_gram = Symmetric(wls_estimator' * wls_estimator)
+    wls_sq_gram = Symmetric(wls_gram * covariance_log_matrix * wls_gram)
+    # Compute the trace of the covariance matrix and its square
     sigma_tr = tr(sigma)
     sigma_sq_tr = tr(sigma^2)
     merit = sqrt(sigma_tr) * (1 - sigma_sq_tr / (4 * sigma_tr^2)) / sqrt(N)
     # Compute the gradient of the trace of the covariance matrix
-    wls_gram = Symmetric(wls_estimator' * wls_estimator)
-    wls_tr_matrix = Symmetric(
-        wls_gram +
-        2 * Diagonal(wls_gram * covariance_combined * wls_estimator_prime_commutant),
+    sigma_tr_diag = diag(
+        Symmetric(wls_gram + 2 * Diagonal(wls_gram * wls_estimator_prime_commutant)) *
+        covariance_log_unweighted_matrix,
     )
-    sigma_tr_diag = diag(wls_tr_matrix * Array(covariance_log_unweighted))
     sigma_tr_partial = [sum(sigma_tr_diag[indices]) for indices in mapping_indices]
     sigma_tr_grad =
         sum(sigma_tr_partial ./ shot_weights) * d.tuple_times +
         sigma_tr_partial .* shot_weights_local_grad
     # Compute the gradient of the trace of the square of the covariance matrix
-    wls_sq_gram = Symmetric(wls_gram * covariance_log_matrix * wls_gram)
-    wls_sq_tr_matrix = Symmetric(
-        2 * wls_sq_gram +
-        4 * Diagonal(wls_sq_gram * covariance_combined * wls_estimator_prime_commutant),
-    )
-    sigma_sq_tr_diag = diag(wls_sq_tr_matrix * Array(covariance_log_unweighted))
+    sigma_sq_tr_diag =
+        2 * diag(
+            Symmetric(
+                wls_sq_gram + 2 * Diagonal(wls_sq_gram * wls_estimator_prime_commutant),
+            ) * covariance_log_unweighted_matrix,
+        )
     sigma_sq_tr_partial = [sum(sigma_sq_tr_diag[indices]) for indices in mapping_indices]
     sigma_sq_tr_grad =
         sum(sigma_sq_tr_partial ./ shot_weights) * d.tuple_times +
@@ -398,7 +385,6 @@ function calc_wls_merit_grad_log(
     # Calculate the gradient of the figure of merit with respect to the shot weights
     merit_grad = get_merit_grad(sigma_tr, sigma_tr_grad, sigma_sq_tr, sigma_sq_tr_grad, N)
     # Calculate the gradient of the figure of merit with respect to the log shot weights
-    shot_weights_log_matrix = get_shot_weights_log_matrix(shot_weights)
     merit_grad_log = shot_weights_log_matrix * merit_grad
     return (merit_grad_log::Vector{Float64}, merit::Float64)
 end
@@ -415,40 +401,80 @@ function wls_optimise_weights(
     options::OptimOptions = OptimOptions(),
 )
     # Get the keyword arguments
-    @assert options.ls_type == :wls "Inappropriate least squares optimisation type $(options.ls_type) supplied."
+    ls_type = options.ls_type
+    @assert ls_type == :wls "Inappropriate least squares optimisation type $(ls_type) supplied."
+    est_type = options.est_type
+    est_weight = options.est_weight
     learning_rate = options.learning_rate
     momentum = options.momentum
     learning_rate_scale_factor = options.learning_rate_scale_factor
-    shot_weights_clip = options.shot_weights_clip
     max_steps = options.max_steps
     convergence_threshold = options.convergence_threshold
     convergence_steps = options.convergence_steps
     diagnostics = options.grad_diagnostics
     # Initialise data
-    N = d.c.N
     tuple_number = length(d.tuple_set)
     shot_weights = project_simplex(d.shot_weights)
     mapping_lengths = length.(d.mapping_ensemble)
     shot_weights_factor_inv =
         get_shot_weights_factor_inv(d.shot_weights, d.tuple_times, mapping_lengths)
     covariance_log_unweighted = covariance_log * shot_weights_factor_inv
+    gate_eigenvalues_diag = sparse(Diagonal(get_gate_eigenvalues(d)))
+    if est_type == :sum || est_type == :prod
+        ord_gate_transform_matrix = get_transform(d, :ordinary) * gate_eigenvalues_diag
+        rel_gate_transform_matrix = get_transform(d, :relative) * gate_eigenvalues_diag
+    else
+        gate_transform_matrix = get_transform(d, est_type) * gate_eigenvalues_diag
+    end
     # Perform gradient descent
     stepping = true
     step = 1
     recently_pruned = 0
     recently_zeroed = 0
     scaled_learning_rate = learning_rate
-    unprunable = Int[]
     old_shot_weights = deepcopy(shot_weights)
     velocity = zeros(tuple_number)
-    merit_descent = Vector{Float64}(undef, 0)
+    merit_descent = Vector{Float64}()
     while stepping
         # Calculate the gradient of the figure of merit
         nesterov_log_shot_weights = -log.(shot_weights) + momentum * velocity
         nesterov_shot_weights =
             exp.(-nesterov_log_shot_weights) / sum(exp.(-nesterov_log_shot_weights))
-        (merit_grad_log, merit) =
-            calc_wls_merit_grad_log(d, nesterov_shot_weights, covariance_log_unweighted)
+        if est_type == :sum || est_type == :prod
+            (ord_merit_grad_log, ord_merit) = calc_wls_merit_grad_log(
+                d,
+                nesterov_shot_weights,
+                covariance_log_unweighted,
+                ord_gate_transform_matrix,
+            )
+            (rel_merit_grad_log, rel_merit) = calc_wls_merit_grad_log(
+                d,
+                nesterov_shot_weights,
+                covariance_log_unweighted,
+                rel_gate_transform_matrix,
+            )
+            if est_type == :sum
+                merit = est_weight * ord_merit + (1 - est_weight) * rel_merit
+                merit_grad_log =
+                    est_weight * ord_merit_grad_log + (1 - est_weight) * rel_merit_grad_log
+            elseif est_type == :prod
+                merit = ord_merit^(est_weight) * rel_merit^(1 - est_weight)
+                merit_grad_log =
+                    merit * (
+                        est_weight * ord_merit_grad_log / ord_merit +
+                        (1 - est_weight) * rel_merit_grad_log / rel_merit
+                    )
+            else
+                throw(error("Unsupported estimator type $(est_type)."))
+            end
+        else
+            (merit_grad_log, merit) = calc_wls_merit_grad_log(
+                d,
+                nesterov_shot_weights,
+                covariance_log_unweighted,
+                gate_transform_matrix,
+            )
+        end
         push!(merit_descent, merit)
         # Update the shot weights, ensuring both they and the gradient are appropriately normalised
         velocity = momentum * velocity - scaled_learning_rate * merit_grad_log
@@ -472,67 +498,18 @@ function wls_optimise_weights(
             old_shot_weights = deepcopy(nesterov_shot_weights)
             shot_weights = shot_weights_update
         end
-        # Prune a tuple from the design if one has a shot weight below the minimum
-        weights_below_min = findall(shot_weights .< shot_weights_clip)
-        if length(weights_below_min) > 0 && recently_pruned == 0
-            min_weight_idx = findmin(shot_weights[weights_below_min])[2]
-            prune_idx = weights_below_min[min_weight_idx]
-            if prune_idx ∉ unprunable
-                (d_prune, covariance_log_unweighted_prune) = prune_design(
-                    d,
-                    covariance_log_unweighted,
-                    prune_idx;
-                    update_weights = false,
-                )
-                # The pruned design must still achieve full rank
-                if rank(Array(d_prune.matrix)) == N
-                    prune_indices = setdiff(1:tuple_number, prune_idx)
-                    prune_shot_weights_factor = get_shot_weights_factor(
-                        d_prune.shot_weights,
-                        d_prune.tuple_times,
-                        mapping_lengths[prune_indices],
-                    )
-                    covariance_log_prune =
-                        covariance_log_unweighted_prune * prune_shot_weights_factor
-                    prune_merit = calc_wls_moments(d_prune, covariance_log_prune)[1]
-                    prune_improve = all([
-                        prune_merit < merit_descent[idx] for
-                        idx in max(1, step - convergence_steps):step
-                    ])
-                    # Prune the tuple only if doing so improves the figure of merit
-                    if prune_improve
-                        # Prune the quantities
-                        mapping_lengths = mapping_lengths[prune_indices]
-                        d = d_prune
-                        covariance_log_unweighted = covariance_log_unweighted_prune
-                        # Update the shot weights and reset the velocity
-                        tuple_number -= 1
-                        shot_weights =
-                            shot_weights[prune_indices] / sum(shot_weights[prune_indices])
-                        old_shot_weights = deepcopy(shot_weights)
-                        velocity = velocity[prune_indices]
-                        recently_pruned = convergence_steps
-                        if diagnostics
-                            println(
-                                "Pruned tuple $(prune_idx) of $(tuple_number + 1) in step $(step); the velocity has been reset.",
-                            )
-                        end
-                    end
-                else
-                    push!(unprunable, prune_idx)
-                end
-            end
-        end
         # Check the step count and convergence
-        if step > convergence_steps
+        if step >= convergence_steps
             merit_converged =
                 all([
-                    abs(merit_descent[idx_1] - merit_descent[idx_2]) <
+                    abs(1 - merit_descent[idx_2] / merit_descent[idx_1]) <
                     convergence_steps * convergence_threshold for
-                    idx_1 in (step - convergence_steps):step for
-                    idx_2 in (step - convergence_steps):step
-                ]) &&
-                (abs(merit_descent[end] - merit_descent[end - 1]) < convergence_threshold)
+                    idx_1 in (step - convergence_steps + 1):step for
+                    idx_2 in (step - convergence_steps + 1):step
+                ]) && (
+                    abs(1 - merit_descent[end - 1] / merit_descent[end]) <
+                    convergence_threshold
+                )
         else
             merit_converged = false
         end
@@ -541,18 +518,18 @@ function wls_optimise_weights(
             if diagnostics
                 if merit_converged
                     println(
-                        "Converged after $(step) steps. The WLS figure of merit is $(round(merit_descent[step], sigdigits = 5)).",
+                        "Converged after $(step) steps. The $(ls_type) $(est_type) figure of merit is $(round(merit_descent[step], sigdigits = 5)).",
                     )
                 else
                     println(
-                        "The maximum number of steps $(max_steps) has been reached without convergence. The WLS figure of merit is $(round(merit_descent[step], sigdigits = 5)), which differs from the previous step by $(round(abs(merit_descent[step] - merit_descent[step-1]), sigdigits=5)), whereas the threshold for convergence is $(convergence_threshold).",
+                        "The maximum number of steps $(max_steps) has been reached without convergence. The $(ls_type) $(est_type) figure of merit is $(round(merit_descent[step], sigdigits = 5))$(max_steps > 1 ? ", which differs from the previous step by $(round(abs(merit_descent[step] - merit_descent[step - 1]), sigdigits = 5)), whereas the threshold for convergence is $(convergence_threshold)" : "").",
                     )
                 end
             end
         else
             if diagnostics
                 println(
-                    "The WLS figure of merit was $(round(merit_descent[step], sigdigits = 5)) prior to step $(step).",
+                    "The $(ls_type) $(est_type) figure of merit was $(round(merit_descent[step], sigdigits = 5)) prior to step $(step).",
                 )
             end
             step += 1
@@ -569,7 +546,7 @@ function wls_optimise_weights(
         get_shot_weights_factor(shot_weights, d.tuple_times, mapping_lengths)
     covariance_log = covariance_log_unweighted * shot_weights_factor
     # Update the design
-    @reset d.shot_weights = shot_weights
+    @reset d.shot_weights = project_simplex(shot_weights)
     @reset d.ls_type = :wls
     return (
         d::Design,
@@ -591,7 +568,6 @@ function calc_ols_merit_grad_log(
     ols_gram_covariance::Matrix{Float64},
 )
     # Initialise data
-    N = d.c.N
     mapping_lengths = length.(d.mapping_ensemble)
     mapping_lower = cumsum([1; mapping_lengths[1:(end - 1)]])
     mapping_upper = cumsum(mapping_lengths)
@@ -600,6 +576,9 @@ function calc_ols_merit_grad_log(
     shot_weights_factor =
         get_shot_weights_factor(shot_weights, d.tuple_times, mapping_lengths)
     shot_weights_local_grad = get_shot_weights_local_grad(shot_weights, d.tuple_times)
+    shot_weights_log_matrix = get_shot_weights_log_matrix(shot_weights)
+    # Calculate gate transform quantities
+    N = size(ols_estimator, 1)
     # Compute the trace of the covariance matrix and its square
     sigma = ols_estimator_covariance * shot_weights_factor * ols_estimator'
     sigma_tr = tr(sigma)
@@ -621,7 +600,6 @@ function calc_ols_merit_grad_log(
     # Calculate the gradient of the figure of merit with respect to the shot weights
     merit_grad = get_merit_grad(sigma_tr, sigma_tr_grad, sigma_sq_tr, sigma_sq_tr_grad, N)
     # Calculate the gradient of the figure of merit with respect to the log shot weights
-    shot_weights_log_matrix = get_shot_weights_log_matrix(shot_weights)
     merit_grad_log = shot_weights_log_matrix * merit_grad
     return (merit_grad_log::Vector{Float64}, merit::Float64)
 end
@@ -638,53 +616,101 @@ function ols_optimise_weights(
     options::OptimOptions = OptimOptions(),
 )
     # Get the keyword arguments
-    @assert options.ls_type == :ols "Inappropriate least squares optimisation type $(options.ls_type) supplied."
+    ls_type = options.ls_type
+    @assert ls_type == :ols "Inappropriate least squares optimisation type $(ls_type) supplied."
+    est_type = options.est_type
+    est_weight = options.est_weight
     learning_rate = options.learning_rate
     momentum = options.momentum
     learning_rate_scale_factor = options.learning_rate_scale_factor
-    shot_weights_clip = options.shot_weights_clip
     max_steps = options.max_steps
     convergence_threshold = options.convergence_threshold
     convergence_steps = options.convergence_steps
     diagnostics = options.grad_diagnostics
     # Initialise data
-    N = d.c.N
     tuple_number = length(d.tuple_set)
     shot_weights = project_simplex(d.shot_weights)
     mapping_lengths = length.(d.mapping_ensemble)
-    gate_eigenvalues = d.c.gate_eigenvalues
-    gate_eigenvalues_diag = Diagonal(gate_eigenvalues)
+    gate_eigenvalues_diag = sparse(Diagonal(get_gate_eigenvalues(d)))
     shot_weights_factor_inv =
         get_shot_weights_factor_inv(d.shot_weights, d.tuple_times, mapping_lengths)
     covariance_log_unweighted = covariance_log * shot_weights_factor_inv
-    ols_estimator =
-        gate_eigenvalues_diag *
-        inv(bunchkaufman(Symmetric(Array(d.matrix' * d.matrix)))) *
-        d.matrix'
-    ols_estimator_covariance = ols_estimator * covariance_log_unweighted
-    ols_gram_covariance = ols_estimator' * ols_estimator_covariance
+    if est_type == :sum || est_type == :prod
+        ord_gate_transform_matrix = get_transform(d, :ordinary) * gate_eigenvalues_diag
+        ord_ols_estimator =
+            ord_gate_transform_matrix *
+            inv(bunchkaufman(Symmetric(Array(d.matrix' * d.matrix)))) *
+            d.matrix'
+        ord_ols_estimator_covariance = ord_ols_estimator * covariance_log_unweighted
+        ord_ols_gram_covariance = ord_ols_estimator' * ord_ols_estimator_covariance
+        rel_gate_transform_matrix = get_transform(d, :relative) * gate_eigenvalues_diag
+        rel_ols_estimator =
+            rel_gate_transform_matrix *
+            inv(bunchkaufman(Symmetric(Array(d.matrix' * d.matrix)))) *
+            d.matrix'
+        rel_ols_estimator_covariance = rel_ols_estimator * covariance_log_unweighted
+        rel_ols_gram_covariance = rel_ols_estimator' * rel_ols_estimator_covariance
+    else
+        gate_transform_matrix = get_transform(d, est_type) * gate_eigenvalues_diag
+        ols_estimator =
+            gate_transform_matrix *
+            inv(bunchkaufman(Symmetric(Array(d.matrix' * d.matrix)))) *
+            d.matrix'
+        ols_estimator_covariance = ols_estimator * covariance_log_unweighted
+        ols_gram_covariance = ols_estimator' * ols_estimator_covariance
+    end
     # Perform gradient descent
     stepping = true
     step = 1
     recently_pruned = 0
     recently_zeroed = 0
     scaled_learning_rate = learning_rate
-    unprunable = Int[]
     old_shot_weights = deepcopy(shot_weights)
     velocity = zeros(tuple_number)
-    merit_descent = Vector{Float64}(undef, 0)
+    merit_descent = Vector{Float64}()
     while stepping
         # Calculate the gradient of the figure of merit
         nesterov_log_shot_weights = -log.(shot_weights) + momentum * velocity
         nesterov_shot_weights =
             exp.(-nesterov_log_shot_weights) / sum(exp.(-nesterov_log_shot_weights))
-        (merit_grad_log, merit) = calc_ols_merit_grad_log(
-            d,
-            nesterov_shot_weights,
-            ols_estimator,
-            ols_estimator_covariance,
-            ols_gram_covariance,
-        )
+        if est_type == :sum || est_type == :prod
+            (ord_merit_grad_log, ord_merit) = calc_ols_merit_grad_log(
+                d,
+                nesterov_shot_weights,
+                ord_ols_estimator,
+                ord_ols_estimator_covariance,
+                ord_ols_gram_covariance,
+            )
+            (rel_merit_grad_log, rel_merit) = calc_ols_merit_grad_log(
+                d,
+                nesterov_shot_weights,
+                rel_ols_estimator,
+                rel_ols_estimator_covariance,
+                rel_ols_gram_covariance,
+            )
+            if est_type == :sum
+                merit = est_weight * ord_merit + (1 - est_weight) * rel_merit
+                merit_grad_log =
+                    est_weight * ord_merit_grad_log + (1 - est_weight) * rel_merit_grad_log
+            elseif est_type == :prod
+                merit = ord_merit^(est_weight) * rel_merit^(1 - est_weight)
+                merit_grad_log =
+                    merit * (
+                        est_weight * ord_merit_grad_log / ord_merit +
+                        (1 - est_weight) * rel_merit_grad_log / rel_merit
+                    )
+            else
+                throw(error("Unsupported estimator type $(est_type)."))
+            end
+        else
+            (merit_grad_log, merit) = calc_ols_merit_grad_log(
+                d,
+                nesterov_shot_weights,
+                ols_estimator,
+                ols_estimator_covariance,
+                ols_gram_covariance,
+            )
+        end
         push!(merit_descent, merit)
         # Update the shot weights, ensuring both they and the gradient are appropriately normalised
         velocity = momentum * velocity - scaled_learning_rate * merit_grad_log
@@ -708,73 +734,18 @@ function ols_optimise_weights(
             old_shot_weights = deepcopy(nesterov_shot_weights)
             shot_weights = shot_weights_update
         end
-        # Prune a tuple from the design if one has a shot weight below the minimum
-        weights_below_min = findall(shot_weights .< shot_weights_clip)
-        if length(weights_below_min) > 0 && recently_pruned == 0
-            min_weight_idx = findmin(shot_weights[weights_below_min])[2]
-            prune_idx = weights_below_min[min_weight_idx]
-            if prune_idx ∉ unprunable
-                (d_prune, covariance_log_unweighted_prune) = prune_design(
-                    d,
-                    covariance_log_unweighted,
-                    prune_idx;
-                    update_weights = false,
-                )
-                # The pruned design must still achieve full rank
-                if rank(Array(d_prune.matrix)) == N
-                    prune_indices = setdiff(1:tuple_number, prune_idx)
-                    prune_shot_weights_factor = get_shot_weights_factor(
-                        d_prune.shot_weights,
-                        d_prune.tuple_times,
-                        mapping_lengths[prune_indices],
-                    )
-                    covariance_log_prune =
-                        covariance_log_unweighted_prune * prune_shot_weights_factor
-                    prune_merit = calc_ols_moments(d_prune, covariance_log_prune)[1]
-                    prune_improve = all([
-                        prune_merit < merit_descent[idx] for
-                        idx in max(1, step - convergence_steps):step
-                    ])
-                    # Prune the tuple only if doing so improves the figure of merit
-                    if prune_improve
-                        # Prune the quantities
-                        mapping_lengths = mapping_lengths[prune_indices]
-                        d = d_prune
-                        covariance_log_unweighted = covariance_log_unweighted_prune
-                        ols_estimator =
-                            gate_eigenvalues_diag *
-                            inv(bunchkaufman(Symmetric(Array(d.matrix' * d.matrix)))) *
-                            d.matrix'
-                        ols_estimator_covariance = ols_estimator * covariance_log_unweighted
-                        ols_gram_covariance = ols_estimator' * ols_estimator_covariance
-                        # Update the shot weights and reset the velocity
-                        tuple_number -= 1
-                        shot_weights =
-                            shot_weights[prune_indices] / sum(shot_weights[prune_indices])
-                        old_shot_weights = deepcopy(shot_weights)
-                        velocity = velocity[prune_indices]
-                        recently_pruned = convergence_steps
-                        if diagnostics
-                            println(
-                                "Pruned tuple $(prune_idx) of $(tuple_number + 1) in step $(step); the velocity has been reset.",
-                            )
-                        end
-                    end
-                else
-                    push!(unprunable, prune_idx)
-                end
-            end
-        end
         # Check the step count and convergence
-        if step > convergence_steps
+        if step >= convergence_steps
             merit_converged =
                 all([
-                    abs(merit_descent[idx_1] - merit_descent[idx_2]) <
+                    abs(1 - merit_descent[idx_2] / merit_descent[idx_1]) <
                     convergence_steps * convergence_threshold for
-                    idx_1 in (step - convergence_steps):step for
-                    idx_2 in (step - convergence_steps):step
-                ]) &&
-                (abs(merit_descent[end] - merit_descent[end - 1]) < convergence_threshold)
+                    idx_1 in (step - convergence_steps + 1):step for
+                    idx_2 in (step - convergence_steps + 1):step
+                ]) && (
+                    abs(1 - merit_descent[end - 1] / merit_descent[end]) <
+                    convergence_threshold
+                )
         else
             merit_converged = false
         end
@@ -783,18 +754,18 @@ function ols_optimise_weights(
             if diagnostics
                 if merit_converged
                     println(
-                        "Converged after $(step) steps. The OLS figure of merit is $(round(merit_descent[step], sigdigits = 5)).",
+                        "Converged after $(step) steps. The $(ls_type) $(est_type) figure of merit is $(round(merit_descent[step], sigdigits = 5)).",
                     )
                 else
                     println(
-                        "The maximum number of steps $(max_steps) has been reached without convergence. The OLS figure of merit is $(round(merit_descent[step], sigdigits = 5)), which differs from the previous step by $(round(abs(merit_descent[step] - merit_descent[step-1]), sigdigits=5)), whereas the threshold for convergence is $(convergence_threshold).",
+                        "The maximum number of steps $(max_steps) has been reached without convergence. The $(ls_type) $(est_type) figure of merit is $(round(merit_descent[step], sigdigits = 5))$(max_steps > 1 ? ", which differs from the previous step by $(round(abs(merit_descent[step] - merit_descent[step - 1]), sigdigits = 5)), whereas the threshold for convergence is $(convergence_threshold)" : "").",
                     )
                 end
             end
         else
             if diagnostics
                 println(
-                    "The OLS figure of merit was $(round(merit_descent[step], sigdigits = 5)) prior to step $(step).",
+                    "The $(ls_type) $(est_type) figure of merit was $(round(merit_descent[step], sigdigits = 5)) prior to step $(step).",
                 )
             end
             step += 1
@@ -811,7 +782,7 @@ function ols_optimise_weights(
         get_shot_weights_factor(shot_weights, d.tuple_times, mapping_lengths)
     covariance_log = covariance_log_unweighted * shot_weights_factor
     # Update the design
-    @reset d.shot_weights = shot_weights
+    @reset d.shot_weights = project_simplex(shot_weights)
     @reset d.ls_type = :ols
     return (
         d::Design,
@@ -853,53 +824,5 @@ function optimise_weights(
         d::Design,
         covariance_log::SparseMatrixCSC{Float64, Int},
         merit_descent::Vector{Float64},
-    )
-end
-
-"""
-    compare_ls_optimise_weights(d::Design, covariance_log::SparseMatrixCSC{Float64, Int}; gls_options::OptimOptions = OptimOptions(; ls_type = :gls), wls_options::OptimOptions = OptimOptions(; ls_type = :wls), ols_options::OptimOptions = OptimOptions(; ls_type = :ols))
-
-Returns versions of the design `d` and circuit log-eigenvalue estimator covariance matrix `covariance_log` after optimising the shot weights with respect to the figure of merit, alongside the figure of merit values at each step and the final merits, for all three least squares estimator types.
-The optimisation for each is parameterised by the [`OptimOptions`](@ref) objects `gls_options`, `wls_options`, and `ols_options`, respectively.
-"""
-function compare_ls_optimise_weights(
-    d::Design,
-    covariance_log::SparseMatrixCSC{Float64, Int};
-    gls_options::OptimOptions = OptimOptions(; ls_type = :gls),
-    wls_options::OptimOptions = OptimOptions(; ls_type = :wls),
-    ols_options::OptimOptions = OptimOptions(; ls_type = :ols),
-)
-    # Perform gradient descent for all LS estimators
-    (d_gls, covariance_log_gls, merit_descent_gls) =
-        gls_optimise_weights(d, covariance_log; options = gls_options)
-    (d_wls, covariance_log_wls, merit_descent_wls) =
-        wls_optimise_weights(d, covariance_log; options = wls_options)
-    (d_ols, covariance_log_ols, merit_descent_ols) =
-        ols_optimise_weights(d, covariance_log; options = ols_options)
-    d_set = (d_gls, d_wls, d_ols)
-    covariance_log_set = (covariance_log_gls, covariance_log_wls, covariance_log_ols)
-    merit_descent_set = (merit_descent_gls, merit_descent_wls, merit_descent_ols)
-    # Calculate the expectation and variance for all combinations of the optimised shot weights and LS estimators
-    expectations = Matrix{Float64}(undef, 3, 3)
-    variances = Matrix{Float64}(undef, 3, 3)
-    (expectations[1, 1], variances[1, 1]) = calc_gls_moments(d_gls, covariance_log_gls)
-    (expectations[2, 1], variances[2, 1]) = calc_gls_moments(d_wls, covariance_log_wls)
-    (expectations[3, 1], variances[3, 1]) = calc_gls_moments(d_ols, covariance_log_ols)
-    (expectations[1, 2], variances[1, 2]) = calc_wls_moments(d_gls, covariance_log_gls)
-    (expectations[2, 2], variances[2, 2]) = calc_wls_moments(d_wls, covariance_log_wls)
-    (expectations[3, 2], variances[3, 2]) = calc_wls_moments(d_ols, covariance_log_ols)
-    (expectations[1, 3], variances[1, 3]) = calc_ols_moments(d_gls, covariance_log_gls)
-    (expectations[2, 3], variances[2, 3]) = calc_ols_moments(d_wls, covariance_log_wls)
-    (expectations[3, 3], variances[3, 3]) = calc_ols_moments(d_ols, covariance_log_ols)
-    merit_array = hcat(expectations, sqrt.(variances))
-    return (
-        d_set::Tuple{Design, Design, Design},
-        covariance_log_set::Tuple{
-            SparseMatrixCSC{Float64, Int},
-            SparseMatrixCSC{Float64, Int},
-            SparseMatrixCSC{Float64, Int},
-        },
-        merit_descent_set::Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}},
-        merit_array::Matrix{Float64},
     )
 end

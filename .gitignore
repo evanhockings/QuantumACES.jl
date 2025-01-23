@@ -28,8 +28,12 @@ Manifest.toml
 *.DS_Store
 
 # Ignore the data folders, as they can contain large files
+data/
 */data/
 
 # VS Code
 *.code-workspace
 .vscode
+
+# Ignore CondaPkg if it is present 
+.CondaPkg/

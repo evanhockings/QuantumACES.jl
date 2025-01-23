@@ -2,13 +2,13 @@
 CollapsedDocStrings = true
 ```
 
-# weights.jl
+# rotated_planar.jl
 
 ## Public functions
 
-```@autodocs; canonical = false
+```@autodocs; canonical=false
 Modules = [QuantumACES]
-Pages = ["weights.jl"]
+Pages = ["src/circuits/rotated_planar.jl"]
 Private = false
 ```
 
@@ -16,6 +16,6 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["weights.jl"]
+Pages = ["src/circuits/rotated_planar.jl"]
 Public = false
 ```

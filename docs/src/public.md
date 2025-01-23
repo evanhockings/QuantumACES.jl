@@ -6,17 +6,19 @@ CollapsedDocStrings = true
 
 Documentation for the public API of `QuantumACES.jl`.
 
-To use internal API, which is documented in the internal API section, import the module by running the following.
+To use the internal API, which is documented in the internal API section, it may be convenient to import the module by running the following.
 
 ```julia
 import QuantumACES as ACES
 ```
 
+Then you can prefix internal functions with `ACES.` rather than `QuantumACES.`.
+
 ## QuantumACES.jl
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["QuantumACES.jl"]
+Pages = ["src/QuantumACES.jl"]
 Private = false
 ```
 
@@ -24,7 +26,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["tableau.jl"]
+Pages = ["src/tableau.jl"]
 Private = false
 ```
 
@@ -32,7 +34,23 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["noise.jl"]
+Pages = ["src/noise.jl"]
+Private = false
+```
+
+## noises/depolarising.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["src/noises/depolarising.jl"]
+Private = false
+```
+
+## noises/lognormal.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["src/noises/lognormal.jl"]
 Private = false
 ```
 
@@ -40,7 +58,39 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["circuit.jl"]
+Pages = ["src/circuit.jl"]
+Private = false
+```
+
+## circuits/rotated_planar.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["src/circuits/rotated_planar.jl"]
+Private = false
+```
+
+## circuits/unrotated_planar.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["src/circuits/unrotated_planar.jl"]
+Private = false
+```
+
+## circuits/heavy_hex.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["src/circuits/heavy_hex.jl"]
+Private = false
+```
+
+## stim.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["src/stim.jl"]
 Private = false
 ```
 
@@ -48,7 +98,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["tuples.jl"]
+Pages = ["src/tuples.jl"]
 Private = false
 ```
 
@@ -56,7 +106,15 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["design.jl"]
+Pages = ["src/design.jl"]
+Private = false
+```
+
+## rand_design.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["src/rand_design.jl"]
 Private = false
 ```
 
@@ -64,31 +122,31 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["merit.jl"]
+Pages = ["src/merit.jl"]
 Private = false
 ```
 
-## weights.jl
+## optimise_weights.jl
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["weights.jl"]
+Pages = ["src/optimise_weights.jl"]
 Private = false
 ```
 
-## optimise.jl
+## optimise_tuples.jl
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["optimise.jl"]
+Pages = ["src/optimise_tuples.jl"]
 Private = false
 ```
 
-## scaling.jl
+## estimate.jl
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["scaling.jl"]
+Pages = ["src/estimate.jl"]
 Private = false
 ```
 
@@ -96,7 +154,23 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["simulate.jl"]
+Pages = ["src/simulate.jl"]
+Private = false
+```
+
+## device.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["src/device.jl"]
+Private = false
+```
+
+## scaling.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["src/scaling.jl"]
 Private = false
 ```
 
@@ -104,7 +178,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["kwargs.jl"]
+Pages = ["src/kwargs.jl"]
 Private = false
 ```
 
@@ -112,7 +186,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["utils.jl"]
+Pages = ["src/utils.jl"]
 Private = false
 ```
 
@@ -120,6 +194,6 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["io.jl"]
+Pages = ["src/io.jl"]
 Private = false
 ```

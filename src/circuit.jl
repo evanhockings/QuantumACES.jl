@@ -6,21 +6,21 @@ Circuit information, including noise parameters.
 # Fields
 
   - `circuit_param::AbstractCircuitParameters`: Circuit parameters.
-  - `circuit::Vector{Layer}`: Circuit arranged by the tuple.
+  - `circuit::Vector{Layer}`: Circuit.
   - `circuit_tuple::Vector{Int}`: Tuple which arranges the order of the circuit layers; this is initialised as trivial.
   - `qubit_num::Int`: Number of qubits in the circuit.
-  - `unique_layer_indices::Vector{Int}`: Unique layer indices of the circuit, which become meaningless and are removed the circuit is arranged by the tuple.
+  - `unique_layer_indices::Vector{Int}`: Unique non-measurement gate layer indices of the circuit.
   - `layer_types::Vector{Symbol}`: Types of the layers in the circuit, used for layer times and dynamical decoupling.
   - `layer_times::Vector{Float64}`: Times taken to implement each layer in the circuit, as well as measurement and reset.
   - `gates::Vector{Gate}`: Gates in the circuit arranged by the tuple.
-  - `total_gates::Vector{Gate}`: Gates in the original circuit, which includes noisy preparations if `add_prep` and noisy measurements if `add_meas`.
-  - `gate_index::Dict{Gate, Int}`: Index of the gate eigenvalues for each gates in the original circuit.
-  - `N::Int`: Number of gate eigenvalues.
+  - `total_gates::Vector{Gate}`: Total gates in the circuit, including preparations if `noisy_prep` and measurements if `noisy_meas`.
+  - `gate_data::GateData`: Gate data for the circuit.
   - `noise_param::AbstractNoiseParameters`: Noise parameters.
   - `gate_probabilities::Dict{Gate, Vector{Float64}}`: Pauli error probabilities for each gate, stored as a dictionary.
-  - `gate_eigenvalues::Vector{Float64}`: Eigenvalues for each gate, stored as a vector whose order is determined by `gate_index`.
-  - `add_prep::Bool`: Whether to treat preparations as noisy and characterise the associated noise, defaulting to `false`; a full-rank design cannot be produced if both `add_prep` and `add_meas` are `true`.
-  - `add_meas::Bool`: Whether to treat measurements as noisy and characterise the associated noise, defaulting to `true`; a full-rank design cannot be produced if both `add_prep` and `add_meas` are `true`.
+  - `gate_eigenvalues::Vector{Float64}`: Eigenvalues for each gate, stored as a vector whose order is determined by the gate order in `total_gates` and indexed by `gate_data`.
+  - `noisy_prep::Bool`: Whether to treat preparations as noisy and characterise the associated noise, which should default to `false`; a full-rank design cannot be produced if both `noisy_prep` and `noisy_meas` are `true`.
+  - `noisy_meas::Bool`: Whether to treat measurements as noisy and characterise the associated noise, which should default to `true`; a full-rank design cannot be produced if both `noisy_prep` and `noisy_meas` are `true`.
+  - `extra_fields::Dict{Symbol, Any}`: Extra data for the circuit, including code parameters for syndrome extraction circuits stored as a `:code_param` field which is a [`CodeParameters`](@ref) object.
 """
 struct Circuit <: AbstractCircuit
     circuit_param::AbstractCircuitParameters
@@ -32,16 +32,110 @@ struct Circuit <: AbstractCircuit
     layer_times::Vector{Float64}
     gates::Vector{Gate}
     total_gates::Vector{Gate}
-    gate_index::Dict{Gate, Int}
-    N::Int
+    gate_data::GateData
     noise_param::AbstractNoiseParameters
     gate_probabilities::Dict{Gate, Vector{Float64}}
     gate_eigenvalues::Vector{Float64}
-    add_prep::Bool
-    add_meas::Bool
+    noisy_prep::Bool
+    noisy_meas::Bool
+    extra_fields::Dict{Symbol, Any}
+end
+
+function Base.show(io::IO, c::Circuit)
+    println(
+        io,
+        "Circuit of type $(c.circuit_param.circuit_name) with $(c.qubit_num) qubits.",
+    )
+    if haskey(c.extra_fields, :code_param)
+        code_param = c.extra_fields[:code_param]
+        show(io, code_param)
+    end
+    return nothing
 end
 
 @struct_hash_equal_isequal Circuit
+
+"""
+    EmptyCircuitParameters
+
+Empty circuit parameters.
+"""
+struct EmptyCircuitParameters <: AbstractCircuitParameters
+    params::Dict{Symbol, Any}
+    circuit_name::String
+    # Constructor
+    function EmptyCircuitParameters()
+        params = Dict{Symbol, Any}()
+        circuit_name = "circuit"
+        return new(params, circuit_name)::EmptyCircuitParameters
+    end
+end
+
+@struct_hash_equal_isequal EmptyCircuitParameters
+
+"""
+    EmptyNoiseParameters
+
+Empty noise parameters.
+"""
+struct EmptyNoiseParameters <: AbstractNoiseParameters
+    params::Dict{Symbol, Any}
+    noise_name::String
+    # Constructor
+    function EmptyNoiseParameters()
+        params = Dict{Symbol, Any}()
+        noise_name = "noise"
+        return new(params, noise_name)::EmptyNoiseParameters
+    end
+end
+
+@struct_hash_equal_isequal EmptyNoiseParameters
+
+"""
+    CodeParameters
+
+Code parameters for syndrome extraction circuits.
+
+Note that these expect the qubits to be arranged such that the data qubits are first, followed by the ancilla qubits, and these parameters should be checked with [`check_code_parameters`](@ref).
+
+# Fields
+
+  - `qubits::Vector{Tuple{Int, Int}}`: Code qubit lattice locations.
+  - `qubit_layout::Matrix{String}`: Diagram of the layout of the code qubits.
+  - `inverse_indices::Dict{Tuple{Int, Int}, Int}`: Inverse mapping from the qubit lattice locations to their indices.
+  - `data_indices::Vector{Int}`: Data qubit indices.
+  - `ancilla_indices::Vector{Int}`: Ancilla qubit indices.
+  - `ancilla_x_indices::Vector{Int}`: Ancilla X check qubit indices.
+  - `ancilla_z_indices::Vector{Int}`: Ancilla Z check qubit indices.
+  - `check_x_indices::Vector{Tuple{Vector{Int}, Vector{Int}}}`: Pairs of (ancilla, data) qubit indices for each of the X checks.
+  - `check_z_indices::Vector{Tuple{Vector{Int}, Vector{Int}}}`: Pairs of (ancilla, data) qubit indices for each of the Z checks.
+  - `init_x_indices::Vector{Int}`: Logical X initialisation qubit indices for which to initialise in the X basis.
+  - `init_z_indices::Vector{Int}`: Logical Z initialisation qubit indices for which to initialise in the X basis.
+  - `logical_x_indices::Vector{Int}`: Logical X operator qubit indices.
+  - `logical_z_indices::Vector{Int}`: Logical Z operator qubit indices.
+"""
+struct CodeParameters <: AbstractCodeParameters
+    qubits::Vector{Tuple{Int, Int}}
+    qubit_layout::Matrix{String}
+    inverse_indices::Dict{Tuple{Int, Int}, Int}
+    data_indices::Vector{Int}
+    ancilla_indices::Vector{Int}
+    ancilla_x_indices::Vector{Int}
+    ancilla_z_indices::Vector{Int}
+    check_x_indices::Vector{Tuple{Vector{Int}, Vector{Int}}}
+    check_z_indices::Vector{Tuple{Vector{Int}, Vector{Int}}}
+    init_x_indices::Vector{Int}
+    init_z_indices::Vector{Int}
+    logical_x_indices::Vector{Int}
+    logical_z_indices::Vector{Int}
+end
+
+function Base.show(io::IO, code_param::CodeParameters)
+    show(io, MIME("text/plain"), code_param.qubit_layout)
+    return nothing
+end
+
+@struct_hash_equal_isequal CodeParameters
 
 """
     apply_tuple(c::AbstractCircuit, circuit_tuple::Vector{Int})
@@ -51,34 +145,85 @@ Returns a copy of the circuit `c` arranged by the tuple `circuit_tuple`.
 function apply_tuple(c::T, circuit_tuple::Vector{Int}) where {T <: AbstractCircuit}
     tuple_circuit = c.circuit[circuit_tuple]
     tuple_gates = get_gates(tuple_circuit)
-    # Applying a tuple to the circuit makes the unique layer indices meaningless
-    # Accordingly, we get rid of them to avoid confusion
-    tuple_unique_layer_indices = Int[]
     # Update the parameters
+    # Applying a tuple to the circuit makes the unique layer and meas indices meaningless
     c_tuple = deepcopy(c)
-    @reset c_tuple.circuit = tuple_circuit
     @reset c_tuple.circuit_tuple = circuit_tuple
-    @reset c_tuple.unique_layer_indices = tuple_unique_layer_indices
     @reset c_tuple.gates = tuple_gates
     return c_tuple::T
 end
 
 """
     update_noise(c::AbstractCircuit, noise_param::AbstractNoiseParameters)
+    update_noise(c::AbstractCircuit, gate_probabilities::Dict{Gate, Vector{Float64}})
 
-Returns a copy of `c` where the circuit has been updated with noise generated according to `noise_param`.
+Returns a copy of `c` where the circuit has been updated with noise generated according to `noise_param`, or the gate probabilities `gate_probabilities`.
 """
 function update_noise(
     c::T,
     noise_param::U,
 ) where {T <: AbstractCircuit, U <: AbstractNoiseParameters}
     # Generate the noise
-    gate_probabilities = get_gate_probabilities(c.total_gates, noise_param)
-    gate_eigenvalues =
-        get_gate_eigenvalues(gate_probabilities, c.total_gates, c.gate_index, c.N)
-    # Update the circuit
+    @assert ~(c.noisy_prep && c.noisy_meas) "Preparation and measurement noise cannot be characterised simultaneously."
     c_update = deepcopy(c)
+    gate_probabilities = init_gate_probabilities(c.total_gates, noise_param)
+    if haskey(noise_param.params, :combined)
+        if noise_param.params[:combined]
+            if c.gate_data.combined
+                gate_data = c.gate_data
+            else
+                gate_data = get_gate_data(
+                    c.total_gates;
+                    combined = true,
+                    strict = c.gate_data.strict,
+                )
+            end
+            combined_gate_probabilities =
+                get_combined_gate_probabilities(gate_probabilities, gate_data)
+            @assert all(
+                gate_probabilities[gate] ≈ combined_gate_probabilities[gate] for
+                gate in c.total_gates
+            ) "The gate probabilities are not consistent with the combined gate probabilities."
+        else
+            if c.gate_data.combined
+                gate_data = get_gate_data(
+                    c.total_gates;
+                    combined = false,
+                    strict = c.gate_data.strict,
+                )
+            else
+                gate_data = c.gate_data
+            end
+        end
+    elseif c.gate_data.combined
+        gate_data = c.gate_data
+        gate_probabilities = get_combined_gate_probabilities(gate_probabilities, gate_data)
+    else
+        gate_data = c.gate_data
+    end
+    gate_eigenvalues = get_gate_eigenvalues(gate_probabilities, gate_data)
+    # Update the circuit
     @reset c_update.noise_param = noise_param
+    @reset c_update.gate_data = gate_data
+    @reset c_update.gate_probabilities = gate_probabilities
+    @reset c_update.gate_eigenvalues = gate_eigenvalues
+    return c_update::T
+end
+function update_noise(
+    c::T,
+    gate_probabilities::Dict{Gate, Vector{Float64}},
+) where {T <: AbstractCircuit}
+    # Generate the noise
+    @assert ~(c.noisy_prep && c.noisy_meas) "Preparation and measurement noise cannot be characterised simultaneously."
+    @assert sort(c.total_gates) == sort(collect(keys(gate_probabilities))) "The gate probabilities must correspond to the gates in the circuit."
+    gate_data = c.gate_data
+    c_update = deepcopy(c)
+    if c.gate_data.combined
+        gate_probabilities = get_combined_gate_probabilities(gate_probabilities, gate_data)
+    end
+    gate_eigenvalues = get_gate_eigenvalues(gate_probabilities, gate_data)
+    # Update the circuit
+    @reset c_update.noise_param = EmptyNoiseParameters()
     @reset c_update.gate_probabilities = gate_probabilities
     @reset c_update.gate_eigenvalues = gate_eigenvalues
     return c_update::T
@@ -87,7 +232,7 @@ end
 """
     get_layer_times(layer_types::Vector{Symbol}, layer_time_dict::Dict{Symbol, Float64})
 
-Returns the times taken to implement each layer in the circuit based on their types in `layer_types` and the times specified in `layer_time_dict, including the time for measurement and reset at the end.
+Returns the times taken to implement each layer in the circuit based on their types in `layer_types` and the times specified in `layer_time_dict, including the time for final measurement and reset.
 """
 function get_layer_times(
     layer_types::Vector{Symbol},
@@ -95,7 +240,7 @@ function get_layer_times(
 )
     # Append the layer times
     layer_times = Vector{Float64}(undef, length(layer_types) + 1)
-    for (idx, type) in enumerate(layer_types)
+    for (idx, type) in pairs(layer_types)
         if haskey(layer_time_dict, type)
             layer_times[idx] = layer_time_dict[type]
         else
@@ -129,12 +274,12 @@ end
 Returns the unique gates in the circuit `circuit`.
 """
 function get_gates(circuit::Vector{Vector{Gate}})
-    gates = sort(unique([gate for layer in circuit for gate in layer]))
+    gates = unique([gate for layer in circuit for gate in layer])
     return gates::Vector{Gate}
 end
 function get_gates(circuit::Vector{Layer})
     @assert all(l.qubit_num == circuit[1].qubit_num for l in circuit) "All layers in the circuit must act on the same number of qubits."
-    gates = sort(unique([gate for l in circuit for gate in l.layer]))
+    gates = unique([gate for l in circuit for gate in l.layer])
     return gates::Vector{Gate}
 end
 
@@ -154,11 +299,12 @@ function label_circuit(circuit::Vector{Vector{Gate}})
     gates = get_gates(unlabelled_circuit)
     # Construct a version of the circuit pruned of all non-unique layers
     L = length(circuit)
-    unique_circuit = Vector{Vector{Gate}}(undef, 0)
-    unique_layer_indices = Vector{Int}(undef, 0)
+    unique_circuit = Vector{Vector{Gate}}()
+    unique_layer_indices = Vector{Int}()
     for l in 1:L
-        if unlabelled_circuit[l] ∉ unique_circuit
-            push!(unique_circuit, unlabelled_circuit[l])
+        unlabelled_layer = unlabelled_circuit[l]
+        if unlabelled_layer ∉ unique_circuit
+            push!(unique_circuit, unlabelled_layer)
             push!(unique_layer_indices, l)
         end
     end
@@ -166,7 +312,7 @@ function label_circuit(circuit::Vector{Vector{Gate}})
     U = length(unique_circuit)
     layer_indices = Vector{Vector{Int}}(undef, U)
     for u in 1:U
-        indices = Vector{Int}(undef, 0)
+        indices = Vector{Int}()
         for l in 1:L
             if unique_circuit[u] == unlabelled_circuit[l]
                 push!(indices, l)
@@ -200,956 +346,270 @@ function label_circuit(circuit::Vector{Layer})
 end
 
 """
-    index_gates(gates::Vector{Gate}, n::Integer, add_prep::Bool, add_meas::Bool)
+    get_total_gates(circuit::Vector{Layer}, noisy_prep::Bool, noisy_meas::Bool)
 
-Returns a dictionary indexing the gates in `gates`, adding preparations and measurements on all `n` qubits to the gates `add_prep` and `add_meas` are `true`, respectively, as well as the total collection of gates once these have been added and the number of gate eigenvalues.
+Returns the total gates in the circuit `circuit`, including preparations if `noisy_prep` and measurements if `noisy_meas` each on all of the qubits, as well as a separate list of the added measurement gates.
 """
-function index_gates(gates::Vector{Gate}, n::Integer, add_prep::Bool, add_meas::Bool)
+function get_total_gates(circuit::Vector{Layer}, noisy_prep::Bool, noisy_meas::Bool)
+    # Get the gates
+    n = convert(Int, circuit[1].qubit_num)
+    @assert all(l.qubit_num == n for l in circuit) "All layers in the circuit must act on the same number of qubits."
+    total_gates = get_gates(circuit)
     # Append preparations to the gate list if appropriate
-    total_gates = deepcopy(gates)
-    if add_prep
-        append!(total_gates, make_layer("PZ-", collect(1:n), n).layer)
-        append!(total_gates, make_layer("PX+", collect(1:n), n).layer)
-        append!(total_gates, make_layer("PZ+", collect(1:n), n).layer)
-        append!(total_gates, make_layer("PX-", collect(1:n), n).layer)
-        append!(total_gates, make_layer("PY+", collect(1:n), n).layer)
-        append!(total_gates, make_layer("PY-", collect(1:n), n).layer)
+    if noisy_prep
+        for i in 1:n
+            append!(
+                total_gates,
+                [
+                    Gate("PZ", 0, [i])
+                    Gate("PX", 0, [i])
+                    Gate("PY", 0, [i])
+                ],
+            )
+        end
     end
     # Append measurements to the gate list if appropriate
-    if add_meas
-        append!(total_gates, make_layer("MZ", collect(1:n), n).layer)
-        append!(total_gates, make_layer("MX", collect(1:n), n).layer)
-        append!(total_gates, make_layer("MY", collect(1:n), n).layer)
-    end
-    # Determine the gate indices
-    gate_index = Dict{Gate, Int}()
-    N = 0
-    for gate in total_gates
-        not_prep = (gate.type ∉ ["PZ+", "PZ-", "PX+", "PX-", "PY+", "PY-"])
-        not_meas = (gate.type ∉ ["MZ", "MX", "MY"])
-        if not_prep && not_meas
-            gate_index[gate] = N
-            if length(gate.targets) == 1
-                N += 3
-            elseif length(gate.targets) == 2
-                N += 15
-            else
-                throw(error("The gate $(gate) does not operate on either 1 or 2 qubits."))
-            end
-        end
-        if (add_prep && (~not_prep))
-            gate_index[gate] = N
-            N += 1
-        end
-        if (add_meas && (~not_meas))
-            gate_index[gate] = N
-            N += 1
+    if noisy_meas
+        for i in 1:n
+            append!(
+                total_gates,
+                [
+                    Gate("MZ", 0, [i])
+                    Gate("MX", 0, [i])
+                    Gate("MY", 0, [i])
+                ],
+            )
         end
     end
-    return (total_gates::Vector{Gate}, gate_index::Dict{Gate, Int}, N::Int)
+    @assert total_gates == unique(total_gates) "The total gates must be unique."
+    return total_gates::Vector{Gate}
 end
 
 """
-    prepare_circuit(circuit::Vector{Layer}, qubit_num::Int, layer_types::Vector{Symbol}, layer_times::Vector{Float64}, noise_param::AbstractNoiseParameters; add_prep::Bool = false, add_meas::Bool = true)
+    check_circuit(circuit::Vector{Layer}, circuit_tuple::Vector{Int}, qubit_num::Integer, layer_types::Vector{Symbol}, layer_times::Vector{Float64})
+
+Checks the provided circuit parameters are consistent with each other.
+"""
+function check_circuit(
+    circuit::Vector{Layer},
+    circuit_tuple::Vector{Int},
+    qubit_num::Integer,
+    layer_types::Vector{Symbol},
+    layer_times::Vector{Float64},
+)
+    # Check the parameters
+    L = length(circuit)
+    @assert all(l.qubit_num == qubit_num for l in circuit) "All layers in the circuit must act on the same number of qubits."
+    @assert circuit_tuple == collect(1:L) "Unexpected circuit tuple."
+    @assert length(layer_times) == L + 1 "The layer times must correspond to the times taken for the circuit layers, alongside measurement and reset at the end."
+    @assert all(layer_times .> 0.0) "The layer times must be positive."
+    @assert length(layer_types) == L "The layer types must correspond to the circuit layers."
+    for (idx, type) in pairs(layer_types)
+        l = circuit[idx]
+        # Check that only supported gates are present
+        @assert ~any(is_state_prep(gate) for gate in l.layer) "The layer $(l) contains mid-circuit state preparations, which are not supported."
+        @assert ~any(is_state_meas(gate) for gate in l.layer) "The layer $(l) contains mid-circuit state measurements, which are not supported."
+        @assert all(
+            is_one_qubit(gate) || is_two_qubit(gate; stim_supported = true) for
+            gate in l.layer
+        ) "The layer $(l) contains unsupported gates."
+        @assert ~any(is_mid_meas(gate) for gate in l.layer) "The layer $(l) contains mid-circuit measurements, which are not currently supported."
+        # Check the layer types are marked correctly
+        if any(is_two_qubit(gate; stim_supported = true) for gate in l.layer)
+            @assert type == :two_qubit "Layers $(l) with two-qubit gates should be marked :two_qubit."
+        end
+        if any(is_mid_reset(gate) || is_meas_idle(gate) for gate in l.layer)
+            @assert type == :mid_reset "Layers $(l) with mid-circuit resets or measurement idles should be marked :mid_reset."
+        end
+        # Check the gates are consistent with the marked layer types
+        if type == :single_qubit
+            # Check single-qubit gate layers
+            @assert all(is_one_qubit(g) for g in l.layer) "The single-qubit gate layer $(l) contains non-single-qubit gates."
+        elseif type == :dynamical
+            # Check dynamical decoupling gate layers
+            @assert all(is_pauli(gate) for gate in l.layer) "The dynamical decoupling gate layer $(l) contains non-Pauli gates."
+        elseif type == :two_qubit
+            # Check two-qubit gate layers
+            @assert any(is_two_qubit(gate; stim_supported = true) for gate in l.layer) "The two-qubit gate layer $(l) does not contain at least one supported two-qubit gate."
+        elseif type == :mid_reset
+            # Check mid-circuit reset layers
+            @assert any(is_mid_reset(gate) for gate in l.layer) "The mid-circuit reset layer $(l) does not contain any resets."
+            @assert all(is_mid_reset(gate) || is_meas_idle(gate) for gate in l.layer) "The mid-circuit reset layer $(l) contains gates that are not R (computational basis reset) or IM (idle during measurement or reset)."
+        else
+            @warn "Unknown or unsupported layer type $(type)."
+        end
+    end
+    return nothing
+end
+
+"""
+    check_code_parameters(code_param::CodeParameters, qubit_num::Integer)
+
+Checks the provided code parameters are consistent with each other.
+"""
+function check_code_parameters(code_param::CodeParameters, qubit_num::Integer)
+    # Check the parameters
+    qubits = code_param.qubits
+    @assert qubit_num == length(qubits) "The number of qubits must match the number of qubits in the code parameters."
+    inverse_indices = code_param.inverse_indices
+    @assert inverse_indices == Dict(qubits[i] => i for i in 1:qubit_num) "The inverse indices must invert the qubits."
+    data_indices = code_param.data_indices
+    data_num = length(data_indices)
+    ancilla_indices = code_param.ancilla_indices
+    ancilla_num = length(ancilla_indices)
+    @assert data_num + ancilla_num == qubit_num "The number of data and ancilla qubits must sum to the total number of qubits."
+    @assert data_indices == collect(1:data_num) "The data indices must come before the ancilla qubits."
+    @assert ancilla_indices == collect((data_num + 1):qubit_num) "The ancilla indices must come after the data qubits."
+    ancilla_x_indices = code_param.ancilla_x_indices
+    ancilla_z_indices = code_param.ancilla_z_indices
+    @assert ancilla_indices == sort(vcat(ancilla_x_indices, ancilla_z_indices)) "The ancilla X and Z check qubit indices must be a subset of the ancilla qubit indices."
+    check_x_indices = code_param.check_x_indices
+    check_z_indices = code_param.check_z_indices
+    @assert all(
+        check_x_idx_pair[1] ⊆ ancilla_indices && check_x_idx_pair[2] ⊆ data_indices for
+        check_x_idx_pair in check_x_indices
+    ) "The X check qubit indices must be ordered as (ancilla, data)."
+    @assert all(
+        check_z_idx_pair[1] ⊆ ancilla_indices && check_z_idx_pair[2] ⊆ data_indices for
+        check_z_idx_pair in check_z_indices
+    ) "The Z check qubit indices must be a subset of the ancilla Z check qubit indices and the data qubit indices."
+    init_x_indices = code_param.init_x_indices
+    init_z_indices = code_param.init_z_indices
+    @assert init_x_indices ⊆ data_indices "The logical X initialisation qubit indices must be a subset of the data qubit indices."
+    @assert init_z_indices ⊆ data_indices "The logical Z initialisation qubit indices must be a subset of the data qubit indices."
+    logical_x_indices = code_param.logical_x_indices
+    logical_z_indices = code_param.logical_z_indices
+    @assert logical_x_indices ⊆ data_indices "The logical X operator qubit indices must be a subset of the data qubit indices."
+    @assert logical_z_indices ⊆ data_indices "The logical Z operator qubit indices must be a subset of the data qubit indices."
+    return nothing
+end
+
+"""
+    prepare_circuit(circuit::Vector{Layer}, noise_param::AbstractNoiseParameters; noisy_prep::Bool = false, noisy_meas::Bool = true)
 
 Returns a labelled copy of the circuit as well as a number of required fields for subtypes `T <: AbstractCircuit`.
 
 # Arguments
 
   - `circuit::Vector{Layer}`: Circuit.
-  - `qubit_num::Int`: Number of qubits in the circuit.
-  - `layer_types::Vector{Symbol}`: Types of the layers in the circuit.
-  - `layer_times::Vector{Float64}`: Times taken to implement each layer in the circuit, including measurement and reset at the end.
   - `noise_param::AbstractNoiseParameters`: Noise parameters.
 
 # Keyword arguments
 
-  - `add_prep::Bool = false`: Whether to treat preparations as noisy and aim to characterise them.
-  - `add_meas::Bool = true`: Whether to treat measurements as noisy and aim to characterise them.
+  - `noisy_prep::Bool = false`: Whether to treat preparations as noisy and aim to characterise them.
+  - `noisy_meas::Bool = true`: Whether to treat measurements as noisy and aim to characterise them.
+  - `combined::Bool`: Whether to treat Pauli X, Y, and Z basis SPAM noise as the same.
+  - `strict::Bool = false`: Whether to be strict about which gates count as estimable to relative precision.
 
 # Returns
 
   - `circuit::Vector{Layer}`: Circuit with labelled gates.
-  - `unique_layer_indices::Vector{Int}`: Indices of the unique layers in the circuit.
+  - `unique_layer_indices::Vector{Int}`: Unique non-measurement gate layer indices of the circuit.
   - `gates::Vector{Gate}`: Gates in the circuit.
-  - `total_gates::Vector{Gate}`: Total gates in the circuit, including preparations if `add_prep` and measurements if `add_meas`.
-  - `gate_index::Dict{Gate, Int}`: Index of the gate eigenvalues for each gate in the original circuit.
-  - `N::Int`: Number of gate eigenvalues.
+  - `total_gates::Vector{Gate}`: Total gates in the circuit, including preparations if `noisy_prep` and measurements if `noisy_meas`.
+  - `gate_data::GateData`: Gate data for the circuit.
   - `gate_probabilities::Dict{Gate, Vector{Float64}}`: Pauli error probabilities for each gate, stored as a dictionary.
-  - `gate_eigenvalues::Vector{Float64}`: Eigenvalues for each gate, stored as a vector whose order is determined by `gate_index`.
+  - `gate_eigenvalues::Vector{Float64}`: Eigenvalues for each gate, stored as a vector whose order is determined by the gate order in `total_gates` and indexed by `gate_data`.
 """
 function prepare_circuit(
     circuit::Vector{Layer},
-    qubit_num::Int,
-    layer_types::Vector{Symbol},
-    layer_times::Vector{Float64},
     noise_param::T;
-    add_prep::Bool = false,
-    add_meas::Bool = true,
+    noisy_prep::Bool = false,
+    noisy_meas::Bool = true,
+    combined::Bool = false,
+    strict::Bool = false,
 ) where {T <: AbstractNoiseParameters}
-    # Check the parameters
-    @assert length(layer_times) == length(circuit) + 1 "The layer times must correspond to the times taken for the circuit layers, alongside measurement and reset at the end."
-    for (idx, type) in enumerate(layer_types)
-        if type == :single_qubit
-            @assert maximum(length(gate.targets) for gate in circuit[idx].layer) == 1 "The single-qubit layer $(circuit[idx]) does not contain only single-qubit gates."
-        elseif type == :two_qubit
-            @assert maximum(length(gate.targets) for gate in circuit[idx].layer) == 2 "The two-qubit layer $(circuit[idx]) does not contain two-qubit gates."
-        elseif type == :dynamical
-            @assert maximum(length(gate.targets) for gate in circuit[idx].layer) == 1 "The dynamical decoupling layer $(circuit[idx]) does not contain only single-qubit gates."
-        end
-    end
+    # Check preparation and measurement are not simultaneously characterised
+    @assert ~(noisy_prep && noisy_meas) "Preparation and measurement noise cannot be characterised simultaneously."
     # Label the circuit
     (labelled_circuit, unique_layer_indices) = label_circuit(circuit)
-    # Generate the gates, total gates, and noise
+    # Generate the gates and total gates
     gates = get_gates(labelled_circuit)
-    (total_gates, gate_index, N) = index_gates(gates, qubit_num, add_prep, add_meas)
-    gate_probabilities = get_gate_probabilities(total_gates, noise_param)
-    gate_eigenvalues = get_gate_eigenvalues(gate_probabilities, total_gates, gate_index, N)
+    total_gates = get_total_gates(labelled_circuit, noisy_prep, noisy_meas)
+    # Calculate the gate data
+    gate_data = get_gate_data(total_gates; combined = combined, strict = strict)
+    # Generate the gate noise
+    gate_probabilities = init_gate_probabilities(total_gates, noise_param)
+    @assert all(
+        all(gate_probs .>= 0.0) && sum(gate_probs) ≈ 1.0 for
+        gate_probs in values(gate_probabilities)
+    ) "The gate probabilities are not all valid probability distributions."
+    gate_eigenvalues = get_gate_eigenvalues(gate_probabilities, gate_data)
     # Return the data
     return (
         labelled_circuit::Vector{Layer},
         unique_layer_indices::Vector{Int},
         gates::Vector{Gate},
         total_gates::Vector{Gate},
-        gate_index::Dict{Gate, Int},
-        N::Int,
+        gate_data::GateData,
         gate_probabilities::Dict{Gate, Vector{Float64}},
         gate_eigenvalues::Vector{Float64},
     )
 end
 
 """
-    RotatedPlanarParameters
+    get_circuit(circuit::Vector{Layer}, layer_types::Vector{Symbol}, layer_times::Vector{Float64}, noise_param::AbstractNoiseParameters; kwargs...)
 
-Parameters for the syndrome extraction circuit of a rotated surface code.
-
-# Fields
-
-  - `vertical_dist::Int`: Vertical (Z) distance of the code.
-  - `horizontal_dist::Int`: Horizontal (X) distance of the code.
-  - `check_type::Symbol`: Type of stabiliser used in the circuit, either `:xzzx` or `:standard`.
-  - `gate_type::Symbol`: Type of two-qubit gate used in the circuit, either `:cx` or `:cz`.
-  - `dynamically_decouple::Bool`: Whether to dynamically decouple the circuit; `true` is currently only supported for `:xzzx` and `:cz`.
-  - `pad_identity::Bool`: Whether to pad layers with single-qubit identity gates.
-  - `layer_time_dict::Dict{Symbol, Float64}`: Dictionary of layer times.
-  - `circuit_name::String`: Name of the circuit used for saving data.
-"""
-struct RotatedPlanarParameters <: AbstractCircuitParameters
-    vertical_dist::Int
-    horizontal_dist::Int
-    check_type::Symbol
-    gate_type::Symbol
-    dynamically_decouple::Bool
-    pad_identity::Bool
-    layer_time_dict::Dict{Symbol, Float64}
-    circuit_name::String
-    # Constructor
-    function RotatedPlanarParameters(
-        vertical_dist::Int,
-        horizontal_dist::Int,
-        check_type::Symbol,
-        gate_type::Symbol,
-        dynamically_decouple::Bool,
-        pad_identity::Bool,
-        layer_time_dict::Dict{Symbol, Float64},
-        circuit_name::String,
-    )
-        # Check some conditions
-        @assert (vertical_dist >= 3 && horizontal_dist >= 3) "Invalid distance $(vertical_dist) x $(horizontal_dist). Must be at least 3 x 3."
-        @assert (check_type == :xzzx || check_type == :standard) "Invalid check type $(check_type). Must be either :xzzx or :standard."
-        @assert (gate_type == :cx || gate_type == :cz) "Invalid gate type $(gate_type). Must be either :cx or :cz."
-        @assert (check_type == :xzzx && gate_type == :cz) ||
-                (check_type == :standard && gate_type == :cx) "Unsupported pairing of check type $(check_type) and gate type $(gate_type)."
-        if dynamically_decouple && ~(check_type == :xzzx && gate_type == :cz)
-            @warn "Dynamical decoupling is only supported for check type :xzzx and gate type :cz."
-        end
-        @assert haskey(layer_time_dict, :single_qubit) "The layer time dictionary must contain the key :single_qubit."
-        @assert haskey(layer_time_dict, :two_qubit) "The layer time dictionary must contain the key :two_qubit."
-        @assert haskey(layer_time_dict, :meas_reset) "The layer time dictionary must contain the key :meas_reset."
-        @assert haskey(layer_time_dict, :dynamical) "The layer time dictionary must contain the key :dynamical."
-        @assert layer_time_dict[:single_qubit] > 0.0 "The single-qubit layer time must be positive."
-        @assert layer_time_dict[:two_qubit] > 0.0 "The two-qubit layer time must be positive."
-        @assert layer_time_dict[:meas_reset] > 0.0 "The measurement and reset layer time must be positive."
-        @assert layer_time_dict[:dynamical] > 0.0 "The dynamical decoupling layer time must be positive."
-        # Test the circuit name
-        test_circuit_name = "rotated_planar_$(vertical_dist)_$(horizontal_dist)"
-        if check_type != :xzzx
-            test_circuit_name *= "_check_type_$(check_type)"
-        end
-        if gate_type != :cz
-            test_circuit_name *= "_gate_type_$(gate_type)"
-        end
-        if dynamically_decouple != true
-            test_circuit_name *= "_dynamically_decouple_$(dynamically_decouple)"
-        end
-        if pad_identity != true
-            test_circuit_name *= "_pad_identity_$(pad_identity)"
-        end
-        @assert circuit_name == test_circuit_name "The circuit name $(circuit_name) does not match the circuit name generated by the supplied parameters $(test_circuit_name)."
-        # Return parameters
-        return new(
-            vertical_dist,
-            horizontal_dist,
-            check_type,
-            gate_type,
-            dynamically_decouple,
-            pad_identity,
-            layer_time_dict,
-            circuit_name,
-        )::RotatedPlanarParameters
-    end
-end
-
-@struct_hash_equal_isequal RotatedPlanarParameters
-
-"""
-    get_rotated_param(vertical_dist::Int, horizontal_dist::Int; kwargs...)
-    get_rotated_param(dist::Int; kwargs...)
-
-Returns a [`RotatedPlanarParameters`](@ref) object that parameterises the syndrome extraction circuit of a rotated surface code.
-
-Default gate layer times are estimated from `Suppressing quantum errors by scaling a surface code logical qubit` by Google Quantum AI (2023).
+Returns a [`Circuit`](@ref) object given the supplied circuit and noise parameters.
 
 # Arguments
 
-  - `vertical_dist::Int`: Vertical (Z) distance of the code.
-  - `horizontal_dist::Int`: Horizontal (X) distance of the code.
-  - `dist::Int`: Distance of the code; this is equivalent to setting `vertical_dist = dist` and `horizontal_dist = dist`.
-
-# Keyword arguments
-
-  - `check_type::Symbol = :xzzx`: Type of stabiliser used in the circuit, either `:xzzx` or `:standard`.
-  - `gate_type::Symbol = :cz`: Type of two-qubit gate used in the circuit, either `:cx` or `:cz`.
-  - `dynamically_decouple::Bool = true`: Whether to dynamically decouple the circuit; `true` is currently only supported for `:xzzx` and `:cz`.
-  - `pad_identity::Bool = true`: Whether to pad layers with single-qubit identity gates.
-  - `single_qubit_time::Float64 = 29.0`: Time taken to implement a single-qubit gate in nanoseconds.
-  - `two_qubit_time::Float64 = 29.0`: Time taken to implement a two-qubit gate in nanoseconds.
-  - `meas_reset_time::Float64 = 660.0`: Time taken to perform measurement and reset at the end of the circuit in nanoseconds.
-  - `dynamical_decoupling_time::Float64 = 29.0`: Time taken to implement a dynamical decoupling layer in nanoseconds.
-"""
-function get_rotated_param(
-    vertical_dist::Int,
-    horizontal_dist::Int;
-    check_type::Symbol = :xzzx,
-    gate_type::Symbol = :cz,
-    dynamically_decouple::Bool = true,
-    pad_identity::Bool = true,
-    single_qubit_time::Float64 = 29.0,
-    two_qubit_time::Float64 = 29.0,
-    meas_reset_time::Float64 = 660.0,
-    dynamical_decoupling_time::Float64 = 29.0,
-)
-    # Check some conditions
-    @assert (vertical_dist >= 3 && horizontal_dist >= 3) "Invalid distance $(vertical_dist) x $(horizontal_dist). Must be at least 3 x 3."
-    @assert (check_type == :xzzx || check_type == :standard) "Invalid check type $(check_type). Must be either :xzzx or :standard."
-    @assert (gate_type == :cx || gate_type == :cz) "Invalid gate type $(gate_type). Must be either :cx or :cz."
-    @assert (check_type == :xzzx && gate_type == :cz) ||
-            (check_type == :standard && gate_type == :cx) "Unsupported pairing of check type $(check_type) and gate type $(gate_type)."
-    if dynamically_decouple && ~(check_type == :xzzx && gate_type == :cz)
-        @warn "Dynamical decoupling is only supported for check type :xzzx and gate type :cz."
-    end
-    @assert single_qubit_time > 0.0 "The single-qubit layer time must be positive."
-    @assert two_qubit_time > 0.0 "The two-qubit layer time must be positive."
-    @assert meas_reset_time > 0.0 "The measurement and reset layer time must be positive."
-    @assert dynamical_decoupling_time > 0.0 "The dynamical decoupling layer time must be positive."
-    # Construct the layer time dictionary
-    layer_time_dict = Dict(
-        :single_qubit => single_qubit_time,
-        :two_qubit => two_qubit_time,
-        :meas_reset => meas_reset_time,
-        :dynamical => dynamical_decoupling_time,
-    )
-    # Generate the circuit name
-    circuit_name = "rotated_planar_$(vertical_dist)_$(horizontal_dist)"
-    if check_type != :xzzx
-        circuit_name *= "_check_type_$(check_type)"
-    end
-    if gate_type != :cz
-        circuit_name *= "_gate_type_$(gate_type)"
-    end
-    if dynamically_decouple != true
-        circuit_name *= "_dynamically_decouple_$(dynamically_decouple)"
-    end
-    if pad_identity != true
-        circuit_name *= "_pad_identity_$(pad_identity)"
-    end
-    # Return parameters
-    rotated_param = RotatedPlanarParameters(
-        vertical_dist,
-        horizontal_dist,
-        check_type,
-        gate_type,
-        dynamically_decouple,
-        pad_identity,
-        layer_time_dict,
-        circuit_name,
-    )
-    return rotated_param::RotatedPlanarParameters
-end
-function get_rotated_param(
-    dist::Int;
-    check_type::Symbol = :xzzx,
-    gate_type::Symbol = :cz,
-    dynamically_decouple::Bool = true,
-    pad_identity::Bool = true,
-    single_qubit_time::Float64 = 29.0,
-    two_qubit_time::Float64 = 29.0,
-    dynamical_decoupling_time::Float64 = 29.0,
-    meas_reset_time::Float64 = 660.0,
-)
-    # Return parameters
-    rotated_param = get_rotated_param(
-        dist,
-        dist;
-        check_type = check_type,
-        gate_type = gate_type,
-        dynamically_decouple = dynamically_decouple,
-        pad_identity = pad_identity,
-        single_qubit_time = single_qubit_time,
-        two_qubit_time = two_qubit_time,
-        dynamical_decoupling_time = dynamical_decoupling_time,
-        meas_reset_time = meas_reset_time,
-    )
-    return rotated_param::RotatedPlanarParameters
-end
-
-"""
-    RotatedPlanarCircuit
-
-Syndrome extraction circuit for a rotated surface code.
-
-# Fields
-
-  - `circuit_param::RotatedPlanarParameters`: Circuit parameters.
-  - `circuit::Vector{Layer}`: Circuit arranged by the tuple.
-  - `circuit_tuple::Vector{Int}`: Tuple which arranges the order of the circuit layers; this is initialised as trivial.
-  - `qubit_num::Int`: Number of qubits in the circuit.
-  - `unique_layer_indices::Vector{Int}`: Unique layer indices of the circuit, which become meaningless and are removed the circuit is arranged by the tuple.
-  - `layer_types::Vector{Symbol}`: Types of the layers in the circuit, used for layer times and dynamical decoupling.
+  - `circuit::Vector{Layer}`: Circuit.
+  - `layer_types::Vector{Symbol}`: Types of the layers in the circuit.
   - `layer_times::Vector{Float64}`: Times taken to implement each layer in the circuit, as well as measurement and reset.
-  - `gates::Vector{Gate}`: Gates in the circuit arranged by the tuple.
-  - `total_gates::Vector{Gate}`: Gates in the original circuit, which includes noisy preparations if `add_prep` and noisy measurements if `add_meas`.
-  - `gate_index::Dict{Gate, Int}`: Index of the gate eigenvalues for each gates in the original circuit.
-  - `N::Int`: Number of gate eigenvalues.
-  - `noise_param::AbstractNoiseParameters`: Noise parameters.
-  - `gate_probabilities::Dict{Gate, Vector{Float64}}`: Pauli error probabilities for each gate, stored as a dictionary.
-  - `gate_eigenvalues::Vector{Float64}`: Eigenvalues for each gate, stored as a vector whose order is determined by `gate_index`.
-  - `add_prep::Bool`: Whether to treat preparations as noisy and characterise the associated noise, defaulting to `false`; a full-rank design cannot be produced if both `add_prep` and `add_meas` are `true`.
-  - `add_meas::Bool`: Whether to treat measurements as noisy and characterise the associated noise, defaulting to `true`; a full-rank design cannot be produced if both `add_prep` and `add_meas` are `true`.
-  - `partition::Tuple{Vector{Int}, Vector{Int}}`: Partition of the qubits (data, ancilla), allowing for easy preparation of sign configurations for Pauli eigenstates.
-  - `qubits::Vector{Tuple{Int, Int}}`: Code qubit lattice locations.
-  - `inverse_indices::Dict{Tuple{Int, Int}, Int}`: Inverse mapping from the qubit lattice locations to their indices.
-  - `data_indices::Vector{Int}`: Data qubit indices.
-  - `ancilla_indices::Vector{Int}`: Ancilla qubit indices.
-  - `ancilla_X_indices::Vector{Int}`: Ancilla X-check qubit indices.
-  - `ancilla_Z_indices::Vector{Int}`: Ancilla Z-check qubit indices.
-  - `qubit_layout::Matrix{String}`: Diagram of the layout of the code qubits.
-"""
-struct RotatedPlanarCircuit <: AbstractCircuit
-    circuit_param::RotatedPlanarParameters
-    circuit::Vector{Layer}
-    circuit_tuple::Vector{Int}
-    qubit_num::Int
-    unique_layer_indices::Vector{Int}
-    layer_types::Vector{Symbol}
-    layer_times::Vector{Float64}
-    gates::Vector{Gate}
-    total_gates::Vector{Gate}
-    gate_index::Dict{Gate, Int}
-    N::Int
-    noise_param::AbstractNoiseParameters
-    gate_probabilities::Dict{Gate, Vector{Float64}}
-    gate_eigenvalues::Vector{Float64}
-    add_prep::Bool
-    add_meas::Bool
-    partition::Tuple{Vector{Int}, Vector{Int}}
-    qubits::Vector{Tuple{Int, Int}}
-    inverse_indices::Dict{Tuple{Int, Int}, Int}
-    data_indices::Vector{Int}
-    ancilla_indices::Vector{Int}
-    ancilla_X_indices::Vector{Int}
-    ancilla_Z_indices::Vector{Int}
-    qubit_layout::Matrix{String}
-end
-
-Base.show(io::IO, c::RotatedPlanarCircuit) = show(io, MIME("text/plain"), c.qubit_layout)
-
-@struct_hash_equal_isequal RotatedPlanarCircuit
-
-"""
-    rotated_planar_circuit(rotated_param::RotatedPlanarParameters)
-
-Returns fields used to construct the syndrome extraction circuit of a rotated surface code in the form of a [`RotatedPlanarCircuit`](@ref) object, based on the supplied parameters `rotated_param`.
-"""
-function rotated_planar_circuit(rotated_param::RotatedPlanarParameters)
-    # Set up variables
-    v = rotated_param.vertical_dist
-    h = rotated_param.horizontal_dist
-    check_type = rotated_param.check_type
-    gate_type = rotated_param.gate_type
-    dynamically_decouple = rotated_param.dynamically_decouple
-    pad_identity = rotated_param.pad_identity
-    layer_time_dict = rotated_param.layer_time_dict
-    single_qubit_type = :single_qubit
-    two_qubit_type = :two_qubit
-    dynamical_decoupling_type = :dynamical
-    # Generate the qubits
-    data_qubits = vcat([(2i, 2j) for i in 1:v, j in 1:h]...)
-    data_num = length(data_qubits)
-    inner_ancilla_qubits = vcat([(2i + 1, 2j + 1) for i in 1:(v - 1), j in 1:(h - 1)]...)
-    inner_num = length(inner_ancilla_qubits)
-    boundary_locations = vcat(
-        [(2i + 1, 1) for i in 1:(v - 1)],
-        [(2v + 1, 2j + 1) for j in 1:(h - 1)],
-        [(2v + 1 - 2i, 2h + 1) for i in 1:(v - 1)],
-        [(1, 2h + 1 - 2j) for j in 1:(h - 1)],
-    )
-    boundary_ancilla_qubits = boundary_locations[1:2:end]
-    boundary_num = length(boundary_ancilla_qubits)
-    ancilla_qubits = vcat(inner_ancilla_qubits, boundary_ancilla_qubits)
-    ancilla_num = length(ancilla_qubits)
-    qubits = vcat(data_qubits, ancilla_qubits)
-    qubit_num = length(qubits)
-    # Check qubit numbers
-    @assert data_num == v * h
-    @assert inner_num == (v - 1) * (h - 1)
-    @assert boundary_num == v + h - 2
-    @assert ancilla_num == v * h - 1
-    @assert qubit_num == 2v * h - 1
-    @assert ancilla_num == inner_num + boundary_num
-    @assert qubit_num == data_num + ancilla_num
-    # Generate the qubit indices
-    data_indices = collect(1:data_num)
-    ancilla_indices = collect((data_num + 1):qubit_num)
-    ancilla_X_indices = ancilla_indices[(sum.(ancilla_qubits) .% 4) .== 0]
-    ancilla_Z_indices = ancilla_indices[(sum.(ancilla_qubits) .% 4) .== 2]
-    inverse_indices = Dict(qubits[i] => i for i in 1:qubit_num)
-    # Generate the qubit layout
-    qubit_layout = [" " for i in 1:(2v + 1), j in 1:(2h + 1)]
-    for (i, j) in qubits[data_indices]
-        qubit_layout[i, j] = "o($(inverse_indices[(i, j)]))"
-    end
-    for (i, j) in qubits[ancilla_X_indices]
-        qubit_layout[i, j] = "x($(inverse_indices[(i, j)]))"
-    end
-    for (i, j) in qubits[ancilla_Z_indices]
-        qubit_layout[i, j] = "z($(inverse_indices[(i, j)]))"
-    end
-    # Generate the X-type ancilla gate layers
-    layers_X = Vector{Vector{Int}}[[], [], [], []]
-    for ancilla_X_qubit in qubits[ancilla_X_indices]
-        # Get indices of adjacent qubits in a vertically-mirrored N order
-        adj_N_indices = [
-            (ancilla_X_qubit[1] - 1, ancilla_X_qubit[2] - 1),
-            (ancilla_X_qubit[1] + 1, ancilla_X_qubit[2] - 1),
-            (ancilla_X_qubit[1] - 1, ancilla_X_qubit[2] + 1),
-            (ancilla_X_qubit[1] + 1, ancilla_X_qubit[2] + 1),
-        ]
-        for (idx, adj_idx) in enumerate(adj_N_indices)
-            if haskey(inverse_indices, adj_idx)
-                push!(
-                    layers_X[idx],
-                    [inverse_indices[ancilla_X_qubit], inverse_indices[adj_idx]],
-                )
-            end
-        end
-    end
-    # Generate the Z-type ancilla gate layers
-    layers_Z = Vector{Vector{Int}}[[], [], [], []]
-    for ancilla_Z_qubit in qubits[ancilla_Z_indices]
-        # Get indices of adjacent qubits in a Z order
-        adj_Z_indices = [
-            (ancilla_Z_qubit[1] - 1, ancilla_Z_qubit[2] - 1),
-            (ancilla_Z_qubit[1] - 1, ancilla_Z_qubit[2] + 1),
-            (ancilla_Z_qubit[1] + 1, ancilla_Z_qubit[2] - 1),
-            (ancilla_Z_qubit[1] + 1, ancilla_Z_qubit[2] + 1),
-        ]
-        for (idx, adj_idx) in enumerate(adj_Z_indices)
-            if haskey(inverse_indices, adj_idx)
-                push!(
-                    layers_Z[idx],
-                    [inverse_indices[adj_idx], inverse_indices[ancilla_Z_qubit]],
-                )
-            end
-        end
-    end
-    # Construct the circuit
-    if check_type == :xzzx && gate_type == :cz
-        if dynamically_decouple
-            circuit = [
-                make_layer(["X", "H"], [data_indices, ancilla_indices], qubit_num),
-                make_layer("CZ", vcat(layers_Z[1], layers_X[1]), qubit_num),
-                make_layer(["H", "X"], [data_indices, ancilla_indices], qubit_num),
-                make_layer("CZ", vcat(layers_Z[2], layers_X[2]), qubit_num),
-                make_layer(["X", "X"], [data_indices, ancilla_indices], qubit_num),
-                make_layer("CZ", vcat(layers_Z[3], layers_X[3]), qubit_num),
-                make_layer(["H", "X"], [data_indices, ancilla_indices], qubit_num),
-                make_layer("CZ", vcat(layers_Z[4], layers_X[4]), qubit_num),
-                make_layer(["X", "H"], [data_indices, ancilla_indices], qubit_num),
-            ]
-            layer_types = [
-                single_qubit_type,
-                two_qubit_type,
-                single_qubit_type,
-                two_qubit_type,
-                dynamical_decoupling_type,
-                two_qubit_type,
-                single_qubit_type,
-                two_qubit_type,
-                single_qubit_type,
-            ]
-        else
-            circuit = [
-                make_layer("H", ancilla_indices, qubit_num),
-                make_layer("CZ", vcat(layers_Z[1], layers_X[1]), qubit_num),
-                make_layer("H", data_indices, qubit_num),
-                make_layer("CZ", vcat(layers_Z[2], layers_X[2]), qubit_num),
-                make_layer("CZ", vcat(layers_Z[3], layers_X[3]), qubit_num),
-                make_layer("H", data_indices, qubit_num),
-                make_layer("CZ", vcat(layers_Z[4], layers_X[4]), qubit_num),
-                make_layer("H", ancilla_indices, qubit_num),
-            ]
-            layer_types = [
-                single_qubit_type,
-                two_qubit_type,
-                single_qubit_type,
-                two_qubit_type,
-                two_qubit_type,
-                single_qubit_type,
-                two_qubit_type,
-                single_qubit_type,
-            ]
-        end
-    elseif check_type == :standard && gate_type == :cx
-        circuit = [
-            make_layer("H", ancilla_X_indices, qubit_num),
-            make_layer("CX", vcat(layers_Z[1], layers_X[1]), qubit_num),
-            make_layer("CX", vcat(layers_Z[2], layers_X[2]), qubit_num),
-            make_layer("CX", vcat(layers_Z[3], layers_X[3]), qubit_num),
-            make_layer("CX", vcat(layers_Z[4], layers_X[4]), qubit_num),
-            make_layer("H", ancilla_X_indices, qubit_num),
-        ]
-        layer_types = [
-            single_qubit_type,
-            two_qubit_type,
-            two_qubit_type,
-            two_qubit_type,
-            two_qubit_type,
-            single_qubit_type,
-        ]
-    end
-    layer_times = get_layer_times(layer_types, layer_time_dict)
-    # Pad each layer with identity gates if appropriate
-    if pad_identity
-        circuit = [pad_layer(l) for l in circuit]
-    end
-    # Return circuit data
-    return (
-        circuit::Vector{Layer},
-        qubit_num::Int,
-        layer_types::Vector{Symbol},
-        layer_times::Vector{Float64},
-        qubits::Vector{Tuple{Int, Int}},
-        inverse_indices::Dict{Tuple{Int, Int}, Int},
-        data_indices::Vector{Int},
-        ancilla_indices::Vector{Int},
-        ancilla_X_indices::Vector{Int},
-        ancilla_Z_indices::Vector{Int},
-        qubit_layout::Matrix{String},
-    )
-end
-
-"""
-    UnrotatedPlanarParameters
-
-Parameters for the syndrome extraction circuit of an unrotated surface code.
-
-# Fields
-
-  - `vertical_dist::Int`: Vertical (Z) distance of the code.
-  - `horizontal_dist::Int`: Horizontal (X) distance of the code.
-  - `gate_type::Symbol`: Type of two-qubit gate used in the circuit, which must be `:cx`.
-  - `pad_identity::Bool`: Whether to pad layers with single-qubit identity gates.
-  - `layer_time_dict::Dict{Symbol, Float64}`: Dictionary of layer times.
-  - `circuit_name::String`: Name of the circuit used for saving data.
-"""
-struct UnrotatedPlanarParameters <: AbstractCircuitParameters
-    vertical_dist::Int
-    horizontal_dist::Int
-    gate_type::Symbol
-    pad_identity::Bool
-    layer_time_dict::Dict{Symbol, Float64}
-    circuit_name::String
-    # Constructor
-    function UnrotatedPlanarParameters(
-        vertical_dist::Int,
-        horizontal_dist::Int,
-        gate_type::Symbol,
-        pad_identity::Bool,
-        layer_time_dict::Dict{Symbol, Float64},
-        circuit_name::String,
-    )
-        # Check some conditions
-        @assert (vertical_dist >= 3 && horizontal_dist >= 3) "Invalid distance $(vertical_dist) x $(horizontal_dist). Must be at least 3 x 3."
-        @assert gate_type == :cx "Invalid gate type $(gate_type). Must be :cx."
-        @assert haskey(layer_time_dict, :single_qubit) "The layer time dictionary must contain the key :single_qubit."
-        @assert haskey(layer_time_dict, :two_qubit) "The layer time dictionary must contain the key :two_qubit."
-        @assert haskey(layer_time_dict, :meas_reset) "The layer time dictionary must contain the key :meas_reset."
-        @assert layer_time_dict[:single_qubit] > 0.0 "The single-qubit layer time must be positive."
-        @assert layer_time_dict[:two_qubit] > 0.0 "The two-qubit layer time must be positive."
-        @assert layer_time_dict[:meas_reset] > 0.0 "The measurement and reset layer time must be positive."
-        # Test the circuit name
-        test_circuit_name = "unrotated_planar_$(vertical_dist)_$(horizontal_dist)"
-        if gate_type != :cx
-            test_circuit_name *= "_gate_type_$(gate_type)"
-        end
-        if pad_identity != true
-            test_circuit_name *= "_pad_identity_$(pad_identity)"
-        end
-        @assert circuit_name == test_circuit_name "The circuit name $(circuit_name) does not match the circuit name generated by the supplied parameters $(test_circuit_name)."
-        # Return parameters
-        return new(
-            vertical_dist,
-            horizontal_dist,
-            gate_type,
-            pad_identity,
-            layer_time_dict,
-            circuit_name,
-        )::UnrotatedPlanarParameters
-    end
-end
-
-@struct_hash_equal_isequal UnrotatedPlanarParameters
-
-"""
-    get_unrotated_param(vertical_dist::Int, horizontal_dist::Int; kwargs...)
-    get_unrotated_param(dist::Int; kwargs...)
-
-Returns an [`UnrotatedPlanarParameters`](@ref) object that parameterises the syndrome extraction circuit of a unrotated surface code.
-
-Default gate layer times are estimated from `Suppressing quantum errors by scaling a surface code logical qubit` by Google Quantum AI (2023).
-
-# Arguments
-
-  - `vertical_dist::Int`: Vertical (Z) distance of the code.
-  - `horizontal_dist::Int`: Horizontal (X) distance of the code.
-  - `dist::Int`: Distance of the code; this is equivalent to setting `vertical_dist = dist` and `horizontal_dist = dist`.
-
-# Keyword arguments
-
-  - `gate_type::Symbol = :cx`: Type of two-qubit gate used in the circuit, which must be `:cx`.
-  - `pad_identity::Bool = true`: Whether to pad layers with single-qubit identity gates.
-  - `single_qubit_time::Float64 = 29.0`: Time taken to implement a single-qubit gate in nanoseconds.
-  - `two_qubit_time::Float64 = 29.0`: Time taken to implement a two-qubit gate in nanoseconds.
-  - `dynamical_decoupling_time::Float64 = 29.0`: Time taken to implement a dynamical decoupling layer in nanoseconds.
-  - `meas_reset_time::Float64 = 660.0`: Time taken to perform measurement and reset at the end of the circuit in nanoseconds.
-"""
-function get_unrotated_param(
-    vertical_dist::Int,
-    horizontal_dist::Int;
-    gate_type::Symbol = :cx,
-    pad_identity::Bool = true,
-    single_qubit_time::Float64 = 29.0,
-    two_qubit_time::Float64 = 29.0,
-    meas_reset_time::Float64 = 660.0,
-)
-    # Check some conditions
-    @assert (vertical_dist >= 3 && horizontal_dist >= 3) "Invalid distance $(vertical_dist) x $(horizontal_dist). Must be at least 3 x 3."
-    @assert gate_type == :cx "Invalid gate type $(gate_type). Must be :cx."
-    @assert single_qubit_time > 0.0 "The single-qubit layer time must be positive."
-    @assert two_qubit_time > 0.0 "The two-qubit layer time must be positive."
-    @assert meas_reset_time > 0.0 "The measurement and reset layer time must be positive."
-    # Construct the layer time dictionary
-    layer_time_dict = Dict(
-        :single_qubit => single_qubit_time,
-        :two_qubit => two_qubit_time,
-        :meas_reset => meas_reset_time,
-    )
-    # Generate the circuit name
-    circuit_name = "unrotated_planar_$(vertical_dist)_$(horizontal_dist)"
-    if gate_type != :cx
-        circuit_name *= "_gate_type_$(gate_type)"
-    end
-    if pad_identity != true
-        circuit_name *= "_pad_identity_$(pad_identity)"
-    end
-    # Return parameters
-    unrotated_param = UnrotatedPlanarParameters(
-        vertical_dist,
-        horizontal_dist,
-        gate_type,
-        pad_identity,
-        layer_time_dict,
-        circuit_name,
-    )
-    return unrotated_param::UnrotatedPlanarParameters
-end
-function get_unrotated_param(
-    dist::Int;
-    gate_type::Symbol = :cx,
-    pad_identity::Bool = true,
-    single_qubit_time::Float64 = 29.0,
-    two_qubit_time::Float64 = 29.0,
-    meas_reset_time::Float64 = 660.0,
-)
-    # Return parameters
-    unrotated_param = get_unrotated_param(
-        dist,
-        dist;
-        gate_type = gate_type,
-        pad_identity = pad_identity,
-        single_qubit_time = single_qubit_time,
-        two_qubit_time = two_qubit_time,
-        meas_reset_time = meas_reset_time,
-    )
-    return unrotated_param::UnrotatedPlanarParameters
-end
-
-"""
-    UnrotatedPlanarCircuit
-
-Syndrome extraction circuit for a unrotated surface code.
-
-# Fields
-
-  - `circuit_param::UnrotatedPlanarParameters`: Circuit parameters.
-  - `circuit::Vector{Layer}`: Circuit arranged by the tuple.
-  - `circuit_tuple::Vector{Int}`: Tuple which arranges the order of the circuit layers; this is initialised as trivial.
-  - `qubit_num::Int`: Number of qubits in the circuit.
-  - `unique_layer_indices::Vector{Int}`: Unique layer indices of the circuit, which become meaningless and are removed the circuit is arranged by the tuple.
-  - `layer_types::Vector{Symbol}`: Types of the layers in the circuit, used for layer times and dynamical decoupling.
-  - `layer_times::Vector{Float64}`: Times taken to implement each layer in the circuit, as well as measurement and reset.
-  - `gates::Vector{Gate}`: Gates in the circuit arranged by the tuple.
-  - `total_gates::Vector{Gate}`: Gates in the original circuit, which includes noisy preparations if `add_prep` and noisy measurements if `add_meas`.
-  - `gate_index::Dict{Gate, Int}`: Index of the gate eigenvalues for each gates in the original circuit.
-  - `N::Int`: Number of gate eigenvalues.
-  - `noise_param::AbstractNoiseParameters`: Noise parameters.
-  - `gate_probabilities::Dict{Gate, Vector{Float64}}`: Pauli error probabilities for each gate, stored as a dictionary.
-  - `gate_eigenvalues::Vector{Float64}`: Eigenvalues for each gate, stored as a vector whose order is determined by `gate_index`.
-  - `add_prep::Bool`: Whether to treat preparations as noisy and characterise the associated noise, defaulting to `false`; a full-rank design cannot be produced if both `add_prep` and `add_meas` are `true`.
-  - `add_meas::Bool`: Whether to treat measurements as noisy and characterise the associated noise, defaulting to `true`; a full-rank design cannot be produced if both `add_prep` and `add_meas` are `true`.
-  - `partition::Tuple{Vector{Int}, Vector{Int}}`: Partition of the qubits (data, ancilla), allowing for easy preparation of sign configurations for Pauli eigenstates.
-  - `qubits::Vector{Tuple{Int, Int}}`: Code qubit lattice locations.
-  - `inverse_indices::Dict{Tuple{Int, Int}, Int}`: Inverse mapping from the qubit lattice locations to their indices.
-  - `data_indices::Vector{Int}`: Data qubit indices.
-  - `ancilla_indices::Vector{Int}`: Ancilla qubit indices.
-  - `ancilla_X_indices::Vector{Int}`: Ancilla X-check qubit indices.
-  - `ancilla_Z_indices::Vector{Int}`: Ancilla Z-check qubit indices.
-  - `qubit_layout::Matrix{String}`: Diagram of the layout of the code qubits.
-"""
-struct UnrotatedPlanarCircuit <: AbstractCircuit
-    circuit_param::UnrotatedPlanarParameters
-    circuit::Vector{Layer}
-    circuit_tuple::Vector{Int}
-    qubit_num::Int
-    unique_layer_indices::Vector{Int}
-    layer_types::Vector{Symbol}
-    layer_times::Vector{Float64}
-    gates::Vector{Gate}
-    total_gates::Vector{Gate}
-    gate_index::Dict{Gate, Int}
-    N::Int
-    noise_param::AbstractNoiseParameters
-    gate_probabilities::Dict{Gate, Vector{Float64}}
-    gate_eigenvalues::Vector{Float64}
-    add_prep::Bool
-    add_meas::Bool
-    partition::Tuple{Vector{Int}, Vector{Int}}
-    qubits::Vector{Tuple{Int, Int}}
-    inverse_indices::Dict{Tuple{Int, Int}, Int}
-    data_indices::Vector{Int}
-    ancilla_indices::Vector{Int}
-    ancilla_X_indices::Vector{Int}
-    ancilla_Z_indices::Vector{Int}
-    qubit_layout::Matrix{String}
-end
-
-Base.show(io::IO, c::UnrotatedPlanarCircuit) = show(io, MIME("text/plain"), c.qubit_layout)
-
-@struct_hash_equal_isequal UnrotatedPlanarCircuit
-
-"""
-    unrotated_planar_circuit(unrotated_param::UnrotatedPlanarParameters)
-
-Returns fields used to construct the syndrome extraction circuit of an unrotated surface code in the form of a [`UnrotatedPlanarCircuit`](@ref) object, based on the supplied parameters `unrotated_param`.
-"""
-function unrotated_planar_circuit(unrotated_param::UnrotatedPlanarParameters)
-    # Set up variables
-    v = unrotated_param.vertical_dist
-    h = unrotated_param.horizontal_dist
-    gate_type = unrotated_param.gate_type
-    pad_identity = unrotated_param.pad_identity
-    layer_time_dict = unrotated_param.layer_time_dict
-    single_qubit_type = :single_qubit
-    two_qubit_type = :two_qubit
-    # Generate the qubits and qubit indices
-    qubits = vcat([(i, j) for i in 1:(2v - 1), j in 1:(2h - 1)]...)
-    qubit_num = length(qubits)
-    qubit_indices = collect(1:qubit_num)
-    data_indices = qubit_indices[(sum.(qubits) .% 2) .== 0]
-    data_num = length(data_indices)
-    ancilla_indices = qubit_indices[(sum.(qubits) .% 2) .== 1]
-    ancilla_num = length(ancilla_indices)
-    ancilla_X_indices =
-        ancilla_indices[([qubits[ancilla_indices][i][1] for i in 1:ancilla_num] .% 2) .== 0]
-    ancilla_Z_indices =
-        ancilla_indices[([qubits[ancilla_indices][i][2] for i in 1:ancilla_num] .% 2) .== 0]
-    inverse_indices = Dict(qubits[i] => i for i in 1:qubit_num)
-    # Check qubit numbers
-    @assert data_num == v * h + (v - 1) * (h - 1)
-    @assert ancilla_num == v * (h - 1) + (v - 1) * h
-    @assert qubit_num == (2v - 1) * (2h - 1)
-    @assert qubit_num == data_num + ancilla_num
-    # Generate the qubit layout
-    qubit_layout = [" " for i in 1:(2v - 1), j in 1:(2h - 1)]
-    for (i, j) in qubits[data_indices]
-        qubit_layout[i, j] = "o($(inverse_indices[(i, j)]))"
-    end
-    for (i, j) in qubits[ancilla_X_indices]
-        qubit_layout[i, j] = "x($(inverse_indices[(i, j)]))"
-    end
-    for (i, j) in qubits[ancilla_Z_indices]
-        qubit_layout[i, j] = "z($(inverse_indices[(i, j)]))"
-    end
-    # Generate the X-type ancilla gate layers
-    layers_X = Vector{Vector{Int}}[[], [], [], []]
-    for ancilla_X_qubit in qubits[ancilla_X_indices]
-        # Get indices of adjacent qubits in a reverse N order, viewed after rotating the code 45 degrees clockwise
-        adj_N_indices = [
-            (ancilla_X_qubit[1] - 1, ancilla_X_qubit[2]),
-            (ancilla_X_qubit[1], ancilla_X_qubit[2] + 1),
-            (ancilla_X_qubit[1], ancilla_X_qubit[2] - 1),
-            (ancilla_X_qubit[1] + 1, ancilla_X_qubit[2]),
-        ]
-        for (idx, adj_idx) in enumerate(adj_N_indices)
-            if haskey(inverse_indices, adj_idx)
-                push!(
-                    layers_X[idx],
-                    [inverse_indices[ancilla_X_qubit], inverse_indices[adj_idx]],
-                )
-            end
-        end
-    end
-    # Generate the Z-type ancilla gate layers
-    layers_Z = Vector{Vector{Int}}[[], [], [], []]
-    for ancilla_Z_qubit in qubits[ancilla_Z_indices]
-        # Get indices of adjacent qubits in a horizontally-mirrored Z order, viewed after rotating the code 45 degrees clockwise
-        adj_Z_indices = [
-            (ancilla_Z_qubit[1] - 1, ancilla_Z_qubit[2]),
-            (ancilla_Z_qubit[1], ancilla_Z_qubit[2] - 1),
-            (ancilla_Z_qubit[1], ancilla_Z_qubit[2] + 1),
-            (ancilla_Z_qubit[1] + 1, ancilla_Z_qubit[2]),
-        ]
-        for (idx, adj_idx) in enumerate(adj_Z_indices)
-            if haskey(inverse_indices, adj_idx)
-                push!(
-                    layers_Z[idx],
-                    [inverse_indices[adj_idx], inverse_indices[ancilla_Z_qubit]],
-                )
-            end
-        end
-    end
-    # Construct the circuit
-    if gate_type == :cx
-        circuit = [
-            make_layer("H", ancilla_X_indices, qubit_num),
-            make_layer("CX", vcat(layers_Z[1], layers_X[1]), qubit_num),
-            make_layer("CX", vcat(layers_Z[2], layers_X[2]), qubit_num),
-            make_layer("CX", vcat(layers_Z[3], layers_X[3]), qubit_num),
-            make_layer("CX", vcat(layers_Z[4], layers_X[4]), qubit_num),
-            make_layer("H", ancilla_X_indices, qubit_num),
-        ]
-        layer_types = [
-            single_qubit_type,
-            two_qubit_type,
-            two_qubit_type,
-            two_qubit_type,
-            two_qubit_type,
-            single_qubit_type,
-        ]
-    end
-    layer_times = get_layer_times(layer_types, layer_time_dict)
-    # Pad each layer with identity gates if appropriate
-    if pad_identity
-        circuit = [pad_layer(l) for l in circuit]
-    end
-    # Return circuit data
-    return (
-        circuit::Vector{Layer},
-        qubit_num::Int,
-        layer_types::Vector{Symbol},
-        layer_times::Vector{Float64},
-        qubits::Vector{Tuple{Int, Int}},
-        inverse_indices::Dict{Tuple{Int, Int}, Int},
-        data_indices::Vector{Int},
-        ancilla_indices::Vector{Int},
-        ancilla_X_indices::Vector{Int},
-        ancilla_Z_indices::Vector{Int},
-        qubit_layout::Matrix{String},
-    )
-end
-
-"""
-    get_circuit(rotated_param::RotatedPlanarParameters, noise_param::AbstractNoiseParameters; kwargs...)
-    get_circuit(unrotated_param::UnrotatedPlanarParameters, noise_param::AbstractNoiseParameters; kwargs...)
-
-Returns a circuit object, a subtype `T <: AbstractCircuit`, parameterised by the supplied circuit and noise parameters.
-
-# Arguments
-
-  - `rotated_param::RotatedPlanarParameters`: Parameters for a rotated surface code.
-  - `unrotated_param::UnrotatedPlanarParameters`: Parameters for an unrotated surface code.
   - `noise_param::AbstractNoiseParameters`: Noise parameters for the circuit.
 
 # Keyword arguments
 
-  - `add_prep::Bool = false`: Whether to treat preparations as noisy and characterise the associated noise, defaulting to `false`; a full-rank design cannot be produced if both `add_prep` and `add_meas` are `true`.
-  - `add_meas::Bool = true`: Whether to treat measurements as noisy and characterise the associated noise, defaulting to `true`; a full-rank design cannot be produced if both `add_prep` and `add_meas` are `true`.
+  - `circuit_param::AbstractCircuitParameters = EmptyCircuitParameters()`: Circuit parameters.
+  - `extra_fields::Dict{Symbol, Any} = Dict{Symbol, Any}()`: Extra fields, including for [`CodeParameters`](@ref).
+  - `noisy_prep::Bool = false`: Whether to treat preparations as noisy and characterise the associated noise; a full-rank design cannot be produced if both `noisy_prep` and `noisy_meas` are `true`.
+  - `noisy_meas::Bool = true`: Whether to treat measurements as noisy and characterise the associated noise; a full-rank design cannot be produced if both `noisy_prep` and `noisy_meas` are `true`.
+  - `combined::Bool = haskey(noise_param.params, :combined) ? noise_param.params[:combined] : false,`: Whether to treat Pauli X, Y, and Z basis SPAM noise as the same.
+  - `strict::Bool = false`: Whether to be strict about which gates count as estimable to relative precision.
 """
 function get_circuit(
-    rotated_param::RotatedPlanarParameters,
+    circuit::Vector{Layer},
+    layer_types::Vector{Symbol},
+    layer_times::Vector{Float64},
     noise_param::T;
-    add_prep::Bool = false,
-    add_meas::Bool = true,
-) where {T <: AbstractNoiseParameters}
-    # Construct the circuit
-    (
-        circuit,
-        qubit_num,
-        layer_types,
-        layer_times,
-        qubits,
-        inverse_indices,
-        data_indices,
-        ancilla_indices,
-        ancilla_X_indices,
-        ancilla_Z_indices,
-        qubit_layout,
-    ) = rotated_planar_circuit(rotated_param)
+    circuit_param::U = EmptyCircuitParameters(),
+    extra_fields::Dict{Symbol, Any} = Dict{Symbol, Any}(),
+    noisy_prep::Bool = false,
+    noisy_meas::Bool = true,
+    combined::Bool = haskey(noise_param.params, :combined) ? noise_param.params[:combined] :
+                     false,
+    strict::Bool = false,
+) where {T <: AbstractNoiseParameters, U <: AbstractCircuitParameters}
+    # Check the circuit
     circuit_tuple = collect(1:length(circuit))
-    partition = (data_indices, ancilla_indices)
-    # Prepare the circuit and generate additional parameters
+    qubit_num = convert(Int, circuit[1].qubit_num)
+    check_circuit(circuit, circuit_tuple, qubit_num, layer_types, layer_times)
+    if haskey(extra_fields, :code_param)
+        code_param = extra_fields[:code_param]
+        @assert typeof(code_param) == CodeParameters "The code parameters must be of type `CodeParameters`."
+        check_code_parameters(code_param, qubit_num)
+    end
+    # Prepare the circuit by generating additional parameters
     (
         labelled_circuit,
         unique_layer_indices,
         gates,
         total_gates,
-        gate_index,
-        N,
+        gate_data,
         gate_probabilities,
         gate_eigenvalues,
     ) = prepare_circuit(
         circuit,
-        qubit_num,
-        layer_types,
-        layer_times,
         noise_param;
-        add_prep = add_prep,
-        add_meas = add_meas,
+        noisy_prep = noisy_prep,
+        noisy_meas = noisy_meas,
+        combined = combined,
+        strict = strict,
     )
     # Return the circuit
-    c = RotatedPlanarCircuit(
-        rotated_param,
+    c = Circuit(
+        circuit_param,
         labelled_circuit,
         circuit_tuple,
         qubit_num,
@@ -1158,91 +618,39 @@ function get_circuit(
         layer_times,
         gates,
         total_gates,
-        gate_index,
-        N,
+        gate_data,
         noise_param,
         gate_probabilities,
         gate_eigenvalues,
-        add_prep,
-        add_meas,
-        partition,
-        qubits,
-        inverse_indices,
-        data_indices,
-        ancilla_indices,
-        ancilla_X_indices,
-        ancilla_Z_indices,
-        qubit_layout,
+        noisy_prep,
+        noisy_meas,
+        extra_fields,
     )
-    return c::RotatedPlanarCircuit
+    return c::Circuit
 end
-function get_circuit(
-    unrotated_param::UnrotatedPlanarParameters,
-    noise_param::T;
-    add_prep::Bool = false,
-    add_meas::Bool = true,
-) where {T <: AbstractNoiseParameters}
-    # Construct the circuit
-    (
-        circuit,
-        qubit_num,
-        layer_types,
-        layer_times,
-        qubits,
-        inverse_indices,
-        data_indices,
-        ancilla_indices,
-        ancilla_X_indices,
-        ancilla_Z_indices,
-        qubit_layout,
-    ) = unrotated_planar_circuit(unrotated_param)
-    circuit_tuple = collect(1:length(circuit))
-    partition = (data_indices, ancilla_indices)
-    # Prepare the circuit and generate additional parameters
-    (
-        labelled_circuit,
-        unique_layer_indices,
-        gates,
-        total_gates,
-        gate_index,
-        N,
-        gate_probabilities,
-        gate_eigenvalues,
-    ) = prepare_circuit(
-        circuit,
-        qubit_num,
-        layer_types,
-        layer_times,
-        noise_param;
-        add_prep = add_prep,
-        add_meas = add_meas,
-    )
-    # Return the circuit
-    c = UnrotatedPlanarCircuit(
-        unrotated_param,
-        labelled_circuit,
-        circuit_tuple,
-        qubit_num,
-        unique_layer_indices,
-        layer_types,
-        layer_times,
-        gates,
-        total_gates,
-        gate_index,
-        N,
-        noise_param,
-        gate_probabilities,
-        gate_eigenvalues,
-        add_prep,
-        add_meas,
-        partition,
-        qubits,
-        inverse_indices,
-        data_indices,
-        ancilla_indices,
-        ancilla_X_indices,
-        ancilla_Z_indices,
-        qubit_layout,
-    )
-    return c::UnrotatedPlanarCircuit
+
+"""
+    get_combined_circuit(c::AbstractCircuit)
+
+Returns a copy of the circuit `c` where the three parameters describing Pauli X, Y, and Z basis measurements have been combined into a single parameter for each qubit.
+"""
+function get_combined_circuit(c::T) where {T <: AbstractCircuit}
+    if c.gate_data.combined
+        return c::T
+    else
+        # Combine the preparation and measurement noise for different Pauli types
+        combined_gate_data =
+            get_gate_data(c.total_gates; combined = true, strict = c.gate_data.strict)
+        @assert ~(c.noisy_prep && c.noisy_meas) "Preparation and measurement noise cannot be characterised simultaneously."
+        combined_gate_probabilities =
+            get_combined_gate_probabilities(c.gate_probabilities, combined_gate_data)
+        combined_gate_eigenvalues =
+            get_gate_eigenvalues(combined_gate_probabilities, combined_gate_data)
+        # Create the combined circuit
+        c_combined = deepcopy(c)
+        @reset c_combined.gate_data = combined_gate_data
+        @reset c_combined.gate_probabilities = combined_gate_probabilities
+        @reset c_combined.gate_eigenvalues = combined_gate_eigenvalues
+        return c_combined::T
+    end
 end
