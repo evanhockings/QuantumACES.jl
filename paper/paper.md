@@ -39,7 +39,7 @@ QuantumACES.jl is tailored to characterising Pauli noise in syndrome extraction 
 It leverages the fact that the simple structures of the syndrome extraction circuits of topological quantum codes remain similar across code sizes, enabling the optimised experimental design for the syndrome extraction circuit of a small-scale code to be transferred to syndrome extraction circuits of larger-scale versions of the same code.
 QuantumACES.jl is capable of calculating and precisely fitting the performance scaling of these experimental designs as a function of the code size, enabling performance predictions at scales where explicit calculation becomes intractable.
 
-Moreover, QuantumACES.jl makes it easy to simulate memory experiments for its syndrome extraction circuits with Stim, and supports decoding these experiments with the open-source Python packages PyMatching&nbsp;[@higgott_pymatching_2021; @higgott_sparse_2023] and BeliefMatching&nbsp;[@higgott_improved_2023].
+Moreover, QuantumACES.jl makes it easy to simulate memory experiments for its syndrome extraction circuits with Stim, and supports decoding these experiments with the open-source Python packages PyMatching&nbsp;[@higgott_pymatching_2022; @higgott_sparse_2025] and BeliefMatching&nbsp;[@higgott_improved_2023].
 It also contains an interface with the open-source Python package Qiskit&nbsp;[@javadi-abhari_quantum_2024], enabling the export of experimental designs and circuits to Qiskit circuits which can then be implemented on quantum devices to characterise noise in real quantum hardware.
 
 # Statement of need
