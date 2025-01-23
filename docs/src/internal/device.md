@@ -8,7 +8,7 @@ CollapsedDocStrings = true
 
 ```@autodocs; canonical=false
 Modules = [QuantumACES]
-Pages = ["device.jl"]
+Pages = ["src/device.jl"]
 Private = false
 ```
 
@@ -16,6 +16,6 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["device.jl"]
+Pages = ["src/device.jl"]
 Public = false
 ```

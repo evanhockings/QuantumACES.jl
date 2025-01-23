@@ -8,7 +8,7 @@ CollapsedDocStrings = true
 
 ```@autodocs; canonical=false
 Modules = [QuantumACES]
-Pages = ["optimise_tuples.jl"]
+Pages = ["src/optimise_tuples.jl"]
 Private = false
 ```
 
@@ -16,6 +16,6 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["optimise_tuples.jl"]
+Pages = ["src/optimise_tuples.jl"]
 Public = false
 ```

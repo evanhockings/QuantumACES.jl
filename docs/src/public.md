@@ -18,7 +18,7 @@ Then you can prefix internal functions with `ACES.` rather than `QuantumACES.`.
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["QuantumACES.jl"]
+Pages = ["src/QuantumACES.jl"]
 Private = false
 ```
 
@@ -26,7 +26,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["tableau.jl"]
+Pages = ["src/tableau.jl"]
 Private = false
 ```
 
@@ -34,7 +34,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["noise.jl"]
+Pages = ["src/noise.jl"]
 Private = false
 ```
 
@@ -42,7 +42,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["noises/depolarising.jl"]
+Pages = ["src/noises/depolarising.jl"]
 Private = false
 ```
 
@@ -50,7 +50,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["noises/lognormal.jl"]
+Pages = ["src/noises/lognormal.jl"]
 Private = false
 ```
 
@@ -58,7 +58,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["circuit.jl"]
+Pages = ["src/circuit.jl"]
 Private = false
 ```
 
@@ -66,7 +66,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["circuits/rotated_planar.jl"]
+Pages = ["src/circuits/rotated_planar.jl"]
 Private = false
 ```
 
@@ -74,7 +74,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["circuits/unrotated_planar.jl"]
+Pages = ["src/circuits/unrotated_planar.jl"]
 Private = false
 ```
 
@@ -82,7 +82,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["circuits/heavy_hex.jl"]
+Pages = ["src/circuits/heavy_hex.jl"]
 Private = false
 ```
 
@@ -90,7 +90,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["stim.jl"]
+Pages = ["src/stim.jl"]
 Private = false
 ```
 
@@ -98,7 +98,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["tuples.jl"]
+Pages = ["src/tuples.jl"]
 Private = false
 ```
 
@@ -106,7 +106,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["design.jl"]
+Pages = ["src/design.jl"]
 Private = false
 ```
 
@@ -114,7 +114,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["rand_design.jl"]
+Pages = ["src/rand_design.jl"]
 Private = false
 ```
 
@@ -122,7 +122,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["merit.jl"]
+Pages = ["src/merit.jl"]
 Private = false
 ```
 
@@ -130,7 +130,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["optimise_weights.jl"]
+Pages = ["src/optimise_weights.jl"]
 Private = false
 ```
 
@@ -138,7 +138,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["optimise_tuples.jl"]
+Pages = ["src/optimise_tuples.jl"]
 Private = false
 ```
 
@@ -146,7 +146,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["estimate.jl"]
+Pages = ["src/estimate.jl"]
 Private = false
 ```
 
@@ -154,7 +154,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["simulate.jl"]
+Pages = ["src/simulate.jl"]
 Private = false
 ```
 
@@ -162,7 +162,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["device.jl"]
+Pages = ["src/device.jl"]
 Private = false
 ```
 
@@ -170,7 +170,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["scaling.jl"]
+Pages = ["src/scaling.jl"]
 Private = false
 ```
 
@@ -178,7 +178,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["kwargs.jl"]
+Pages = ["src/kwargs.jl"]
 Private = false
 ```
 
@@ -186,7 +186,7 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["utils.jl"]
+Pages = ["src/utils.jl"]
 Private = false
 ```
 
@@ -194,6 +194,6 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["io.jl"]
+Pages = ["src/io.jl"]
 Private = false
 ```

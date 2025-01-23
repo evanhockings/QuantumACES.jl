@@ -8,7 +8,7 @@ CollapsedDocStrings = true
 
 ```@autodocs; canonical=false
 Modules = [QuantumACES]
-Pages = ["circuits/rotated_planar.jl"]
+Pages = ["src/circuits/rotated_planar.jl"]
 Private = false
 ```
 
@@ -16,6 +16,6 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["circuits/rotated_planar.jl"]
+Pages = ["src/circuits/rotated_planar.jl"]
 Public = false
 ```
