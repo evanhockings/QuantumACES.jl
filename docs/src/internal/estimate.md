@@ -2,13 +2,13 @@
 CollapsedDocStrings = true
 ```
 
-# utils.jl
+# estimate.jl
 
 ## Public functions
 
 ```@autodocs; canonical = false
 Modules = [QuantumACES]
-Pages = ["utils.jl"]
+Pages = ["estimate.jl"]
 Private = false
 ```
 
@@ -16,6 +16,6 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["utils.jl"]
+Pages = ["estimate.jl"]
 Public = false
 ```

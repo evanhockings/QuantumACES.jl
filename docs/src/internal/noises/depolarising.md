@@ -2,13 +2,13 @@
 CollapsedDocStrings = true
 ```
 
-# utils.jl
+# depolarising.jl
 
 ## Public functions
 
 ```@autodocs; canonical = false
 Modules = [QuantumACES]
-Pages = ["utils.jl"]
+Pages = ["noises/depolarising.jl"]
 Private = false
 ```
 
@@ -16,6 +16,6 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["utils.jl"]
+Pages = ["noises/depolarising.jl"]
 Public = false
 ```

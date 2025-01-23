@@ -6,11 +6,13 @@ CollapsedDocStrings = true
 
 Documentation for the public API of `QuantumACES.jl`.
 
-To use internal API, which is documented in the internal API section, import the module by running the following.
+To use the internal API, which is documented in the internal API section, it may be convenient to import the module by running the following.
 
 ```julia
 import QuantumACES as ACES
 ```
+
+Then you can prefix internal functions with `ACES.` rather than `QuantumACES.`.
 
 ## QuantumACES.jl
 
@@ -36,11 +38,59 @@ Pages = ["noise.jl"]
 Private = false
 ```
 
+## noises/depolarising.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["noises/depolarising.jl"]
+Private = false
+```
+
+## noises/lognormal.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["noises/lognormal.jl"]
+Private = false
+```
+
 ## circuit.jl
 
 ```@autodocs
 Modules = [QuantumACES]
 Pages = ["circuit.jl"]
+Private = false
+```
+
+## circuits/rotated_planar.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["circuits/rotated_planar.jl"]
+Private = false
+```
+
+## circuits/unrotated_planar.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["circuits/unrotated_planar.jl"]
+Private = false
+```
+
+## circuits/heavy_hex.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["circuits/heavy_hex.jl"]
+Private = false
+```
+
+## stim.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["stim.jl"]
 Private = false
 ```
 
@@ -60,6 +110,14 @@ Pages = ["design.jl"]
 Private = false
 ```
 
+## rand_design.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["rand_design.jl"]
+Private = false
+```
+
 ## merit.jl
 
 ```@autodocs
@@ -68,27 +126,27 @@ Pages = ["merit.jl"]
 Private = false
 ```
 
-## weights.jl
+## optimise_weights.jl
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["weights.jl"]
+Pages = ["optimise_weights.jl"]
 Private = false
 ```
 
-## optimise.jl
+## optimise_tuples.jl
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["optimise.jl"]
+Pages = ["optimise_tuples.jl"]
 Private = false
 ```
 
-## scaling.jl
+## estimate.jl
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["scaling.jl"]
+Pages = ["estimate.jl"]
 Private = false
 ```
 
@@ -97,6 +155,22 @@ Private = false
 ```@autodocs
 Modules = [QuantumACES]
 Pages = ["simulate.jl"]
+Private = false
+```
+
+## device.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["device.jl"]
+Private = false
+```
+
+## scaling.jl
+
+```@autodocs
+Modules = [QuantumACES]
+Pages = ["scaling.jl"]
 Private = false
 ```
 

@@ -1,5 +1,15 @@
-using QuantumACES, StructEquality, Accessors
-
+using QuantumACES, Test
+# Set up parameters
+p = 0.025 / 100
+m = 2.0 / 100
+r_1 = 3 * p
+r_2 = 6 * p + 9 * p^2
+r_m = m
+budget_set = [10^7; 2 * 10^7]
+repetitions = 3
+seed = UInt(0)
+z_score_cutoff_upper = 3.5
+z_score_cutoff_lower = -3.5
 # Example circuit parameters
 struct ExampleParameters <: AbstractCircuitParameters
     params::Dict{Symbol, Any}
@@ -27,9 +37,6 @@ struct ExampleParameters <: AbstractCircuitParameters
         return new(params, new_circuit_name)::ExampleParameters
     end
 end
-
-@struct_hash_equal_isequal ExampleParameters
-
 # Construct the example parameters
 function get_example_param(;
     pad_identity = true,
@@ -52,7 +59,6 @@ function get_example_param(;
     example_param = ExampleParameters(params, "example_circuit")
     return example_param::ExampleParameters
 end
-
 # Construct the example circuit
 function example_circuit(example_param::ExampleParameters)
     # Set up variables
@@ -79,7 +85,6 @@ function example_circuit(example_param::ExampleParameters)
         layer_times::Vector{Float64},
     )
 end
-
 # Construct the circuit struct
 function QuantumACES.get_circuit(
     example_param::ExampleParameters,
@@ -105,7 +110,6 @@ function QuantumACES.get_circuit(
     )
     return c::Circuit
 end
-
 # Phenomenological noise model parameters
 struct PhenomenologicalParameters <: AbstractNoiseParameters
     params::Dict{Symbol, Any}
@@ -129,14 +133,12 @@ struct PhenomenologicalParameters <: AbstractNoiseParameters
         return new(params, new_noise_name)::PhenomenologicalParameters
     end
 end
-
 # Construct the phenomenological noise model parameters
 function get_phen_param(p::Float64, m::Float64; combined::Bool = false)
     params = Dict{Symbol, Any}(:p => p, :m => m, :combined => combined)
     phen_param = PhenomenologicalParameters(params, "phenomenological")
     return phen_param::PhenomenologicalParameters
 end
-
 # Construct the gate probabilities
 function QuantumACES.init_gate_probabilities(
     total_gates::Vector{Gate},
@@ -180,70 +182,27 @@ function QuantumACES.init_gate_probabilities(
     end
     return gate_probabilities::Dict{Gate, Vector{Float64}}
 end
-
-# Set up noise models
-p = 0.025 / 100
-m = 2.0 / 100
-r_1 = 0.075 / 100
-r_2 = 0.5 / 100
-r_m = 2.0 / 100
-phen_param = get_phen_param(p, m)
-dep_param = get_dep_param(r_1, r_2, r_m)
-# Generate the circuit
-example_param = get_example_param()
-circuit_example = get_circuit(example_param, dep_param)
-# Optimise the experimental design
-add_circuit = false
-repeat_points = 3
-seed = UInt(0)
-d = optimise_design(
-    circuit_example;
-    options = OptimOptions(;
-        add_circuit = add_circuit,
-        repeat_points = repeat_points,
-        seed = seed,
-    ),
-)
-merit = calc_merit(d)
-display(d)
-display(merit)
-# Construct a randomised design
-min_randomisations = 50
-target_shot_budget = 10^7
-experiment_shots = 512
-d_rand = generate_rand_design(
-    d,
-    min_randomisations,
-    target_shot_budget,
-    experiment_shots;
-    seed = seed,
-)
-d_shot = get_design(d_rand)
-merit_shot = calc_merit(d_shot)
-display(d_shot)
-display(merit_shot)
-# Update the noise to the phenomenological noise model
-d_phen = update_noise(d_shot, phen_param)
-merit_phen = calc_merit(d_phen)
-display(merit_phen)
-# Simulate ACES experiments
-budget_set = [10^6; 10^7; 10^8]
-repetitions = 10
-aces_data = simulate_aces(d_phen, budget_set; repetitions = repetitions, seed = seed)
-pretty_print(aces_data, merit_phen)
-# Example tuple mappings
-example_tuple = [2; 3; 2; 1; 1]
-idx = 9
-@assert d_shot.tuple_set[idx] == example_tuple
-experiment_set = d_shot.experiment_ensemble[idx]
-example_mappings =
-    [d_shot.mapping_ensemble[idx][experiment] for experiment in experiment_set]
-display(example_mappings)
-# Example gate eigenvalue estimator covariance matrix slices
-gls_covariance = calc_gls_covariance(d_shot)
-gls_marginal_covariance = get_marginal_gate_covariance(d_shot, gls_covariance)
-h_22_gate_index = d_shot.c.gate_data.gate_indices[4]
-h_22_indices = h_22_gate_index.indices
-display(gls_covariance[h_22_indices, h_22_indices])
-h_22_marg_indices = h_22_gate_index.marg_indices
-display(gls_marginal_covariance[h_22_marg_indices, h_22_marg_indices])
+# Test creating an example circuit and phenomenological noise model
+@testset "Example circuit and phenomenological noise" begin
+    # Set up noise models
+    phen_param = get_phen_param(p, m)
+    dep_param = get_dep_param(r_1, r_2, r_m)
+    # Generate the circuit
+    example_param = get_example_param()
+    circuit_example = get_circuit(example_param, dep_param)
+    # Generate the experimental design
+    d = generate_design(circuit_example)
+    display(d)
+    # Update the noise to the phenomenological noise model
+    d_phen = update_noise(d, phen_param)
+    merit_phen = calc_merit(d_phen)
+    display(merit_phen)
+    # Simulate ACES experiments
+    aces_data = simulate_aces(d_phen, budget_set; repetitions = repetitions, seed = seed)
+    pretty_print(aces_data, merit_phen; projected = true)
+    # Test that the simulations agree sufficiently with the predicted distributions
+    noise_score_coll = get_noise_score(aces_data, merit_phen)
+    for noise_score in noise_score_coll
+        @test is_score_expected(noise_score, z_score_cutoff_lower, z_score_cutoff_upper)
+    end
+end

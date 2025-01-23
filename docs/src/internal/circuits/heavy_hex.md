@@ -2,13 +2,13 @@
 CollapsedDocStrings = true
 ```
 
-# weights.jl
+# heavy_hex.jl
 
 ## Public functions
 
 ```@autodocs; canonical = false
 Modules = [QuantumACES]
-Pages = ["weights.jl"]
+Pages = ["circuits/heavy_hex.jl"]
 Private = false
 ```
 
@@ -16,6 +16,6 @@ Private = false
 
 ```@autodocs
 Modules = [QuantumACES]
-Pages = ["weights.jl"]
+Pages = ["circuits/heavy_hex.jl"]
 Public = false
 ```
