@@ -11,6 +11,7 @@ makedocs(;
         canonical = "https://evanhockings.github.io/QuantumACES.jl",
         edit_link = "main",
         assets = String[],
+        size_threshold = 2^20,
     ),
     pages = [
         "Home" => "index.md",
