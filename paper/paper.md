@@ -25,7 +25,7 @@ Consequently, quantum computers will require fault-tolerant architectures that r
 Detailed characterisation of the noise in prototype quantum computers can demonstrate correct device performance and identify poorly functioning qubits and operations.
 It can also enable noise-aware decoding of quantum error correcting codes by calibrating the decoder prior on which physical configurations of errors are more and less likely&nbsp;[@tuckett_faulttolerant_2020; @chen_calibrated_2022; @sundaresan_demonstrating_2023; @tiurev_correcting_2023; @higgott_improved_2023].
 
-QuantumACES.jl uses the framework of averaged circuit eigenvalue sampling (ACES)&nbsp;[@flammia_averaged_2022] to design experiments that characterise Pauli noise in stabiliser circuits, following the theory and protocol outlined in&nbsp;[@hockings_scalable_2024].
+QuantumACES.jl designs experiments to characterise Pauli noise in stabiliser circuits within the framework of averaged circuit eigenvalue sampling (ACES)&nbsp;[@flammia_averaged_2022], following the theory and protocol outlined in&nbsp;[@hockings_scalable_2024].
 Stabiliser circuits are a restricted class of quantum circuits that admit efficient classical simulation&nbsp;[@aaronson_improved_2004; @gottesman_stabilizer_1997], including with Pauli noise.
 Quantum noise is tailored into Pauli noise by techniques such as Pauli frame randomisation&nbsp;[@knill_quantum_2005], randomised compiling&nbsp;[@wallman_noise_2016], or quantum error correction itself&nbsp;[@beale_coherence_2018], and the theory of quantum error correction and fault tolerance generally relies on modelling noise as Pauli noise&nbsp;[@terhal_quantum_2015].
 
