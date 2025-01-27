@@ -733,12 +733,12 @@ function calc_gate_probabilities_covariance(
     @assert dropzeros!(pad_transform' * pad_transform) ≈ I
     @assert dropzeros!(pad_transform' * pad_transform_probs) ≈ I
     @assert dropzeros!(pad_transform_probs' * pad_transform) ≈ I
-    probs_transform = pad_transform' * wht_transform_inv * pad_transform
-    inv_probs_transform = pad_transform_probs' * wht_transform * pad_transform_probs
-    @assert inv_probs_transform ≈ pad_transform_probs' * wht_transform * pad_transform
-    @assert inv_probs_transform ≈ pad_transform' * wht_transform * pad_transform_probs
-    @assert dropzeros!(probs_transform * inv_probs_transform) ≈ I
-    @assert dropzeros!(inv_probs_transform * probs_transform) ≈ I
+    probs_transform = pad_transform_probs' * wht_transform * pad_transform_probs
+    @assert probs_transform ≈ pad_transform_probs' * wht_transform * pad_transform
+    @assert probs_transform ≈ pad_transform' * wht_transform * pad_transform_probs
+    probs_transform_inv = pad_transform' * wht_transform_inv * pad_transform
+    @assert dropzeros!(probs_transform_inv * probs_transform) ≈ I
+    @assert dropzeros!(probs_transform * probs_transform_inv) ≈ I
     # Calculate the gate probabilities estimator covariance matrix
     gate_probabilities_cov = Symmetric(
         wht_transform_inv *

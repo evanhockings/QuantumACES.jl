@@ -548,9 +548,9 @@ function full_project_gate_eigenvalues(
     est_unproj_unpad_gate_probabilities_vec =
         pad_transform' * est_unproj_gate_probabilities_vec
     # Generate the gate probabilities precision matrix
-    inv_probs_transform = pad_transform' * wht_transform * pad_transform_probs
+    probs_transform = pad_transform' * wht_transform * pad_transform_probs
     est_unpad_probabilities_precision_matrix =
-        inv_probs_transform * est_precision_matrix * inv_probs_transform'
+        probs_transform * est_precision_matrix * probs_transform'
     # Project the gate probabilities
     est_unpad_gate_probabilities_vec = scs_project_nonnegative(
         est_unproj_unpad_gate_probabilities_vec,
@@ -596,9 +596,9 @@ function split_project_gate_eigenvalues(
     est_unproj_unpad_gate_probabilities_vec =
         pad_transform' * est_unproj_gate_probabilities_vec
     # Generate the gate probabilities precision matrix
-    inv_probs_transform = pad_transform' * wht_transform * pad_transform_probs
+    probs_transform = pad_transform' * wht_transform * pad_transform_probs
     est_unpad_probabilities_precision_matrix =
-        inv_probs_transform * est_precision_matrix * inv_probs_transform'
+        probs_transform * est_precision_matrix * probs_transform'
     # Project the gate probabilities
     est_unpad_gate_probabilities_vec =
         Vector{Float64}(undef, length(est_unproj_unpad_gate_probabilities_vec))
