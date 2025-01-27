@@ -548,9 +548,9 @@ function full_project_gate_eigenvalues(
     est_unproj_unpad_gate_probabilities_vec =
         pad_transform' * est_unproj_gate_probabilities_vec
     # Generate the gate probabilities precision matrix
-    probabilities_transform = pad_transform_probs' * wht_transform * pad_transform
+    inv_probs_transform = pad_transform' * wht_transform * pad_transform_probs
     est_unpad_probabilities_precision_matrix =
-        probabilities_transform * est_precision_matrix * probabilities_transform'
+        inv_probs_transform * est_precision_matrix * inv_probs_transform'
     # Project the gate probabilities
     est_unpad_gate_probabilities_vec = scs_project_nonnegative(
         est_unproj_unpad_gate_probabilities_vec,
@@ -561,7 +561,9 @@ function full_project_gate_eigenvalues(
     # Generate the projected gate eigenvalues
     est_gate_probabilities_vec =
         (pad_transform_probs * est_unpad_gate_probabilities_vec + pad_mask)
-    est_gate_eigenvalues = pad_transform' * wht_transform * est_gate_probabilities_vec
+    est_pad_gate_eigenvalues = wht_transform * est_gate_probabilities_vec
+    est_gate_eigenvalues = pad_transform' * est_pad_gate_eigenvalues
+    @assert est_gate_eigenvalues ≈ pad_transform_probs' * est_pad_gate_eigenvalues .+ 1
     return (
         est_gate_eigenvalues::Vector{Float64},
         est_unproj_gate_probabilities_vec::Vector{Float64},
@@ -594,9 +596,9 @@ function split_project_gate_eigenvalues(
     est_unproj_unpad_gate_probabilities_vec =
         pad_transform' * est_unproj_gate_probabilities_vec
     # Generate the gate probabilities precision matrix
-    probabilities_transform = pad_transform_probs' * wht_transform * pad_transform
+    inv_probs_transform = pad_transform' * wht_transform * pad_transform_probs
     est_unpad_probabilities_precision_matrix =
-        probabilities_transform * est_precision_matrix * probabilities_transform'
+        inv_probs_transform * est_precision_matrix * inv_probs_transform'
     # Project the gate probabilities
     est_unpad_gate_probabilities_vec =
         Vector{Float64}(undef, length(est_unproj_unpad_gate_probabilities_vec))
@@ -615,7 +617,9 @@ function split_project_gate_eigenvalues(
     # Generate the projected gate eigenvalues
     est_gate_probabilities_vec =
         (pad_transform_probs * est_unpad_gate_probabilities_vec + pad_mask)
-    est_gate_eigenvalues = pad_transform' * wht_transform * est_gate_probabilities_vec
+    est_pad_gate_eigenvalues = wht_transform * est_gate_probabilities_vec
+    est_gate_eigenvalues = pad_transform' * est_pad_gate_eigenvalues
+    @assert est_gate_eigenvalues ≈ pad_transform_probs' * est_pad_gate_eigenvalues .+ 1
     return (
         est_gate_eigenvalues::Vector{Float64},
         est_unproj_gate_probabilities_vec::Vector{Float64},

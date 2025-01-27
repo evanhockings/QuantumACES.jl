@@ -727,6 +727,18 @@ function calc_gate_probabilities_covariance(
     # Get the transform matrices
     pad_transform = get_pad_transform(d, est_type)
     wht_transform_inv = get_wht_transform(d, est_type; inverse = true)
+    pad_transform_probs = get_pad_transform(d, est_type; probabilities = true)
+    wht_transform = get_wht_transform(d, est_type)
+    # Check the transform matrices
+    @assert dropzeros!(pad_transform' * pad_transform) ≈ I
+    @assert dropzeros!(pad_transform' * pad_transform_probs) ≈ I
+    @assert dropzeros!(pad_transform_probs' * pad_transform) ≈ I
+    probs_transform = pad_transform' * wht_transform_inv * pad_transform
+    inv_probs_transform = pad_transform_probs' * wht_transform * pad_transform_probs
+    @assert inv_probs_transform ≈ pad_transform_probs' * wht_transform * pad_transform
+    @assert inv_probs_transform ≈ pad_transform' * wht_transform * pad_transform_probs
+    @assert dropzeros!(probs_transform * inv_probs_transform) ≈ I
+    @assert dropzeros!(inv_probs_transform * probs_transform) ≈ I
     # Calculate the gate probabilities estimator covariance matrix
     gate_probabilities_cov = Symmetric(
         wht_transform_inv *
@@ -737,9 +749,8 @@ function calc_gate_probabilities_covariance(
     )
     # Unpad the gate probability distributions if appropriate
     if unpad
-        pad_transform_probs = get_pad_transform(d, est_type; probabilities = true)
         gate_probabilities_cov =
-            Symmetric(pad_transform_probs' * gate_probabilities_cov * pad_transform_probs)
+            Symmetric(pad_transform' * gate_probabilities_cov * pad_transform)
     end
     return gate_probabilities_cov::Symmetric{Float64, Matrix{Float64}}
 end

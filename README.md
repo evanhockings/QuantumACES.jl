@@ -133,7 +133,7 @@ The packages attempts to load the following Python packages:
   - [Qiskit](https://github.com/Qiskit/qiskit), installed with `pip install qiskit`.
   - [Aer](https://github.com/Qiskit/qiskit-aer), installed with `pip install qiskit-aer`.
 
-By default, PythonCall creates its own Python environment, but you may wish to use an existing Python installation.
+By default, PythonCall creates its own Python environment, but you may wish to [configure](https://juliapy.github.io/PythonCall.jl/stable/pythoncall/#pythoncall-config) it to use an existing Python installation.
 
 One helpful method for managing Python versions is [pyenv](https://github.com/pyenv/pyenv), or for Windows, [pyenv-win](https://github.com/pyenv-win/pyenv-win); these are analogous to [Juliaup](https://github.com/JuliaLang/juliaup) for Julia.
 The following assumes you are using pyenv or pyenv-win.
