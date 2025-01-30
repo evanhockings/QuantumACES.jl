@@ -49,8 +49,8 @@ z_score_cutoff_upper = 3.5
 z_score_cutoff_lower = -3.5
 clip_number = 100
 clip_z_cutoff = 2.0
-trial_number = 3
-trial_z_abs_cutoff = 0.2
+trial_number = 5
+trial_z_abs_cutoff = 0.5
 trial_z_mean_cutoff = 0.1
 # Set up a basic design
 rot_basic = get_basic_tuple_set(rotated_planar)
