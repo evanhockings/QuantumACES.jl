@@ -765,15 +765,11 @@ function get_relative_gate_eigenvalues(
 end
 
 """
-    get_pad_transform(gate_data::GateData; inverse::Bool = false, probabilities::Bool = false)
+    get_pad_transform(gate_data::GateData; probabilities::Bool = false)
 
-Returns a transform matrix that pads gate eigenvalues, or gate error probabilities if `probabilities` is `true`, with identity eigenvaleus or error probabilities respectively, up to a constant given by [`get_pad_mask`](@ref), or the transpose if `inverse` is `true`, calculated using the gate data `gate_data`.
+Returns a transform matrix that pads gate eigenvalues, or gate error probabilities if `probabilities` is `true`, with identity eigenvaleus or error probabilities respectively, up to a constant given by [`get_pad_mask`](@ref), calculated using the gate data `gate_data`.
 """
-function get_pad_transform(
-    gate_data::GateData;
-    inverse::Bool = false,
-    probabilities::Bool = false,
-)
+function get_pad_transform(gate_data::GateData; probabilities::Bool = false)
     # Generate the transform
     pad_transform = spzeros(Float64, gate_data.N_pad, gate_data.N)
     for gate_idx in gate_data.gate_indices
@@ -785,9 +781,6 @@ function get_pad_transform(
                 pad_transform[pad_indices[1], indices[idx]] = -1
             end
         end
-    end
-    if inverse
-        pad_transform = convert(SparseMatrixCSC{Float64, Int}, pad_transform')
     end
     return pad_transform::SparseMatrixCSC{Float64, Int}
 end
@@ -807,15 +800,11 @@ function get_pad_mask(gate_data::GateData)
 end
 
 """
-    get_marginal_pad_transform(gate_data::GateData; inverse::Bool = false, probabilities::Bool = false)
+    get_marginal_pad_transform(gate_data::GateData; probabilities::Bool = false)
 
-Returns a transform matrix that pads marginal gate eigenvalues, or marginal gate error probabilities if `probabilities` is `true`, with identity eigenvaleus or error probabilities respectively, up to a constant given by [`get_marginal_pad_mask`](@ref), or the transpose if `inverse` is `true`, calculated using the gate data `gate_data`.
+Returns a transform matrix that pads marginal gate eigenvalues, or marginal gate error probabilities if `probabilities` is `true`, with identity eigenvaleus or error probabilities respectively, up to a constant given by [`get_marginal_pad_mask`](@ref), calculated using the gate data `gate_data`.
 """
-function get_marginal_pad_transform(
-    gate_data::GateData;
-    inverse::Bool = false,
-    probabilities::Bool = false,
-)
+function get_marginal_pad_transform(gate_data::GateData; probabilities::Bool = false)
     # Generate the transform
     marg_pad_transform = spzeros(Float64, gate_data.N_pad_marginal, gate_data.N_marginal)
     for gate_idx in gate_data.gate_indices
@@ -827,9 +816,6 @@ function get_marginal_pad_transform(
                 marg_pad_transform[pad_marg_indices[1], marg_indices[idx]] = -1
             end
         end
-    end
-    if inverse
-        marg_pad_transform = convert(SparseMatrixCSC{Float64, Int}, marg_pad_transform')
     end
     return marg_pad_transform::SparseMatrixCSC{Float64, Int}
 end
@@ -849,15 +835,11 @@ function get_marginal_pad_mask(gate_data::GateData)
 end
 
 """
-    get_relative_pad_transform(gate_data::GateData; inverse::Bool = false, probabilities::Bool = false)
+    get_relative_pad_transform(gate_data::GateData; probabilities::Bool = false)
 
-Returns a transform matrix that pads marginal gate eigenvalues, or marginal gate error probabilities if `probabilities` is `true`, for gates estimable to relative precision, with identity eigenvaleus or error probabilities respectively, up to a constant given by [`get_relative_pad_mask`](@ref), or the transpose if `inverse` is `true`, calculated using the gate data `gate_data`.
+Returns a transform matrix that pads marginal gate eigenvalues, or marginal gate error probabilities if `probabilities` is `true`, for gates estimable to relative precision, with identity eigenvaleus or error probabilities respectively, up to a constant given by [`get_relative_pad_mask`](@ref), calculated using the gate data `gate_data`.
 """
-function get_relative_pad_transform(
-    gate_data::GateData;
-    inverse::Bool = false,
-    probabilities::Bool = false,
-)
+function get_relative_pad_transform(gate_data::GateData; probabilities::Bool = false)
     # Generate the transform
     rel_pad_transform = spzeros(Float64, gate_data.N_pad_relative, gate_data.N_relative)
     for gate_idx in gate_data.gate_indices
@@ -871,9 +853,6 @@ function get_relative_pad_transform(
                 end
             end
         end
-    end
-    if inverse
-        rel_pad_transform = convert(SparseMatrixCSC{Float64, Int}, rel_pad_transform')
     end
     return rel_pad_transform::SparseMatrixCSC{Float64, Int}
 end
