@@ -22,7 +22,7 @@ bibliography: paper.bib
 QuantumACES.jl is a Julia&nbsp;[@bezanson_julia_2017] package for designing, simulating, and performing scalable Pauli noise characterisation experiments for quantum computers.
 Noise in quantum devices is the key obstacle to large-scale quantum computation.
 Consequently, quantum computers will require fault-tolerant architectures that replace physical qubits and operations with redundantly-encoded logical equivalents, which entails regularly measuring the parity checks of quantum error correcting codes&nbsp;[@shor_faulttolerant_1996; @gottesman_introduction_2010; @aliferis_introduction_2013].
-Decoders use the resulting error syndrome data to attempt to infer and correct the underlying physical errors in the quantum device.
+Decoders attempt to underlying physical errors in the quantum device from the resulting error syndrome data, and hence determine a correction operation that preserves the logical information.
 The noise estimates produced by QuantumACES.jl can calibrate decoders to the likelihood of physical error configurations in a quantum device&nbsp;[@tuckett_faulttolerant_2020; @chen_calibrated_2022; @sundaresan_demonstrating_2023; @tiurev_correcting_2023; @higgott_improved_2023], enabling noise-aware decoding.
 They can also be used to generate simulated data for training more accurate decoders, such as&nbsp;[@bausch_learning_2024], verify appropriate device calibration, and inform the co-design of quantum error correcting codes, fault-tolerant circuits, and quantum devices.
 
