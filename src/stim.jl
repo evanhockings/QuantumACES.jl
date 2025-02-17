@@ -59,11 +59,11 @@ function Base.show(io::IO, memory_data::MemoryData)
     # Print the memory summary data
     digits = 4
     memory_x_errors_string = [
-        "$(round(100 * memory_x_errors[i], digits = digits)) ± $(round(100 * memory_x_errors_sem[i], digits = digits))%"
+        "($(round(100 * memory_x_errors[i], digits = digits)) ± $(round(100 * memory_x_errors_sem[i], digits = digits)))%"
         for i in 1:decoder_num
     ]
     memory_z_errors_string = [
-        "$(round(100 * memory_z_errors[i], digits = digits)) ± $(round(100 * memory_z_errors_sem[i], digits = digits))%"
+        "($(round(100 * memory_z_errors[i], digits = digits)) ± $(round(100 * memory_z_errors_sem[i], digits = digits)))%"
         for i in 1:decoder_num
     ]
     pretty_table(
@@ -134,11 +134,11 @@ function Base.show(io::IO, memory_summary::MemorySummary)
     memory_z_errors_sem =
         [sqrt(memory_summary.memory_z_errors_cov[i, i] / shots) for i in 1:decoder_num]
     memory_x_errors_string = [
-        "$(round(100 * memory_summary.memory_x_errors[i], digits = digits)) ± $(round(100 * memory_z_errors_sem[i], digits = digits))%"
+        "($(round(100 * memory_summary.memory_x_errors[i], digits = digits)) ± $(round(100 * memory_z_errors_sem[i], digits = digits)))%"
         for i in 1:decoder_num
     ]
     memory_z_errors_string = [
-        "$(round(100 * memory_summary.memory_z_errors[i], digits = digits)) ± $(round(100 * memory_x_errors_sem[i], digits = digits))%"
+        "($(round(100 * memory_summary.memory_z_errors[i], digits = digits)) ± $(round(100 * memory_x_errors_sem[i], digits = digits)))%"
         for i in 1:decoder_num
     ]
     pretty_table(
