@@ -13,7 +13,7 @@ affiliations:
     index: 1
   - name: ARC Centre of Excellence for Engineered Quantum Systems
     index: 2
-date: 23 January 2025
+date: 17 February 2025
 bibliography: paper.bib
 ---
 
@@ -22,8 +22,9 @@ bibliography: paper.bib
 QuantumACES.jl is a Julia&nbsp;[@bezanson_julia_2017] package for designing, simulating, and performing scalable Pauli noise characterisation experiments for quantum computers.
 Noise in quantum devices is the key obstacle to large-scale quantum computation.
 Consequently, quantum computers will require fault-tolerant architectures that replace physical qubits and operations with redundantly-encoded logical equivalents, which entails regularly measuring the parity checks of quantum error correcting codes&nbsp;[@shor_faulttolerant_1996; @gottesman_introduction_2010; @aliferis_introduction_2013].
-Detailed characterisation of the noise in prototype quantum computers can demonstrate correct device performance and identify poorly functioning qubits and operations.
-It can also enable noise-aware decoding of quantum error correcting codes by calibrating the decoder prior on which physical configurations of errors are more and less likely&nbsp;[@tuckett_faulttolerant_2020; @chen_calibrated_2022; @sundaresan_demonstrating_2023; @tiurev_correcting_2023; @higgott_improved_2023].
+Decoders use the resulting error syndrome data to attempt to infer and correct the underlying physical errors in the quantum device.
+The noise estimates produced by QuantumACES.jl can calibrate decoders to the likelihood of physical error configurations in a quantum device&nbsp;[@tuckett_faulttolerant_2020; @chen_calibrated_2022; @sundaresan_demonstrating_2023; @tiurev_correcting_2023; @higgott_improved_2023], enabling noise-aware decoding.
+They can also be used to generate simulated data for training more accurate decoders, such as&nbsp;[@bausch_learning_2024], verify appropriate device calibration, and inform the co-design of quantum error correcting codes, fault-tolerant circuits, and quantum devices.
 
 QuantumACES.jl designs experiments to characterise Pauli noise in stabiliser circuits within the framework of averaged circuit eigenvalue sampling (ACES)&nbsp;[@flammia_averaged_2022], following the theory and protocol outlined in&nbsp;[@hockings_scalable_2024].
 Stabiliser circuits are a restricted class of quantum circuits that admit efficient classical simulation&nbsp;[@aaronson_improved_2004; @gottesman_stabilizer_1997], including with Pauli noise.
@@ -40,12 +41,12 @@ It leverages the fact that the simple structures of the syndrome extraction circ
 QuantumACES.jl is capable of calculating and precisely fitting the performance scaling of these experimental designs as a function of the code size, enabling performance predictions at scales where explicit calculation becomes intractable.
 
 Moreover, QuantumACES.jl makes it easy to simulate memory experiments for its syndrome extraction circuits with Stim, and supports decoding these experiments with the open-source Python packages PyMatching&nbsp;[@higgott_pymatching_2022; @higgott_sparse_2025] and BeliefMatching&nbsp;[@higgott_improved_2023].
-It also contains an interface with the open-source Python package Qiskit&nbsp;[@javadi-abhari_quantum_2024], enabling the export of experimental designs and circuits to Qiskit circuits which can then be implemented on quantum devices to characterise noise in real quantum hardware.
+It also contains an interface with the open-source Python package Qiskit&nbsp;[@javadi-abhari_quantum_2024], enabling the export of experimental designs to Qiskit circuits which can then be implemented to characterise noise in real quantum devices.
 
 # Statement of need
 
 The utility of detailed and scalable Pauli noise characterisation methods grows as experimental progress pushes quantum devices towards scales of hundreds of qubits and initial demonstrations of fault tolerance.
-QuantumACES.jl enables noise characterisation in this context, as demonstrated in&nbsp;[@hockings_scalable_2024].
+QuantumACES.jl enables noise characterisation in this context, as demonstrated in&nbsp;[@hockings_scalable_2024], and hence also enables noise-aware decoding.
 While there are several software packages for benchmarking and noise characterisation, there are no open-source packages capable of detailed and scalable Pauli noise characterisation of quantum devices.
 Forest-Benchmarking&nbsp;[@combes_forest_2019], is an open-source Python package containing many routines for quantum characterisation, verification, and validation (QCVV), but its detailed noise characterisation techniques are not scalable.
 Gate set tomography (GST)&nbsp;[@nielsen_gate_2021], is a principled and extremely detailed noise characterisation protocol implemented by the open-source Python package pyGSTi&nbsp;[@nielsen_pygsti_2022], but it is limited to characterising extremely small numbers of qubits.
