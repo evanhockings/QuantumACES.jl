@@ -340,6 +340,7 @@ export
     design_filename,
     scaling_filename,
     aces_data_filename,
+    rand_design_filename,
     save_design,
     load_design,
     delete_design,
