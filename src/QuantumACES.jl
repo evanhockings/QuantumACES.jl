@@ -302,8 +302,11 @@ export
     estimate_gate_noise,
     get_noise_error,
     get_noise_score,
-    get_model_score,
     is_score_expected,
+    get_rss,
+    get_model_violation,
+    get_aic,
+    get_bic,
     # simulate.jl functions
     simulate_stim_estimate,
     simulate_aces,

@@ -1249,73 +1249,6 @@ function get_noise_score(noise_error_matrix::Matrix{NoiseError}, merit::Merit)
 end
 
 """
-    get_model_score(d::Design, noise_est::NoiseEstimate; projected::Bool = false)
-    get_model_score(d_rand::RandDesign, noise_est::NoiseEstimate; projected::Bool = false)
-    get_model_score(d::Design, noise_est_vector::Vector{NoiseEstimate}; projected::Bool = false)
-    get_model_score(d::Design, noise_est_matrix::Matrix{NoiseEstimate}; projected::Bool = false)
-
-Returns the noise model violation z-score for the generalised residual sum of squares corresponding to the noise estimate `noise_est`, given the design `d` or alternatively the randomised design `d_rand`, calculating with the projected gate eigenvalues if `projected` is `true`.
-"""
-function get_model_score(d::Design, noise_est::NoiseEstimate; projected::Bool = false)
-    # Initialise variables 
-    mapping_lengths = length.(d.mapping_ensemble)
-    est_eigenvalues = get_eigenvalues(noise_est)
-    est_covariance = calc_covariance(d, noise_est)
-    est_covariance_log = calc_covariance_log(est_covariance, est_eigenvalues)
-    est_covariance_log_inv = sparse_covariance_inv(est_covariance_log, mapping_lengths)
-    design_matrix = d.matrix
-    (M, N) = size(design_matrix)
-    K = M - N
-    # Compute the model violation score
-    if projected
-        gls_log_eigenvalues_residual =
-            (design_matrix * log.(noise_est.gls_gate_eigenvalues)) - log.(est_eigenvalues)
-    else
-        gls_log_eigenvalues_residual =
-            (design_matrix * log.(noise_est.gls_unproj_gate_eigenvalues)) -
-            log.(est_eigenvalues)
-    end
-    gls_residual_sum_squares =
-        gls_log_eigenvalues_residual' *
-        est_covariance_log_inv *
-        gls_log_eigenvalues_residual
-    model_score = (gls_residual_sum_squares - K) / sqrt(2 * K)
-    return model_score::Float64
-end
-function get_model_score(
-    d_rand::RandDesign,
-    noise_est::NoiseEstimate;
-    projected::Bool = false,
-)
-    d = get_design(d_rand)
-    @assert d_rand.shot_budget == noise_est.shot_budget "The shot budgets of the design and noise estimate do not match."
-    model_score = get_model_score(d, noise_est; projected = projected)
-    return model_score::Float64
-end
-function get_model_score(
-    d::Design,
-    noise_est_vector::Vector{NoiseEstimate};
-    projected::Bool = false,
-)
-    model_score_vector = [
-        get_model_score(d, noise_est; projected = projected) for
-        noise_est in noise_est_vector
-    ]
-    return model_score_vector::Vector{Float64}
-end
-function get_model_score(
-    d::Design,
-    noise_est_matrix::Matrix{NoiseEstimate};
-    projected::Bool = false,
-)
-    model_score_matrix = [
-        get_model_score(d, noise_est; projected = projected) for
-        noise_est in noise_est_matrix
-    ]
-    return model_score_matrix::Matrix{Float64}
-end
-
-"""
     is_score_expected(noise_score::NoiseScore, z_score_cutoff::Real)
     is_score_expected(noise_score::NoiseScore, z_score_cutoff_lower::Real, z_score_cutoff_upper::Real)
 
@@ -1379,4 +1312,132 @@ function is_score_expected(noise_score::NoiseScore, z_score_cutoff::Real)
     @assert z_score_cutoff > 0.0 "The z-score cutoff must be positive."
     is_expected = is_score_expected(noise_score, -z_score_cutoff, z_score_cutoff)
     return is_expected::Bool
+end
+
+"""
+    get_rss(d::Design, noise_est::NoiseEstimate; projected::Bool = false)
+    get_rss(d_rand::RandDesign, noise_est::NoiseEstimate; projected::Bool = false)
+
+Returns the generalised residual sum of squares corresponding to the noise estimate `noise_est`, given the design `d` or alternatively the randomised design `d_rand`, calculating with the projected gate eigenvalues if `projected` is `true`.
+"""
+function get_rss(d::Design, noise_est::NoiseEstimate; projected::Bool = false)
+    # Initialise variables 
+    mapping_lengths = length.(d.mapping_ensemble)
+    est_eigenvalues = get_eigenvalues(noise_est)
+    est_covariance = calc_covariance(d, noise_est)
+    est_covariance_log = calc_covariance_log(est_covariance, est_eigenvalues)
+    est_covariance_log_inv = sparse_covariance_inv(est_covariance_log, mapping_lengths)
+    design_matrix = d.matrix
+    # Compute the generalised residual sum of squares
+    if projected
+        gls_log_eigenvalues_residual =
+            (design_matrix * log.(noise_est.gls_gate_eigenvalues)) - log.(est_eigenvalues)
+    else
+        gls_log_eigenvalues_residual =
+            (design_matrix * log.(noise_est.gls_unproj_gate_eigenvalues)) -
+            log.(est_eigenvalues)
+    end
+    gls_residual_sum_squares =
+        gls_log_eigenvalues_residual' *
+        est_covariance_log_inv *
+        gls_log_eigenvalues_residual
+    return gls_residual_sum_squares::Float64
+end
+function get_rss(d_rand::RandDesign, noise_est::NoiseEstimate; projected::Bool = false)
+    d = get_design(d_rand)
+    @assert d_rand.shot_budget == noise_est.shot_budget "The shot budgets of the design and noise estimate do not match."
+    rss = get_rss(d, noise_est; projected = projected)
+    return rss::Float64
+end
+
+"""
+    get_model_violation(d::Design, noise_est::NoiseEstimate; projected::Bool = false)
+    get_model_violation(d_rand::RandDesign, noise_est::NoiseEstimate; projected::Bool = false)
+    get_model_violation(d::Design, noise_est_vector::Vector{NoiseEstimate}; projected::Bool = false)
+    get_model_violation(d::Design, noise_est_matrix::Matrix{NoiseEstimate}; projected::Bool = false)
+
+Returns the noise model violation z-score for the generalised residual sum of squares corresponding to the noise estimate `noise_est`, given the design `d` or alternatively the randomised design `d_rand`, calculating with the projected gate eigenvalues if `projected` is `true`.
+"""
+function get_model_violation(d::Design, noise_est::NoiseEstimate; projected::Bool = false)
+    # Intialise variables
+    (M, N) = size(d.matrix)
+    K = M - N
+    # Compute the model violation
+    gls_residual_sum_squares = get_rss(d, noise_est; projected = projected)
+    model_violation = (gls_residual_sum_squares - K) / sqrt(2 * K)
+    return model_violation::Float64
+end
+function get_model_violation(
+    d_rand::RandDesign,
+    noise_est::NoiseEstimate;
+    projected::Bool = false,
+)
+    d = get_design(d_rand)
+    @assert d_rand.shot_budget == noise_est.shot_budget "The shot budgets of the design and noise estimate do not match."
+    model_violation = get_model_violation(d, noise_est; projected = projected)
+    return model_violation::Float64
+end
+function get_model_violation(
+    d::Design,
+    noise_est_vector::Vector{NoiseEstimate};
+    projected::Bool = false,
+)
+    model_violation_vector = [
+        get_model_violation(d, noise_est; projected = projected) for
+        noise_est in noise_est_vector
+    ]
+    return model_violation_vector::Vector{Float64}
+end
+function get_model_violation(
+    d::Design,
+    noise_est_matrix::Matrix{NoiseEstimate};
+    projected::Bool = false,
+)
+    model_violation_matrix = [
+        get_model_violation(d, noise_est; projected = projected) for
+        noise_est in noise_est_matrix
+    ]
+    return model_violation_matrix::Matrix{Float64}
+end
+
+"""
+    get_aic(d::Design, noise_est::NoiseEstimate; projected::Bool = false)
+    get_aic(d_rand::RandDesign, noise_est::NoiseEstimate; projected::Bool = false)
+
+Returns the Akaike information criterion (AIC) corresponding to the noise estimate `noise_est`, given the design `d` or alternatively the randomised design `d_rand`, calculating with the projected gate eigenvalues if `projected` is `true`.
+"""
+function get_aic(d::Design, noise_est::NoiseEstimate; projected::Bool = false)
+    # Intialise variables
+    N = size(d.matrix, 2)
+    # Compute the Akaike information criterion
+    gls_residual_sum_squares = get_rss(d, noise_est; projected = projected)
+    aic = 2 * N + gls_residual_sum_squares
+    return aic::Float64
+end
+function get_aic(d_rand::RandDesign, noise_est::NoiseEstimate; projected::Bool = false)
+    d = get_design(d_rand)
+    @assert d_rand.shot_budget == noise_est.shot_budget "The shot budgets of the design and noise estimate do not match."
+    aic = get_aic(d, noise_est; projected = projected)
+    return aic::Float64
+end
+
+"""
+    get_bic(d::Design, noise_est::NoiseEstimate; projected::Bool = false)
+    get_bic(d_rand::RandDesign, noise_est::NoiseEstimate; projected::Bool = false)
+
+Returns the Bayesian information criterion (BIC) corresponding to the noise estimate `noise_est`, given the design `d` or alternatively the randomised design `d_rand`, calculating with the projected gate eigenvalues if `projected` is `true`.
+"""
+function get_bic(d::Design, noise_est::NoiseEstimate; projected::Bool = false)
+    # Intialise variables
+    (M, N) = size(d.matrix)
+    # Compute the Bayesian information criterion
+    gls_residual_sum_squares = get_rss(d, noise_est; projected = projected)
+    bic = N * log(M) + gls_residual_sum_squares
+    return bic::Float64
+end
+function get_bic(d_rand::RandDesign, noise_est::NoiseEstimate; projected::Bool = false)
+    d = get_design(d_rand)
+    @assert d_rand.shot_budget == noise_est.shot_budget "The shot budgets of the design and noise estimate do not match."
+    bic = get_bic(d, noise_est; projected = projected)
+    return bic::Float64
 end
