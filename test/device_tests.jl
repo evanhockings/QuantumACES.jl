@@ -106,9 +106,12 @@ z_score_cutoff_lower = -3.5
     noise_est = aces_data.noise_est_coll[1, 1]
     noise_error = aces_data.noise_error_coll[1, 1]
     noise_score = get_noise_score(noise_error, merit_hex_shot)
-    model_score = get_model_score(d_hex_shot, noise_est)
+    model_violation = get_model_violation(d_hex_shot, noise_est)
+    rss = get_rss(d_hex_shot, noise_est)
+    aic = get_aic(d_hex_shot, noise_est)
+    bic = get_bic(d_hex_shot, noise_est)
     @test is_score_expected(noise_score, z_score_cutoff_lower, z_score_cutoff_upper)
-    @test z_score_cutoff_lower <= model_score && model_score <= z_score_cutoff_upper
+    @test z_score_cutoff_lower <= model_violation && model_violation <= z_score_cutoff_upper
 end
 @testset "Stim randomised ensemble" begin
     # Simulate and process the data in Stim
@@ -119,10 +122,13 @@ end
     stim_noise_error = get_noise_error(d_hex_rand, stim_noise_est)
     # Check agreement with the merits
     stim_noise_score = get_noise_score(stim_noise_error, merit_hex_shot)
-    stim_model_score = get_model_score(d_hex_rand, stim_noise_est)
+    stim_model_violation = get_model_violation(d_hex_rand, stim_noise_est)
+    stim_rss = get_rss(d_hex_rand, stim_noise_est)
+    stim_aic = get_aic(d_hex_rand, stim_noise_est)
+    stim_bic = get_bic(d_hex_rand, stim_noise_est)
     @test is_score_expected(stim_noise_score, z_score_cutoff_lower, z_score_cutoff_upper)
-    @test z_score_cutoff_lower <= stim_model_score &&
-          stim_model_score <= z_score_cutoff_upper
+    @test z_score_cutoff_lower <= stim_model_violation &&
+          stim_model_violation <= z_score_cutoff_upper
 end
 # Use a reduced number of shots because Qiskit simulations are extremely slow
 reduced_shots = 64

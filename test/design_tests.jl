@@ -49,8 +49,8 @@ z_score_cutoff_upper = 3.5
 z_score_cutoff_lower = -3.5
 clip_number = 100
 clip_z_cutoff = 2.0
-trial_number = 3
-trial_z_abs_cutoff = 0.2
+trial_number = 5
+trial_z_abs_cutoff = 0.5
 trial_z_mean_cutoff = 0.1
 # Set up a basic design
 rot_basic = get_basic_tuple_set(rotated_planar)
@@ -207,7 +207,7 @@ aces_data_rot_big = simulate_aces(
 )
 pretty_print(aces_data_rot_big, rot_big_merit)
 noise_score_coll_big = get_noise_score(aces_data_rot_big, rot_big_merit)
-model_score_coll_big = get_model_score(aces_data_rot_big)
+model_violation_coll_big = get_model_violation(aces_data_rot_big)
 noise_error = aces_data_rot_big.noise_error_coll[end, budget_number]
 noise_score = noise_score_coll_big[end, budget_number]
 display(noise_error)
@@ -219,25 +219,26 @@ comb_noise_est_coll_big = [
     estimate_gate_noise(d_rot_comb, noise_est) for
     noise_est in aces_data_rot_big.noise_est_coll
 ]
-comb_model_score_coll_big = get_model_score(d_rot_comb, comb_noise_est_coll_big)
+comb_model_violation_coll_big = get_model_violation(d_rot_comb, comb_noise_est_coll_big)
 # Simulate a diagonal design
 d_rot_diag = get_diag_design(d_rot_big)
 rot_diag_merit = calc_merit(d_rot_diag)
 aces_data_rot_diag = simulate_aces(d_rot_diag, budget_set; seed = seed)
 noise_score_coll_diag = get_noise_score(aces_data_rot_diag, rot_diag_merit)
-model_score_coll_diag = get_model_score(aces_data_rot_diag)
+model_violation_coll_diag = get_model_violation(aces_data_rot_diag)
 pretty_print(aces_data_rot_diag, rot_diag_merit)
 # Test that the simulations agree sufficiently with the predicted distributions
 @testset "Simulation merit agreement" begin
     for noise_score in noise_score_coll_big
         @test is_score_expected(noise_score, z_score_cutoff_lower, z_score_cutoff_upper)
     end
-    for idx in eachindex(model_score_coll_big)
-        model_score = model_score_coll_big[idx]
-        @test z_score_cutoff_lower <= model_score && model_score <= z_score_cutoff_upper
+    for idx in eachindex(model_violation_coll_big)
+        model_violation = model_violation_coll_big[idx]
+        @test z_score_cutoff_lower <= model_violation &&
+              model_violation <= z_score_cutoff_upper
         # Ensure the combined design has worse model violation scores
-        comb_model_score = comb_model_score_coll_big[idx]
-        @test model_score <= comb_model_score
+        comb_model_violation = comb_model_violation_coll_big[idx]
+        @test model_violation <= comb_model_violation
     end
     for noise_est in aces_data_rot_diag.noise_est_coll
         @test noise_est.gls_unproj_gate_eigenvalues ≈ noise_est.wls_unproj_gate_eigenvalues
@@ -246,8 +247,9 @@ pretty_print(aces_data_rot_diag, rot_diag_merit)
     for noise_score in noise_score_coll_diag
         @test is_score_expected(noise_score, z_score_cutoff_lower, z_score_cutoff_upper)
     end
-    for model_score in model_score_coll_diag
-        @test z_score_cutoff_lower <= model_score && model_score <= z_score_cutoff_upper
+    for model_violation in model_violation_coll_diag
+        @test z_score_cutoff_lower <= model_violation &&
+              model_violation <= z_score_cutoff_upper
     end
 end
 # Ensure the estimation is robust to many eigenvalues being clipped

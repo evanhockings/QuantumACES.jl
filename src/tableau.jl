@@ -24,13 +24,28 @@ mutable struct Tableau
 end
 
 function Base.show(io::IO, t::Tableau)
-    for i in 1:(t.qubit_num)
-        print(
-            io,
-            get_pauli_string(Pauli(t.tableau[t.qubit_num + i, :], t.qubit_num)) *
-            (i == t.qubitnum ? "" : "\n"),
-        )
+    # Initialise printing data
+    n = t.qubit_num
+    pauli_strings = [
+        "$(((i-1) % n) + 1): " * get_pauli_string(Pauli(t.tableau[i, :], n)) for i in 1:(2n)
+    ]
+    destabiliser_string = "Destabilisers"
+    stabiliser_string = "Stabilisers"
+    divider_line = "-"^max(maximum(length.(pauli_strings)), length(destabiliser_string))
+    # Print the tableau
+    println(io, divider_line)
+    println(io, destabiliser_string)
+    println(io, divider_line)
+    for i in 1:n
+        println(io, pauli_strings[i])
     end
+    println(io, divider_line)
+    println(io, stabiliser_string)
+    println(io, divider_line)
+    for i in 1:n
+        println(io, pauli_strings[n + i])
+    end
+    print(io, divider_line)
     return nothing
 end
 

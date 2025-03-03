@@ -504,34 +504,18 @@ function get_relative_gate_covariance(
 end
 
 """
-    get_pad_transform(d::Design, est_type::Symbol; inverse::Bool = false, probabilities::Bool = false)
+    get_pad_transform(d::Design, est_type::Symbol; probabilities::Bool = false)
 
-Returns a transform matrix that pads gate eigenvalues, or gate error probabilities if `probabilities` is `true`, whose type depends on the estimator type `est_type` (`:ordinary`, `:marginal`, or `:relative`), with identity eigenvaleus or error probabilities, respectively, and the transpose if `inverse` is `true`, calculated using the gate data of the design `d`.
+Returns a transform matrix that pads gate eigenvalues, or gate error probabilities if `probabilities` is `true`, whose type depends on the estimator type `est_type` (`:ordinary`, `:marginal`, or `:relative`), with identity eigenvaleus or error probabilities, respectively, calculated using the gate data of the design `d`.
 """
-function get_pad_transform(
-    d::Design,
-    est_type::Symbol;
-    inverse::Bool = false,
-    probabilities::Bool = false,
-)
+function get_pad_transform(d::Design, est_type::Symbol; probabilities::Bool = false)
+    gate_data = d.c.gate_data
     if est_type == :ordinary
-        pad_transform = get_pad_transform(
-            d.c.gate_data;
-            inverse = inverse,
-            probabilities = probabilities,
-        )
+        pad_transform = get_pad_transform(gate_data; probabilities = probabilities)
     elseif est_type == :marginal
-        pad_transform = get_marginal_pad_transform(
-            d.c.gate_data;
-            inverse = inverse,
-            probabilities = probabilities,
-        )
+        pad_transform = get_marginal_pad_transform(gate_data; probabilities = probabilities)
     elseif est_type == :relative
-        pad_transform = get_relative_pad_transform(
-            d.c.gate_data;
-            inverse = inverse,
-            probabilities = probabilities,
-        )
+        pad_transform = get_relative_pad_transform(gate_data; probabilities = probabilities)
     else
         throw(
             error(
@@ -737,9 +721,8 @@ function calc_gate_probabilities_covariance(
     )
     # Unpad the gate probability distributions if appropriate
     if unpad
-        pad_transform_probs = get_pad_transform(d, est_type; probabilities = true)
         gate_probabilities_cov =
-            Symmetric(pad_transform_probs' * gate_probabilities_cov * pad_transform_probs)
+            Symmetric(pad_transform' * gate_probabilities_cov * pad_transform)
     end
     return gate_probabilities_cov::Symmetric{Float64, Matrix{Float64}}
 end

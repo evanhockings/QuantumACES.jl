@@ -476,12 +476,12 @@ function get_noise_score(aces_data::ACESData, merit::Merit)
 end
 
 """
-    get_model_score(aces_data::ACESData; projected::Bool = false)
+    get_model_violation(aces_data::ACESData; projected::Bool = false)
 
 Returns the noise model violation z-score for the generalised residual sum of squares corresponding to the noise estimates stored in `aces_data`, given the design also stored in `aces_data`, calculating with the projected gate eigenvalues if `projected` is `true`.
 """
-function get_model_score(aces_data::ACESData; projected::Bool = false)
-    model_score_coll =
-        get_model_score(aces_data.d, aces_data.noise_est_coll; projected = projected)
-    return model_score_coll::Matrix{Float64}
+function get_model_violation(aces_data::ACESData; projected::Bool = false)
+    model_violation_coll =
+        get_model_violation(aces_data.d, aces_data.noise_est_coll; projected = projected)
+    return model_violation_coll::Matrix{Float64}
 end

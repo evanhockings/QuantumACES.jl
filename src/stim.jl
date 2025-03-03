@@ -59,11 +59,11 @@ function Base.show(io::IO, memory_data::MemoryData)
     # Print the memory summary data
     digits = 4
     memory_x_errors_string = [
-        "$(round(100 * memory_x_errors[i], digits = digits)) ± $(round(100 * memory_x_errors_sem[i], digits = digits))%"
+        "($(round(100 * memory_x_errors[i], digits = digits)) ± $(round(100 * memory_x_errors_sem[i], digits = digits)))%"
         for i in 1:decoder_num
     ]
     memory_z_errors_string = [
-        "$(round(100 * memory_z_errors[i], digits = digits)) ± $(round(100 * memory_z_errors_sem[i], digits = digits))%"
+        "($(round(100 * memory_z_errors[i], digits = digits)) ± $(round(100 * memory_z_errors_sem[i], digits = digits)))%"
         for i in 1:decoder_num
     ]
     pretty_table(
@@ -134,11 +134,11 @@ function Base.show(io::IO, memory_summary::MemorySummary)
     memory_z_errors_sem =
         [sqrt(memory_summary.memory_z_errors_cov[i, i] / shots) for i in 1:decoder_num]
     memory_x_errors_string = [
-        "$(round(100 * memory_summary.memory_x_errors[i], digits = digits)) ± $(round(100 * memory_z_errors_sem[i], digits = digits))%"
+        "($(round(100 * memory_summary.memory_x_errors[i], digits = digits)) ± $(round(100 * memory_z_errors_sem[i], digits = digits)))%"
         for i in 1:decoder_num
     ]
     memory_z_errors_string = [
-        "$(round(100 * memory_summary.memory_z_errors[i], digits = digits)) ± $(round(100 * memory_x_errors_sem[i], digits = digits))%"
+        "($(round(100 * memory_summary.memory_z_errors[i], digits = digits)) ± $(round(100 * memory_x_errors_sem[i], digits = digits)))%"
         for i in 1:decoder_num
     ]
     pretty_table(
@@ -290,10 +290,8 @@ function get_stim_circuit(
         string_vector[i] =
             join(noise_string_vector) *
             join(gate_string_vector) *
-            join(meas_noise_string_vector)
-        if i < length(circuit)
-            string_vector[i] = string_vector[i] * "TICK\n"
-        end
+            join(meas_noise_string_vector) *
+            "TICK\n"
     end
     # Generate the qubit coordinates
     if haskey(extra_fields, :code_param)
@@ -488,7 +486,7 @@ function get_stim_measure_detectors(
             measure_list[idx] = "$(gate.type) $(gate.targets[1])\n"
         end
     end
-    stim_measure = "TICK\n" * join(measure_list)
+    stim_measure = join(measure_list)
     # Construct the detectors
     stim_detectors =
         "SHIFT_COORDS(0, 0, 1)\n" * get_stim_detectors(
