@@ -148,7 +148,7 @@ Therefore, you may need to manually supply `python_exe` for the Python version `
 python_exe = homedir() * "/.pyenv/versions/<version>/bin/python"
 ```
 
-## Related work
+## Attribution
 
 The methods used in this package are based on [arXiv:2404.06545](https://arxiv.org/abs/2404.06545) and [arXiv:2502.21044](https://arxiv.org/abs/2502.21044), and they build on the original ACES protocol introduced in [arXiv:2108.05803](https://arxiv.org/abs/2108.05803).
 The code for [arXiv:2404.06545](https://arxiv.org/abs/2404.06545) can be found in the `scalable_aces` folder on the [scalable_aces](https://github.com/evanhockings/QuantumACES.jl/tree/scalable_aces) branch.
