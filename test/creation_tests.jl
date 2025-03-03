@@ -75,6 +75,7 @@ function example_circuit(example_param::ExampleParameters)
     ]
     layer_types = [two_qubit_type, two_qubit_type, single_qubit_type]
     layer_times = get_layer_times(layer_types, layer_time_dict)
+    extra_fields = Dict{Symbol, Any}()
     # Pad each layer with identity gates if appropriate
     if pad_identity
         circuit = [pad_layer(l) for l in circuit]
@@ -83,6 +84,7 @@ function example_circuit(example_param::ExampleParameters)
         circuit::Vector{Layer},
         layer_types::Vector{Symbol},
         layer_times::Vector{Float64},
+        extra_fields::Dict{Symbol, Any},
     )
 end
 # Construct the circuit struct
@@ -95,14 +97,14 @@ function QuantumACES.get_circuit(
                      false,
     strict::Bool = false,
 ) where {T <: AbstractNoiseParameters}
-    # Construct the circuit
-    (circuit, layer_types, layer_times) = example_circuit(example_param)
+    (circuit, layer_types, layer_times, extra_fields) = example_circuit(example_param)
     c = get_circuit(
         circuit,
         layer_types,
         layer_times,
         noise_param;
         circuit_param = example_param,
+        extra_fields = extra_fields,
         noisy_prep = noisy_prep,
         noisy_meas = noisy_meas,
         combined = combined,
@@ -119,23 +121,36 @@ struct PhenomenologicalParameters <: AbstractNoiseParameters
         # Check noise parameters are present
         @assert haskey(params, :p) "The phenomenological gate error probability is missing."
         @assert haskey(params, :m) "The measurement error probability is missing."
+        @assert haskey(params, :m_r) "The measurement reset error probability is missing."
+        @assert haskey(params, :m_i) "The measurement idle error probability is missing."
         @assert haskey(params, :combined) "The combined flag is missing."
         p = params[:p]
         m = params[:m]
+        m_r = params[:m_r]
+        m_i = params[:m_i]
         combined = params[:combined]
         # Check some conditions
         @assert (p >= 0) && (p <= 1 / 10) "The phenomenological gate error probability $(p) is out of bounds."
         @assert (m >= 0) && (m <= 1 / 2) "The phenomenological measurement error probability $(m) is out of bounds."
+        @assert (m_r >= 0) && (m_r <= 1 / 2) "The phenomenological measurement reset error probability $(m_r) is out of bounds."
+        @assert (m_i >= 0) && (m_i <= 1 / 4) "The phenomenological measurement idle error probability $(m_i) is out of bounds."
         @assert typeof(combined) == Bool "The combined flag $(combined) is not a Bool."
         # Return parameters with the appropriate name
         sigdigits = 3
-        new_noise_name = "phenomenological_$(round(p; sigdigits = sigdigits))_$(round(m; sigdigits = sigdigits))_$(combined)"
+        new_noise_name = "phenomenological_$(round(p; sigdigits = sigdigits))_$(round(m; sigdigits = sigdigits))_$(round(m_r; sigdigits = sigdigits))_$(round(m_i; sigdigits = sigdigits))_$(combined)"
         return new(params, new_noise_name)::PhenomenologicalParameters
     end
 end
 # Construct the phenomenological noise model parameters
-function get_phen_param(p::Float64, m::Float64; combined::Bool = false)
-    params = Dict{Symbol, Any}(:p => p, :m => m, :combined => combined)
+function get_phen_param(
+    p::Float64,
+    m::Float64;
+    m_r::Real = m,
+    m_i::Real = m / 3,
+    combined::Bool = false,
+)
+    params =
+        Dict{Symbol, Any}(:p => p, :m => m, :m_r => m_r, :m_i => m_i, :combined => combined)
     phen_param = PhenomenologicalParameters(params, "phenomenological")
     return phen_param::PhenomenologicalParameters
 end
@@ -144,11 +159,12 @@ function QuantumACES.init_gate_probabilities(
     total_gates::Vector{Gate},
     phen_param::PhenomenologicalParameters,
 )
-    # Extract the parameters for generating the noise
+    # Set up variables
     p = phen_param.params[:p]
     m = phen_param.params[:m]
-    im = phen_param.params[:m] / 3
-    # Determine the weight of the error corresponding to each gate error probability
+    m_r = phen_param.params[:m_r]
+    m_i = phen_param.params[:m_i]
+    # Determine the weights of the Pauli errors
     one_qubit_support_size = ones(3)
     n = 2
     two_qubit_support_size = Vector{Int}()
@@ -163,10 +179,12 @@ function QuantumACES.init_gate_probabilities(
     # Generate the noise
     gate_probabilities = Dict{Gate, Vector{Float64}}()
     for gate in total_gates
-        if is_spam(gate) || is_mid_meas_reset(gate)
+        if is_spam(gate)
             gate_probs = [m]
+        elseif is_mid_meas_reset(gate)
+            gate_probs = [m_r]
         elseif is_meas_idle(gate)
-            gate_probs = im * one_qubit_support_size
+            gate_probs = m_i .^ one_qubit_support_size
         else
             gate_support_size = length(gate.targets)
             if gate_support_size == 1
@@ -177,7 +195,7 @@ function QuantumACES.init_gate_probabilities(
                 throw(error("The gate $(gate) is unsupported."))
             end
         end
-        @assert sum(gate_probs) < 1 "The probabilities $(gate_probs) sum to more than 1; change the input parameters."
+        @assert sum(gate_probs) < 1
         gate_probabilities[gate] = [1 - sum(gate_probs); gate_probs]
     end
     return gate_probabilities::Dict{Gate, Vector{Float64}}
@@ -189,11 +207,13 @@ end
     dep_param = get_dep_param(r_1, r_2, r_m)
     # Generate the circuit
     example_param = get_example_param()
-    circuit_example = get_circuit(example_param, dep_param)
+    example_dep = get_circuit(example_param, dep_param)
+    example_phen = get_circuit(example_param, phen_param)
     # Generate the experimental design
-    d = generate_design(circuit_example)
+    d = generate_design(example_dep)
     display(d)
     # Update the noise to the phenomenological noise model
+    d_phen = generate_design(example_phen, d)
     d_phen = update_noise(d, phen_param)
     merit_phen = calc_merit(d_phen)
     display(merit_phen)

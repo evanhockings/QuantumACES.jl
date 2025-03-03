@@ -4,15 +4,13 @@ CollapsedDocStrings = true
 
 # Public API
 
-Documentation for the public API of `QuantumACES.jl`.
+Documentation for the public API of `QuantumACES`.
 
 To use the internal API, which is documented in the internal API section, it may be convenient to import the module by running the following.
 
 ```julia
 import QuantumACES as ACES
 ```
-
-Then you can prefix internal functions with `ACES.` rather than `QuantumACES.`.
 
 ## QuantumACES.jl
 

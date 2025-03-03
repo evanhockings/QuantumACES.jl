@@ -1,7 +1,7 @@
 """
     GateIndex
 
-A struct that stores all of the different indices of a gate.
+An object that stores all of the different indices of a gate.
 
 # Fields
 
@@ -28,7 +28,7 @@ end
 """
     GateData
 
-A struct that stores all of the gate indices and data.
+An object that stores all of the gate indices and data.
 
 # Fields
 

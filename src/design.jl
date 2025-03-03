@@ -952,6 +952,7 @@ end
 """
     generate_design(c::AbstractCircuit, tuple_set::Vector{Vector{Int}}; kwargs...)
     generate_design(c::AbstractCircuit, tuple_set_data::TupleSetData; kwargs...)
+    generate_design(c::AbstractCircuit, d::Design; kwargs...)
     generate_design(c::AbstractCircuit; kwargs...)
 
 Returns a [`Design`](@ref) object containing all relevant information describing the experimental design, including the design matrix.
@@ -961,6 +962,7 @@ Returns a [`Design`](@ref) object containing all relevant information describing
   - `c::AbstractCircuit`: Circuit for which the design matrix is to be generated.
   - `tuple_set::Vector{Vector{Int}}`: Tuple set arranging the circuit layers that is used to generate the experimental design.
   - `tuple_set_data::TupleSetData`: [`TupleSetData`](@ref) object that generates the tuple set.
+  - `d::Design`: Old design object whose parameters are used to generate the design for the circuit `c`.
 
 # Keyword arguments
 
@@ -1155,6 +1157,29 @@ function generate_design(
     )
     # Return the results
     return d::Design
+end
+function generate_design(
+    c::T,
+    d::Design;
+    N_warn::Integer = 10^5,
+    full_covariance::Bool = (c.gate_data.N < N_warn ? true : false),
+    weight_experiments::Bool = true,
+    diagnostics::Bool = false,
+    save_data::Bool = false,
+) where {T <: AbstractCircuit}
+    # Generate the design
+    d_new = generate_design(
+        c,
+        d.tuple_set_data;
+        shot_weights = d.shot_weights,
+        N_warn = N_warn,
+        full_covariance = full_covariance,
+        weight_experiments = weight_experiments,
+        diagnostics = diagnostics,
+        save_data = save_data,
+    )
+    # Return the results
+    return d_new::Design
 end
 
 """
