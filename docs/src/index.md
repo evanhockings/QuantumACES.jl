@@ -27,6 +27,6 @@ If you wish to contribute to this package, please refer to the `CONTRIBUTING.md`
 ## Index
 
 The [Package Guide](@ref) describes how you can start using `QuantumACES`.
-The [Public API](@ref) documents the public functions and types, and the [Internal API](@ref) is also documented.
+The [Public API](@ref) documents the public functions and types, and the internal API is also documented.
 
 The [Package Performance](@ref) section describes some important performance optimisations in `QuantumACES`.
