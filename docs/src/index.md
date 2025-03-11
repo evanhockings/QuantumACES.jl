@@ -18,7 +18,9 @@ This subsequently enables:
   - Creating Pauli frame randomised ACES experimental designs, exporting them to Qiskit circuits, and processing the results, enabling implementation on quantum devices.
 
 The methods used in this package are based on [arXiv:2404.06545](https://arxiv.org/abs/2404.06545) and [arXiv:2502.21044](https://arxiv.org/abs/2502.21044), and they build on the original ACES protocol introduced in [arXiv:2108.05803](https://arxiv.org/abs/2108.05803).
+
 The code for [arXiv:2404.06545](https://arxiv.org/abs/2404.06545) can be found in the `scalable_aces` folder on the [scalable_aces](https://github.com/evanhockings/QuantumACES.jl/tree/scalable_aces) branch.
+
 The code for [arXiv:2502.21044](https://arxiv.org/abs/2502.21044) can be found in the `aces_decoding` folder on the [aces_decoding](https://github.com/evanhockings/QuantumACES.jl/tree/aces_decoding) branch.
 
 If you find this package helpful for your research, please cite it using the supplied `CITATION.cff` file, and consider citing the associated papers if appropriate.
@@ -26,7 +28,8 @@ If you wish to contribute to this package, please refer to the `CONTRIBUTING.md`
 
 ## Index
 
-The [Package Guide](@ref) describes how you can start using `QuantumACES`.
+The [Package Guide](@ref) describes how you can start using `QuantumACES`, and [Creating Circuits and Noise Models](@ref) described the creation of new circuits and noise models to which the methods of `QuantumACES` can be applied.
+
 The [Public API](@ref) documents the public functions and types, and the internal API is also documented.
 
 The [Package Performance](@ref) section describes some important performance optimisations in `QuantumACES`.

@@ -24,7 +24,7 @@ This subsequently enables:
   - Simulating memory experiments for syndrome extraction circuits using Stim, and then decoding with PyMatching or BeliefMatching with decoder priors informed by a range of noise models, including ACES noise estimates.
   - Creating Pauli frame randomised ACES experimental designs, exporting them to Qiskit circuits, and processing the results, enabling implementation on quantum devices.
 
-## Package usage
+## Example usage
 
 First parameterise a depolarising noise model with single-qubit gate infidelity `r_1`, two-qubit gate infidelity `r_2`, and measurement infidelity `r_m`, and a log-normal random Pauli noise model with the same gate infidelities and a standard deviation of the underlying normal distributions `total_std_log`, specifying the seed `seed` for reproducibility.
 
@@ -58,10 +58,21 @@ Now we can generate an experimental design for this circuit.
 d = generate_design(circuit_dep)
 ```
 
-Alternatively, we can optimise an experimental design to improve its sample efficiency, configuring the optimisation with the parameters associated with [`OptimOptions`](@ref).
+Alternatively, we can optimise an experimental design to improve its sample efficiency, configuring the optimisation with the parameters associated with `OptimOptions`.
 
 ```julia
 d = optimise_design(circuit_dep; options = OptimOptions(; seed = seed))
+```
+
+There are a number of options that allow you to reduce the optimisation time.
+For example, we can disable cyclic coordinate descent optimisation of the circuit depth of repeated tuples in the design by setting `max_cycles = 0`.
+We can also allow the greedy search over ordinary tuples to terminate once they are left unchanged by single excursion in the search by setting `excursions_unchanged = 1`.
+
+```julia
+d = optimise_design(
+    circuit_dep;
+    options = OptimOptions(; max_cycles = 0, excursions_unchanged = 1, seed = seed),
+)
 ```
 
 This experimental design can be transferred to the circuit with the log-normal Pauli noise model.
@@ -151,7 +162,9 @@ python_exe = homedir() * "/.pyenv/versions/<version>/bin/python"
 ## Attribution
 
 The methods used in this package are based on [arXiv:2404.06545](https://arxiv.org/abs/2404.06545) and [arXiv:2502.21044](https://arxiv.org/abs/2502.21044), and they build on the original ACES protocol introduced in [arXiv:2108.05803](https://arxiv.org/abs/2108.05803).
+
 The code for [arXiv:2404.06545](https://arxiv.org/abs/2404.06545) can be found in the `scalable_aces` folder on the [scalable_aces](https://github.com/evanhockings/QuantumACES.jl/tree/scalable_aces) branch.
+
 The code for [arXiv:2502.21044](https://arxiv.org/abs/2502.21044) can be found in the `aces_decoding` folder on the [aces_decoding](https://github.com/evanhockings/QuantumACES.jl/tree/aces_decoding) branch.
 
 If you find this package helpful for your research, please cite it using the supplied `CITATION.cff` file, and consider citing the associated papers if appropriate.

@@ -15,7 +15,11 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
-        "Manual" => Any["Guide" => "guide.md", "Performance" => "performance.md"],
+        "Manual" => Any[
+            "Package Guide" => "guide.md",
+            "Creating Circuits and Noise Models" => "creation.md",
+            "Package Performance" => "performance.md",
+        ],
         "Reference" => Any[
             "Public API" => "public.md",
             "Internal API" => Any[
