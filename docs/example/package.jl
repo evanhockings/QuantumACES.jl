@@ -18,6 +18,11 @@ display(d)
 # Optimise a design for this circuit
 d = optimise_design(circuit_dep; options = OptimOptions(; seed = seed))
 display(d)
+# Quickly optimise a design for this circuit
+d = optimise_design(
+    circuit_dep;
+    options = OptimOptions(; max_cycles = 0, excursions_unchanged = 1, seed = seed),
+)
 # Simulate repeated noise characterisation experiments
 d_log = generate_design(circuit_log, d)
 d_log = update_noise(d, log_param)

@@ -21,11 +21,11 @@ bibliography: paper.bib
 
 QuantumACES is a Julia [@bezanson_julia_2017] package for designing, simulating, and performing scalable Pauli noise characterisation experiments for quantum computers.
 Noise in quantum devices is the key obstacle to large-scale quantum computation.
-Consequently, quantum computers will require fault-tolerant architectures that replace physical qubits and operations with redundantly-encoded logical equivalents, which entails regularly measuring the parity checks of quantum error correcting codes [@shor_faulttolerant_1996; @gottesman_introduction_2010; @aliferis_introduction_2013].
+Consequently, quantum computers will require fault-tolerant architectures that replace physical qubits and operations with redundantly encoded logical equivalents, which entails regularly measuring the parity checks of quantum error correcting codes [@shor_faulttolerant_1996; @gottesman_introduction_2010; @aliferis_introduction_2013].
 Decoders process the resulting error syndrome data and attempt to infer the most likely underlying physical errors in the quantum device.
 Subsequently, they determine correction operations that attempt to preserve logical information.
 The noise estimates produced by QuantumACES can inform decoders of the likelihood of physical error configurations in a quantum device [@tuckett_faulttolerant_2020; @chen_calibrated_2022; @sundaresan_demonstrating_2023; @tiurev_correcting_2023; @higgott_improved_2023], enabling noise-aware decoding.
-They can also be used to generate simulated data for training more accurate decoders, such as [@bausch_learning_2024], verify appropriate device calibration, and inform the co-design of quantum error correcting codes, decoders, fault-tolerant circuits, and quantum devices.
+They can also be used to generate simulated data for training more accurate decoders, such as in [@bausch_learning_2024], to verify appropriate device calibration, and to inform the co-design of quantum error correcting codes, decoders, fault-tolerant circuits, and quantum devices.
 
 QuantumACES designs experiments to characterise Pauli noise in stabiliser circuits within the framework of averaged circuit eigenvalue sampling (ACES) [@flammia_averaged_2022], following the theory and protocol outlined in [@hockings_scalable_2025].
 Stabiliser circuits are a restricted class of quantum circuits that admit efficient classical simulation [@aaronson_improved_2004; @gottesman_stabilizer_1997], including with Pauli noise.
@@ -51,9 +51,9 @@ It also provides an interface with the open-source Python package Qiskit [@javad
 The utility of detailed and scalable Pauli noise characterisation methods grows as experimental progress pushes quantum devices towards scales of hundreds of qubits and initial demonstrations of fault tolerance.
 QuantumACES enables noise characterisation and noise-aware decoding in this context, as demonstrated in [@hockings_scalable_2025] and [@hockings_improving_2025], respectively.
 While there are several software packages for benchmarking and noise characterisation, there are no open-source packages capable of detailed and scalable Pauli noise characterisation of quantum devices.
-Forest-Benchmarking [@combes_forest_2019] is an open-source Python package containing many routines for quantum characterisation, verification, and validation (QCVV), but its detailed noise characterisation techniques are not scalable.
-Gate set tomography (GST) [@nielsen_gate_2021] is a principled and extremely detailed noise characterisation protocol implemented by the open-source Python package pyGSTi [@nielsen_pygsti_2022], but it is limited to characterising very small numbers of qubits.
-Cycle error reconstruction (CER) [@carignan-dugas_error_2023] is the noise characterisation protocol whose capabilities are most similar to ACES, but it is implemented by the commercial software True-Q [@beale_trueq_2020].
+Forest-Benchmarking [@combes_forest_2019] is an open-source Python package containing many routines for quantum characterisation, verification, and validation, but its detailed noise characterisation techniques are not scalable.
+Gate set tomography [@nielsen_gate_2021] is a principled and extremely detailed noise characterisation protocol implemented by the open-source Python package pyGSTi [@nielsen_pygsti_2022], but it is limited to characterising very small numbers of qubits.
+Cycle error reconstruction [@carignan-dugas_error_2023] is the noise characterisation protocol whose capabilities are most similar to ACES, but it is implemented by the commercial software True-Q [@beale_trueq_2020].
 
 # Acknowledgements
 
