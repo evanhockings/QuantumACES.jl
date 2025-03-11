@@ -4,13 +4,13 @@
 At a high level, we create new parameter types for the circuit or noise model and then create new methods for the functions [`get_circuit`](@ref) and [`init_gate_probabilities`](@ref), respectively, that take these parameter types as arguments.
 Then [`get_circuit`](@ref) uses the circuit and noise model parameters to create a [`Circuit`](@ref) object.
 
-The [`Circuit`](@ref) object enables the functionality we saw in [Package usage](@ref), with two exceptions.
+The [`Circuit`](@ref) object enables the functionality we saw in [Example usage](@ref), with two exceptions.
 First, calculating performance predictions requires the circuit to be parameterised by a `dist` parameter, typically the distance of the code underlying the syndrome extraction circuit.
 Second, simulating memory experiments in Stim requires the circuit to be a syndrome extraction annotated with the appropriate information.
 The [`Circuit`](@ref) object contains an `extra_fields` field which is a dictionary that can store additional parameters to enable functionality such as this.
 In particular, syndrome extraction circuits must store a [`CodeParameters`](@ref)object in this dictionary, which is then used to generate the detectors in Stim for memory experiment circuits, enabling decoding.
 
-The example code shown below can be found [here](../example/creation.jl).
+The example code shown below can be found [here](./docs/example/creation.jl).
 
 Let us begin by creating a new circuit, following the example circuit shown in Figure 2 of [arXiv:2404.06545](https://arxiv.org/abs/2404.06545).
 The first step is to create a parameter object for the circuit, which must be a subtype of [`AbstractCircuitParameters`](@ref) and contain the necessary fields `params` and `circuit_name`, using the `StructEquality` package to automatically generate hash and equality relationships for the object to enable comparisons for the resulting [`Circuit`](@ref) objects.
