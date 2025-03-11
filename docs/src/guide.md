@@ -70,8 +70,6 @@ Beware that the examples shown below can take a long time to run.
 Ensure that Julia is set up to use as many threads as your CPU can handle.
 For example usage that is faster to run, see [Creating Circuits and Noise Models](@ref).
 
-The example code shown below can be found [here](./docs/example/package.jl).
-
 First parameterise a depolarising noise model with single-qubit gate infidelity `r_1`, two-qubit gate infidelity `r_2`, and measurement infidelity `r_m`, and a log-normal random Pauli noise model with the same gate infidelities and a standard deviation of the underlying normal distributions `total_std_log`, specifying the seed `seed` for reproducibility.
 
 ```julia
