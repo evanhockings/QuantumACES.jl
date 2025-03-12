@@ -30,11 +30,12 @@ If you wish to contribute to this package, please refer to the `CONTRIBUTING.md`
 
 The [Package Guide](@ref) describes how you can start using `QuantumACES`, and [Creating Circuits and Noise Models](@ref) described the creation of new circuits and noise models to which the methods of `QuantumACES` can be applied.
 
-[Reference](@ref) documents the functions and types in `QuantumACES`, including internal functions.
-To use the internal functions, it may be convenient to import the module by running the following.
+The [Package Performance](@ref) section describes some important performance optimisations in `QuantumACES`.
+
+The package reference documents the functions and types in `QuantumACES`, including internal functions.
+When making heavy use of the internal functions, you may find it convenient to rename the package as `ACES` as follows.
 
 ```julia
+using QuantumACES
 import QuantumACES as ACES
 ```
-
-The [Package Performance](@ref) section describes some important performance optimisations in `QuantumACES`.
