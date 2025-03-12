@@ -6,7 +6,7 @@ CollapsedDocStrings = true
 
 ## Public functions
 
-```@autodocs; canonical=false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["src/circuits/heavy_hex.jl"]
 Private = false

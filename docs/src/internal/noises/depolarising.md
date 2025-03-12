@@ -6,7 +6,7 @@ CollapsedDocStrings = true
 
 ## Public functions
 
-```@autodocs; canonical=false
+```@autodocs
 Modules = [QuantumACES]
 Pages = ["src/noises/depolarising.jl"]
 Private = false

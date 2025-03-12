@@ -83,7 +83,7 @@ A gate in a stabiliser circuit.
   - `M` or `MZ`: Measure in the computational Pauli Z basis.
   - `MX`: Measure in the Pauli X basis.
   - `MY`: Measure in the Pauli Y basis.
-  - `R`: Reset to the computational Z basis.
+  - `R`: Reset in the computational Z basis.
 """
 struct Gate
     type::String
