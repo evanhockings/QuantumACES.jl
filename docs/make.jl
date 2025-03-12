@@ -13,14 +13,14 @@ makedocs(;
         assets = String[],
         size_threshold = 2^20,
     ),
-    pages = [
+    pages = Any[
         "Home" => "index.md",
         "Manual" => Any[
             "Package Guide" => "guide.md",
             "Creating Circuits and Noise Models" => "creation.md",
             "Package Performance" => "performance.md",
         ],
-        "Reference" => Any[
+        "Reference" => Any["API" => Any[
             "QuantumACES.jl" => "internal/QuantumACES.md",
             "tableau.jl" => "internal/tableau.md",
             "noise.jl" => "internal/noise.md",
@@ -44,7 +44,7 @@ makedocs(;
             "kwargs.jl" => "internal/kwargs.md",
             "utils.jl" => "internal/utils.md",
             "io.jl" => "internal/io.md",
-        ],
+        ],],
     ],
 )
 
