@@ -7,13 +7,11 @@ tags:
 authors:
   - name: Evan T. Hockings
     orcid: 0000-0002-5890-5705
-    affiliation: 1, 2
+    affiliation: 1
 affiliations:
-  - name: School of Physics, The University of Sydney, Sydney, NSW 2006, Australia
+  - name: Australian Research Council (ARC) Centre of Excellence for Engineered Quantum Systems, School of Physics, The University of Sydney, Sydney, New South Wales 2006, Australia
     index: 1
-  - name: ARC Centre of Excellence for Engineered Quantum Systems
-    index: 2
-date: 3 March 2025
+date: 22 March 2025
 bibliography: paper.bib
 ---
 
