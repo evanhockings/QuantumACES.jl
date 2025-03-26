@@ -1,0 +1,3909 @@
+\RequirePackage{luatex85}
+\documentclass[tikz]{standalone}
+% Default preamble
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+\usepgfplotslibrary{groupplots}
+\usepgfplotslibrary{polar}
+\usepgfplotslibrary{smithchart}
+\usepgfplotslibrary{statistics}
+\usepgfplotslibrary{dateplot}
+\usepgfplotslibrary{ternary}
+% Custom preamble from global variable:
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{backgrounds}
+\usepgfplotslibrary{patchplots}
+\usepgfplotslibrary{fillbetween}
+\pgfplotsset{%
+    layers/standard/.define layer set={%
+        background,axis background,axis grid,axis ticks,axis lines,axis tick labels,pre main,main,axis descriptions,axis foreground%
+    }{
+        grid style={/pgfplots/on layer=axis grid},%
+        tick style={/pgfplots/on layer=axis ticks},%
+        axis line style={/pgfplots/on layer=axis lines},%
+        label style={/pgfplots/on layer=axis descriptions},%
+        legend style={/pgfplots/on layer=axis descriptions},%
+        title style={/pgfplots/on layer=axis descriptions},%
+        colorbar style={/pgfplots/on layer=axis descriptions},%
+        ticklabel style={/pgfplots/on layer=axis tick labels},%
+        axis background@ style={/pgfplots/on layer=axis background},%
+        3d box foreground style={/pgfplots/on layer=axis foreground},%
+    },
+}
+
+\begin{document}
+\begin{tikzpicture}[/tikz/background rectangle/.style={fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={0.0}, draw opacity={0.0}}, show background rectangle]
+\begin{axis}[point meta max={nan}, point meta min={nan}, legend cell align={left}, legend columns={1}, title={}, title style={at={{(0.5,1)}}, anchor={south}, font={{\fontsize{10 pt}{13.0 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}, align={center}}, legend style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={0.0}, text opacity={1.0}, font={{\fontsize{7 pt}{9.1 pt}\selectfont}}, text={rgb,1:red,0.0;green,0.0;blue,0.0}, cells={anchor={west}}, at={(0.98, 0.98)}, anchor={north east}}, axis background/.style={fill={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={0.0}}, anchor={north west}, xshift={0.0mm}, yshift={-0.0mm}, width={83.6059609796596mm}, height={65.6873100871731mm}, scaled x ticks={false}, xlabel={$\textrm{Circuit eigenvalue estimation error}\left(\times 10^3\right)$}, x tick style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}}, x tick label style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}, rotate={0}}, xlabel style={at={(ticklabel cs:0.5)}, anchor=near ticklabel, at={{(ticklabel cs:0.5)}}, anchor={near ticklabel}, font={{\fontsize{9 pt}{11.700000000000001 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, xmajorgrids={false}, xmin={-4}, xmax={4}, xticklabels={{$-4$,$-3$,$-2$,$-1$,$0$,$1$,$2$,$3$,$4$}}, xtick={{-4.0,-3.0,-2.0,-1.0,0.0,1.0,2.0,3.0,4.0}}, xtick align={outside}, xticklabel style={font={{\fontsize{7 pt}{9.1 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, x grid style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.1}, line width={0.5}, solid}, axis x line*={left}, x axis line style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid}, scaled y ticks={false}, ylabel={Probability}, y tick style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}}, y tick label style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}, rotate={0}}, ylabel style={at={(ticklabel cs:0.5)}, anchor=near ticklabel, at={{(ticklabel cs:0.5)}}, anchor={near ticklabel}, font={{\fontsize{9 pt}{11.700000000000001 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, ymajorgrids={false}, ymin={0}, ymax={0.16}, yticklabels={{$0.00$,$0.04$,$0.08$,$0.12$,$0.16$}}, ytick={{0.0,0.04,0.08,0.12,0.16}}, ytick align={outside}, yticklabel style={font={{\fontsize{7 pt}{9.1 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, y grid style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.1}, line width={0.5}, solid}, axis y line*={left}, y axis line style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid}, colorbar={false}]
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid]
+        table[row sep={\\}]
+        {
+            \\
+            -4.0  0.00783277270543008  \\
+            -4.0  0.0  \\
+            -3.9000000000000004  0.0  \\
+            -3.9000000000000004  0.00783277270543008  \\
+            -4.0  0.00783277270543008  \\
+        }
+        ;
+    \addlegendentry {$S=10^{6}$}
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.8999999999999995  0.007960916226173313  \\
+            -3.8999999999999995  0.0  \\
+            -3.8  0.0  \\
+            -3.8  0.007960916226173313  \\
+            -3.8999999999999995  0.007960916226173313  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.8  0.008041005926637835  \\
+            -3.8  0.0  \\
+            -3.7  0.0  \\
+            -3.7  0.008041005926637835  \\
+            -3.8  0.008041005926637835  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.7  0.00783277270543008  \\
+            -3.7  0.0  \\
+            -3.6000000000000005  0.0  \\
+            -3.6000000000000005  0.00783277270543008  \\
+            -3.7  0.00783277270543008  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.5999999999999996  0.008761813230818516  \\
+            -3.5999999999999996  0.0  \\
+            -3.5  0.0  \\
+            -3.5  0.008761813230818516  \\
+            -3.5999999999999996  0.008761813230818516  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.5  0.008569597949703668  \\
+            -3.5  0.0  \\
+            -3.4000000000000004  0.0  \\
+            -3.4000000000000004  0.008569597949703668  \\
+            -3.5  0.008569597949703668  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.3999999999999995  0.008761813230818516  \\
+            -3.3999999999999995  0.0  \\
+            -3.3  0.0  \\
+            -3.3  0.008761813230818516  \\
+            -3.3999999999999995  0.008761813230818516  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.3  0.008809867051097228  \\
+            -3.3  0.0  \\
+            -3.2  0.0  \\
+            -3.2  0.008809867051097228  \\
+            -3.3  0.008809867051097228  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.2  0.009546692295370815  \\
+            -3.2  0.0  \\
+            -3.1000000000000005  0.0  \\
+            -3.1000000000000005  0.009546692295370815  \\
+            -3.2  0.009546692295370815  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.0999999999999996  0.008986064392119172  \\
+            -3.0999999999999996  0.0  \\
+            -3.0  0.0  \\
+            -3.0  0.008986064392119172  \\
+            -3.0999999999999996  0.008986064392119172  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.0  0.009642799935928238  \\
+            -3.0  0.0  \\
+            -2.9000000000000004  0.0  \\
+            -2.9000000000000004  0.009642799935928238  \\
+            -3.0  0.009642799935928238  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.8999999999999995  0.00961076405574243  \\
+            -2.8999999999999995  0.0  \\
+            -2.8  0.0  \\
+            -2.8  0.00961076405574243  \\
+            -2.8999999999999995  0.00961076405574243  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.8  0.010587858401409578  \\
+            -2.8  0.0  \\
+            -2.7  0.0  \\
+            -2.7  0.010587858401409578  \\
+            -2.8  0.010587858401409578  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.7  0.011036360724010891  \\
+            -2.7  0.0  \\
+            -2.6000000000000005  0.0  \\
+            -2.6000000000000005  0.011036360724010891  \\
+            -2.7  0.011036360724010891  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.5999999999999996  0.010924235143360564  \\
+            -2.5999999999999996  0.0  \\
+            -2.5  0.0  \\
+            -2.5  0.010924235143360564  \\
+            -2.5999999999999996  0.010924235143360564  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.5  0.01130866570559026  \\
+            -2.5  0.0  \\
+            -2.4000000000000004  0.0  \\
+            -2.4000000000000004  0.01130866570559026  \\
+            -2.5  0.01130866570559026  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.3999999999999995  0.010619894281595385  \\
+            -2.3999999999999995  0.0  \\
+            -2.3  0.0  \\
+            -2.3  0.010619894281595385  \\
+            -2.3999999999999995  0.010619894281595385  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.3  0.011372737465961876  \\
+            -2.3  0.0  \\
+            -2.2  0.0  \\
+            -2.2  0.011372737465961876  \\
+            -2.3  0.011372737465961876  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.2  0.011965401249399326  \\
+            -2.2  0.0  \\
+            -2.1000000000000005  0.0  \\
+            -2.1000000000000005  0.011965401249399326  \\
+            -2.2  0.011965401249399326  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.0999999999999996  0.011853275668748999  \\
+            -2.0999999999999996  0.0  \\
+            -1.9999999999999998  0.0  \\
+            -1.9999999999999998  0.011853275668748999  \\
+            -2.0999999999999996  0.011853275668748999  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.0  0.012477975332372257  \\
+            -2.0  0.0  \\
+            -1.9  0.0  \\
+            -1.9  0.012477975332372257  \\
+            -2.0  0.012477975332372257  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.9  0.012157616530514176  \\
+            -1.9  0.0  \\
+            -1.8000000000000003  0.0  \\
+            -1.8000000000000003  0.012157616530514176  \\
+            -1.9  0.012157616530514176  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.8  0.01351914143841102  \\
+            -1.8  0.0  \\
+            -1.7  0.0  \\
+            -1.7  0.01351914143841102  \\
+            -1.8  0.01351914143841102  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.6999999999999997  0.013278872337017458  \\
+            -1.6999999999999997  0.0  \\
+            -1.6  0.0  \\
+            -1.6  0.013278872337017458  \\
+            -1.6999999999999997  0.013278872337017458  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.6  0.013535159378503924  \\
+            -1.6  0.0  \\
+            -1.5  0.0  \\
+            -1.5  0.013535159378503924  \\
+            -1.6  0.013535159378503924  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.5  0.014223930802498798  \\
+            -1.5  0.0  \\
+            -1.4  0.0  \\
+            -1.4  0.014223930802498798  \\
+            -1.5  0.014223930802498798  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.4  0.014015697581291045  \\
+            -1.4  0.0  \\
+            -1.3000000000000003  0.0  \\
+            -1.3000000000000003  0.014015697581291045  \\
+            -1.4  0.014015697581291045  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.3  0.014384110203427839  \\
+            -1.3  0.0  \\
+            -1.2  0.0  \\
+            -1.2  0.014384110203427839  \\
+            -1.3  0.014384110203427839  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.1999999999999997  0.01419189492231299  \\
+            -1.1999999999999997  0.0  \\
+            -1.1  0.0  \\
+            -1.1  0.01419189492231299  \\
+            -1.1999999999999997  0.01419189492231299  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.1  0.014336056383149127  \\
+            -1.1  0.0  \\
+            -1.0  0.0  \\
+            -1.0  0.014336056383149127  \\
+            -1.1  0.014336056383149127  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.0  0.014880666346307863  \\
+            -1.0  0.0  \\
+            -0.8999999999999999  0.0  \\
+            -0.8999999999999999  0.014880666346307863  \\
+            -1.0  0.014880666346307863  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.9000000000000001  0.014960756046772385  \\
+            -0.9000000000000001  0.0  \\
+            -0.8  0.0  \\
+            -0.8  0.014960756046772385  \\
+            -0.9000000000000001  0.014960756046772385  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.8  0.015489348069838219  \\
+            -0.8  0.0  \\
+            -0.7  0.0  \\
+            -0.7  0.015489348069838219  \\
+            -0.8  0.015489348069838219  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.7  0.016930962678199584  \\
+            -0.7  0.0  \\
+            -0.5999999999999999  0.0  \\
+            -0.5999999999999999  0.016930962678199584  \\
+            -0.7  0.016930962678199584  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.6000000000000001  0.016498478295691173  \\
+            -0.6000000000000001  0.0  \\
+            -0.5  0.0  \\
+            -0.5  0.016498478295691173  \\
+            -0.6000000000000001  0.016498478295691173  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.5  0.01720326765977895  \\
+            -0.5  0.0  \\
+            -0.4  0.0  \\
+            -0.4  0.01720326765977895  \\
+            -0.5  0.01720326765977895  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.4  0.01601794009290405  \\
+            -0.4  0.0  \\
+            -0.29999999999999993  0.0  \\
+            -0.29999999999999993  0.01601794009290405  \\
+            -0.4  0.01601794009290405  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.3  0.016354316834855036  \\
+            -0.3  0.0  \\
+            -0.2  0.0  \\
+            -0.2  0.016354316834855036  \\
+            -0.3  0.016354316834855036  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.2  0.016946980618292487  \\
+            -0.2  0.0  \\
+            -0.10000000000000002  0.0  \\
+            -0.10000000000000002  0.016946980618292487  \\
+            -0.2  0.016946980618292487  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.1  0.016786801217363447  \\
+            -0.1  0.0  \\
+            0.0  0.0  \\
+            0.0  0.016786801217363447  \\
+            -0.1  0.016786801217363447  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.0  0.01718724971968605  \\
+            0.0  0.0  \\
+            0.1  0.0  \\
+            0.1  0.01718724971968605  \\
+            0.0  0.01718724971968605  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.10000000000000002  0.016162101553740187  \\
+            0.10000000000000002  0.0  \\
+            0.2  0.0  \\
+            0.2  0.016162101553740187  \\
+            0.10000000000000002  0.016162101553740187  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.2  0.0162101553740189  \\
+            0.2  0.0  \\
+            0.3  0.0  \\
+            0.3  0.0162101553740189  \\
+            0.2  0.0162101553740189  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.29999999999999993  0.017219285599871854  \\
+            0.29999999999999993  0.0  \\
+            0.4  0.0  \\
+            0.4  0.017219285599871854  \\
+            0.29999999999999993  0.017219285599871854  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.4  0.01752362646163703  \\
+            0.4  0.0  \\
+            0.5  0.0  \\
+            0.5  0.01752362646163703  \\
+            0.4  0.01752362646163703  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.5  0.015505366009931121  \\
+            0.5  0.0  \\
+            0.6000000000000001  0.0  \\
+            0.6000000000000001  0.015505366009931121  \\
+            0.5  0.015505366009931121  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.5999999999999999  0.01588979657216082  \\
+            0.5999999999999999  0.0  \\
+            0.7  0.0  \\
+            0.7  0.01588979657216082  \\
+            0.5999999999999999  0.01588979657216082  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.7  0.014576325484542687  \\
+            0.7  0.0  \\
+            0.8  0.0  \\
+            0.8  0.014576325484542687  \\
+            0.7  0.014576325484542687  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.8  0.016306263014576324  \\
+            0.8  0.0  \\
+            0.9000000000000001  0.0  \\
+            0.9000000000000001  0.016306263014576324  \\
+            0.8  0.016306263014576324  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.8999999999999999  0.016866890917827965  \\
+            0.8999999999999999  0.0  \\
+            1.0  0.0  \\
+            1.0  0.016866890917827965  \\
+            0.8999999999999999  0.016866890917827965  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.015425276309466602  \\
+            1.0  0.0  \\
+            1.1  0.0  \\
+            1.1  0.015425276309466602  \\
+            1.0  0.015425276309466602  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.1  0.015329168668909177  \\
+            1.1  0.0  \\
+            1.1999999999999997  0.0  \\
+            1.1999999999999997  0.015329168668909177  \\
+            1.1  0.015329168668909177  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.2  0.015024827807144  \\
+            1.2  0.0  \\
+            1.3  0.0  \\
+            1.3  0.015024827807144  \\
+            1.2  0.015024827807144  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.3000000000000003  0.015489348069838219  \\
+            1.3000000000000003  0.0  \\
+            1.4  0.0  \\
+            1.4  0.015489348069838219  \\
+            1.3000000000000003  0.015489348069838219  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.4  0.013615249078968444  \\
+            1.4  0.0  \\
+            1.5  0.0  \\
+            1.5  0.013615249078968444  \\
+            1.4  0.013615249078968444  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.5  0.013935607880826525  \\
+            1.5  0.0  \\
+            1.6  0.0  \\
+            1.6  0.013935607880826525  \\
+            1.5  0.013935607880826525  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.6  0.013182764696460035  \\
+            1.6  0.0  \\
+            1.6999999999999997  0.0  \\
+            1.6999999999999997  0.013182764696460035  \\
+            1.6  0.013182764696460035  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.7  0.013150728816274226  \\
+            1.7  0.0  \\
+            1.8  0.0  \\
+            1.8  0.013150728816274226  \\
+            1.7  0.013150728816274226  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.8000000000000003  0.012029473009770943  \\
+            1.8000000000000003  0.0  \\
+            1.9  0.0  \\
+            1.9  0.012029473009770943  \\
+            1.8000000000000003  0.012029473009770943  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.9  0.012189652410699983  \\
+            1.9  0.0  \\
+            2.0  0.0  \\
+            2.0  0.012189652410699983  \\
+            1.9  0.012189652410699983  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.9999999999999998  0.012622136793208392  \\
+            1.9999999999999998  0.0  \\
+            2.0999999999999996  0.0  \\
+            2.0999999999999996  0.012622136793208392  \\
+            1.9999999999999998  0.012622136793208392  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.1000000000000005  0.011933365369213519  \\
+            2.1000000000000005  0.0  \\
+            2.2  0.0  \\
+            2.2  0.011933365369213519  \\
+            2.1000000000000005  0.011933365369213519  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.2  0.012365849751721928  \\
+            2.2  0.0  \\
+            2.3  0.0  \\
+            2.3  0.012365849751721928  \\
+            2.2  0.012365849751721928  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.3  0.011276629825404453  \\
+            2.3  0.0  \\
+            2.3999999999999995  0.0  \\
+            2.3999999999999995  0.011276629825404453  \\
+            2.3  0.011276629825404453  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.4000000000000004  0.011484863046612205  \\
+            2.4000000000000004  0.0  \\
+            2.5  0.0  \\
+            2.5  0.011484863046612205  \\
+            2.4000000000000004  0.011484863046612205  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.5  0.01174115008809867  \\
+            2.5  0.0  \\
+            2.5999999999999996  0.0  \\
+            2.5999999999999996  0.01174115008809867  \\
+            2.5  0.01174115008809867  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.6000000000000005  0.010956271023546372  \\
+            2.6000000000000005  0.0  \\
+            2.7  0.0  \\
+            2.7  0.010956271023546372  \\
+            2.6000000000000005  0.010956271023546372  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.7  0.010347589300016018  \\
+            2.7  0.0  \\
+            2.8  0.0  \\
+            2.8  0.010347589300016018  \\
+            2.7  0.010347589300016018  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.8  0.010956271023546372  \\
+            2.8  0.0  \\
+            2.8999999999999995  0.0  \\
+            2.8999999999999995  0.010956271023546372  \\
+            2.8  0.010956271023546372  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.9000000000000004  0.009947140797693417  \\
+            2.9000000000000004  0.0  \\
+            3.0  0.0  \\
+            3.0  0.009947140797693417  \\
+            2.9000000000000004  0.009947140797693417  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  0.010395643120294729  \\
+            3.0  0.0  \\
+            3.0999999999999996  0.0  \\
+            3.0999999999999996  0.010395643120294729  \\
+            3.0  0.010395643120294729  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.1000000000000005  0.009594746115649528  \\
+            3.1000000000000005  0.0  \\
+            3.2  0.0  \\
+            3.2  0.009594746115649528  \\
+            3.1000000000000005  0.009594746115649528  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.2  0.01004324843825084  \\
+            3.2  0.0  \\
+            3.3  0.0  \\
+            3.3  0.01004324843825084  \\
+            3.2  0.01004324843825084  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.3  0.009770943456671472  \\
+            3.3  0.0  \\
+            3.3999999999999995  0.0  \\
+            3.3999999999999995  0.009770943456671472  \\
+            3.3  0.009770943456671472  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.4000000000000004  0.00885792087137594  \\
+            3.4000000000000004  0.0  \\
+            3.5  0.0  \\
+            3.5  0.00885792087137594  \\
+            3.4000000000000004  0.00885792087137594  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.5  0.009194297613326926  \\
+            3.5  0.0  \\
+            3.5999999999999996  0.0  \\
+            3.5999999999999996  0.009194297613326926  \\
+            3.5  0.009194297613326926  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.6000000000000005  0.009338459074163061  \\
+            3.6000000000000005  0.0  \\
+            3.7  0.0  \\
+            3.7  0.009338459074163061  \\
+            3.6000000000000005  0.009338459074163061  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.7  0.00877783117091142  \\
+            3.7  0.0  \\
+            3.8  0.0  \\
+            3.8  0.00877783117091142  \\
+            3.7  0.00877783117091142  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.8  0.007816754765337178  \\
+            3.8  0.0  \\
+            3.8999999999999995  0.0  \\
+            3.8999999999999995  0.007816754765337178  \\
+            3.8  0.007816754765337178  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={129}, area legend, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.9000000000000004  0.007544449783757809  \\
+            3.9000000000000004  0.0  \\
+            4.0  0.0  \\
+            4.0  0.007544449783757809  \\
+            3.9000000000000004  0.007544449783757809  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.8;green,0.7333;blue,0.2667}, name path={130}, only marks, draw opacity={1.0}, line width={0}, solid, mark={*}, mark size={0.0 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.0}, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={0.0}, line width={0.75}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.95  0.00783277270543008  \\
+            -3.8499999999999996  0.007960916226173313  \\
+            -3.75  0.008041005926637835  \\
+            -3.6500000000000004  0.00783277270543008  \\
+            -3.55  0.008761813230818516  \\
+            -3.45  0.008569597949703668  \\
+            -3.3499999999999996  0.008761813230818516  \\
+            -3.25  0.008809867051097228  \\
+            -3.1500000000000004  0.009546692295370815  \\
+            -3.05  0.008986064392119172  \\
+            -2.95  0.009642799935928238  \\
+            -2.8499999999999996  0.00961076405574243  \\
+            -2.75  0.010587858401409578  \\
+            -2.6500000000000004  0.011036360724010891  \\
+            -2.55  0.010924235143360564  \\
+            -2.45  0.01130866570559026  \\
+            -2.3499999999999996  0.010619894281595385  \\
+            -2.25  0.011372737465961876  \\
+            -2.1500000000000004  0.011965401249399326  \\
+            -2.05  0.011853275668748999  \\
+            -1.95  0.012477975332372257  \\
+            -1.85  0.012157616530514176  \\
+            -1.75  0.01351914143841102  \\
+            -1.65  0.013278872337017458  \\
+            -1.55  0.013535159378503924  \\
+            -1.45  0.014223930802498798  \\
+            -1.35  0.014015697581291045  \\
+            -1.25  0.014384110203427839  \\
+            -1.15  0.01419189492231299  \\
+            -1.05  0.014336056383149127  \\
+            -0.95  0.014880666346307863  \\
+            -0.8500000000000001  0.014960756046772385  \\
+            -0.75  0.015489348069838219  \\
+            -0.6499999999999999  0.016930962678199584  \\
+            -0.55  0.016498478295691173  \\
+            -0.45  0.01720326765977895  \\
+            -0.35  0.01601794009290405  \\
+            -0.25  0.016354316834855036  \\
+            -0.15000000000000002  0.016946980618292487  \\
+            -0.05  0.016786801217363447  \\
+            0.05  0.01718724971968605  \\
+            0.15000000000000002  0.016162101553740187  \\
+            0.25  0.0162101553740189  \\
+            0.35  0.017219285599871854  \\
+            0.45  0.01752362646163703  \\
+            0.55  0.015505366009931121  \\
+            0.6499999999999999  0.01588979657216082  \\
+            0.75  0.014576325484542687  \\
+            0.8500000000000001  0.016306263014576324  \\
+            0.95  0.016866890917827965  \\
+            1.05  0.015425276309466602  \\
+            1.15  0.015329168668909177  \\
+            1.25  0.015024827807144  \\
+            1.35  0.015489348069838219  \\
+            1.45  0.013615249078968444  \\
+            1.55  0.013935607880826525  \\
+            1.65  0.013182764696460035  \\
+            1.75  0.013150728816274226  \\
+            1.85  0.012029473009770943  \\
+            1.95  0.012189652410699983  \\
+            2.05  0.012622136793208392  \\
+            2.1500000000000004  0.011933365369213519  \\
+            2.25  0.012365849751721928  \\
+            2.3499999999999996  0.011276629825404453  \\
+            2.45  0.011484863046612205  \\
+            2.55  0.01174115008809867  \\
+            2.6500000000000004  0.010956271023546372  \\
+            2.75  0.010347589300016018  \\
+            2.8499999999999996  0.010956271023546372  \\
+            2.95  0.009947140797693417  \\
+            3.05  0.010395643120294729  \\
+            3.1500000000000004  0.009594746115649528  \\
+            3.25  0.01004324843825084  \\
+            3.3499999999999996  0.009770943456671472  \\
+            3.45  0.00885792087137594  \\
+            3.55  0.009194297613326926  \\
+            3.6500000000000004  0.009338459074163061  \\
+            3.75  0.00877783117091142  \\
+            3.8499999999999996  0.007816754765337178  \\
+            3.95  0.007544449783757809  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid]
+        table[row sep={\\}]
+        {
+            \\
+            -4.0  0.0047592914143822366  \\
+            -4.0  0.0  \\
+            -3.9000000000000004  0.0  \\
+            -3.9000000000000004  0.0047592914143822366  \\
+            -4.0  0.0047592914143822366  \\
+        }
+        ;
+    \addlegendentry {$S=10^{7}$}
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.8999999999999995  0.005092171910284208  \\
+            -3.8999999999999995  0.0  \\
+            -3.8  0.0  \\
+            -3.8  0.005092171910284208  \\
+            -3.8999999999999995  0.005092171910284208  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.8  0.004885246196615415  \\
+            -3.8  0.0  \\
+            -3.7  0.0  \\
+            -3.7  0.004885246196615415  \\
+            -3.8  0.004885246196615415  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.7  0.005479033027143255  \\
+            -3.7  0.0  \\
+            -3.6000000000000005  0.0  \\
+            -3.6000000000000005  0.005479033027143255  \\
+            -3.7  0.005479033027143255  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.5999999999999996  0.005649971660173997  \\
+            -3.5999999999999996  0.0  \\
+            -3.5  0.0  \\
+            -3.5  0.005649971660173997  \\
+            -3.5999999999999996  0.005649971660173997  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.5  0.0057399393617691245  \\
+            -3.5  0.0  \\
+            -3.4000000000000004  0.0  \\
+            -3.4000000000000004  0.0057399393617691245  \\
+            -3.5  0.0057399393617691245  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.3999999999999995  0.005775926442407176  \\
+            -3.3999999999999995  0.0  \\
+            -3.3  0.0  \\
+            -3.3  0.005775926442407176  \\
+            -3.3999999999999995  0.005775926442407176  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.3  0.005649971660173997  \\
+            -3.3  0.0  \\
+            -3.2  0.0  \\
+            -3.2  0.005649971660173997  \\
+            -3.3  0.005649971660173997  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.2  0.006378710043094529  \\
+            -3.2  0.0  \\
+            -3.1000000000000005  0.0  \\
+            -3.1000000000000005  0.006378710043094529  \\
+            -3.2  0.006378710043094529  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.0999999999999996  0.006225764950382812  \\
+            -3.0999999999999996  0.0  \\
+            -3.0  0.0  \\
+            -3.0  0.006225764950382812  \\
+            -3.0999999999999996  0.006225764950382812  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.0  0.006522658365646732  \\
+            -3.0  0.0  \\
+            -2.9000000000000004  0.0  \\
+            -2.9000000000000004  0.006522658365646732  \\
+            -3.0  0.006522658365646732  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.8999999999999995  0.007188419357450675  \\
+            -2.8999999999999995  0.0  \\
+            -2.8  0.0  \\
+            -2.8  0.007188419357450675  \\
+            -2.8999999999999995  0.007188419357450675  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.8  0.007332367680002879  \\
+            -2.8  0.0  \\
+            -2.7  0.0  \\
+            -2.7  0.007332367680002879  \\
+            -2.8  0.007332367680002879  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.7  0.006999487184100908  \\
+            -2.7  0.0  \\
+            -2.6000000000000005  0.0  \\
+            -2.6000000000000005  0.006999487184100908  \\
+            -2.7  0.006999487184100908  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.5999999999999996  0.007881170659733155  \\
+            -2.5999999999999996  0.0  \\
+            -2.5  0.0  \\
+            -2.5  0.007881170659733155  \\
+            -2.5999999999999996  0.007881170659733155  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.5  0.007431332151757519  \\
+            -2.5  0.0  \\
+            -2.4000000000000004  0.0  \\
+            -2.4000000000000004  0.007431332151757519  \\
+            -2.5  0.007431332151757519  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.3999999999999995  0.008151073764518537  \\
+            -2.3999999999999995  0.0  \\
+            -2.3  0.0  \\
+            -2.3  0.008151073764518537  \\
+            -2.3999999999999995  0.008151073764518537  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.3  0.008807837986162966  \\
+            -2.3  0.0  \\
+            -2.2  0.0  \\
+            -2.2  0.008807837986162966  \\
+            -2.3  0.008807837986162966  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.2  0.008465960720101483  \\
+            -2.2  0.0  \\
+            -2.1000000000000005  0.0  \\
+            -2.1000000000000005  0.008465960720101483  \\
+            -2.2  0.008465960720101483  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.0999999999999996  0.00931165711509568  \\
+            -2.0999999999999996  0.0  \\
+            -1.9999999999999998  0.0  \\
+            -1.9999999999999998  0.00931165711509568  \\
+            -2.0999999999999996  0.00931165711509568  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.0  0.009536576369083498  \\
+            -2.0  0.0  \\
+            -1.9  0.0  \\
+            -1.9  0.009536576369083498  \\
+            -2.0  0.009536576369083498  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.9  0.009941431026261572  \\
+            -1.9  0.0  \\
+            -1.8000000000000003  0.0  \\
+            -1.8000000000000003  0.009941431026261572  \\
+            -1.9  0.009941431026261572  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.8  0.010634182328544052  \\
+            -1.8  0.0  \\
+            -1.7  0.0  \\
+            -1.7  0.010634182328544052  \\
+            -1.8  0.010634182328544052  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.6999999999999997  0.011039036985722126  \\
+            -1.6999999999999997  0.0  \\
+            -1.6  0.0  \\
+            -1.6  0.011039036985722126  \\
+            -1.6999999999999997  0.011039036985722126  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.6  0.011929717231513886  \\
+            -1.6  0.0  \\
+            -1.5  0.0  \\
+            -1.5  0.011929717231513886  \\
+            -1.6  0.011929717231513886  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.5  0.01286538132810321  \\
+            -1.5  0.0  \\
+            -1.4  0.0  \\
+            -1.4  0.01286538132810321  \\
+            -1.5  0.01286538132810321  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.4  0.013153277973207618  \\
+            -1.4  0.0  \\
+            -1.3000000000000003  0.0  \\
+            -1.3000000000000003  0.013153277973207618  \\
+            -1.4  0.013153277973207618  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.3  0.013998974368201815  \\
+            -1.3  0.0  \\
+            -1.2  0.0  \\
+            -1.2  0.013998974368201815  \\
+            -1.3  0.013998974368201815  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.1999999999999997  0.015573409146116542  \\
+            -1.1999999999999997  0.0  \\
+            -1.1  0.0  \\
+            -1.1  0.015573409146116542  \\
+            -1.1999999999999997  0.015573409146116542  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.1  0.01652706678302489  \\
+            -1.1  0.0  \\
+            -1.0  0.0  \\
+            -1.0  0.01652706678302489  \\
+            -1.1  0.01652706678302489  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.0  0.017390756718338115  \\
+            -1.0  0.0  \\
+            -0.8999999999999999  0.0  \\
+            -0.8999999999999999  0.017390756718338115  \\
+            -1.0  0.017390756718338115  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.9000000000000001  0.019136130129283585  \\
+            -0.9000000000000001  0.0  \\
+            -0.8  0.0  \\
+            -0.8  0.019136130129283585  \\
+            -0.9000000000000001  0.019136130129283585  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.8  0.020476648883050983  \\
+            -0.8  0.0  \\
+            -0.7  0.0  \\
+            -0.7  0.020476648883050983  \\
+            -0.8  0.020476648883050983  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.7  0.021196390495812  \\
+            -0.7  0.0  \\
+            -0.5999999999999999  0.0  \\
+            -0.5999999999999999  0.021196390495812  \\
+            -0.7  0.021196390495812  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.6000000000000001  0.024210308499248767  \\
+            -0.6000000000000001  0.0  \\
+            -0.5  0.0  \\
+            -0.5  0.024210308499248767  \\
+            -0.6000000000000001  0.024210308499248767  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.5  0.02471412762818148  \\
+            -0.5  0.0  \\
+            -0.4  0.0  \\
+            -0.4  0.02471412762818148  \\
+            -0.5  0.02471412762818148  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.4  0.026612446131838666  \\
+            -0.4  0.0  \\
+            -0.29999999999999993  0.0  \\
+            -0.29999999999999993  0.026612446131838666  \\
+            -0.4  0.026612446131838666  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.3  0.02799794873640363  \\
+            -0.3  0.0  \\
+            -0.2  0.0  \\
+            -0.2  0.02799794873640363  \\
+            -0.3  0.02799794873640363  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.2  0.028150893829115346  \\
+            -0.2  0.0  \\
+            -0.10000000000000002  0.0  \\
+            -0.10000000000000002  0.028150893829115346  \\
+            -0.2  0.028150893829115346  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.1  0.02948241581272323  \\
+            -0.1  0.0  \\
+            0.0  0.0  \\
+            0.0  0.02948241581272323  \\
+            -0.1  0.02948241581272323  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.0  0.030004228481974968  \\
+            0.0  0.0  \\
+            0.1  0.0  \\
+            0.1  0.030004228481974968  \\
+            0.0  0.030004228481974968  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.10000000000000002  0.028438790474219752  \\
+            0.10000000000000002  0.0  \\
+            0.2  0.0  \\
+            0.2  0.028438790474219752  \\
+            0.10000000000000002  0.028438790474219752  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.2  0.028402803393581703  \\
+            0.2  0.0  \\
+            0.3  0.0  \\
+            0.3  0.028402803393581703  \\
+            0.2  0.028402803393581703  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.29999999999999993  0.02668442029311477  \\
+            0.29999999999999993  0.0  \\
+            0.4  0.0  \\
+            0.4  0.02668442029311477  \\
+            0.29999999999999993  0.02668442029311477  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.4  0.02510998551520004  \\
+            0.4  0.0  \\
+            0.5  0.0  \\
+            0.5  0.02510998551520004  \\
+            0.4  0.02510998551520004  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.5  0.023184676701064316  \\
+            0.5  0.0  \\
+            0.6000000000000001  0.0  \\
+            0.6000000000000001  0.023184676701064316  \\
+            0.5  0.023184676701064316  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.5999999999999999  0.022761828503567217  \\
+            0.5999999999999999  0.0  \\
+            0.7  0.0  \\
+            0.7  0.022761828503567217  \\
+            0.5999999999999999  0.022761828503567217  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.7  0.02036868764113683  \\
+            0.7  0.0  \\
+            0.8  0.0  \\
+            0.8  0.02036868764113683  \\
+            0.7  0.02036868764113683  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.8  0.018668298080988924  \\
+            0.8  0.0  \\
+            0.9000000000000001  0.0  \\
+            0.9000000000000001  0.018668298080988924  \\
+            0.8  0.018668298080988924  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.8999999999999999  0.017426743798976168  \\
+            0.8999999999999999  0.0  \\
+            1.0  0.0  \\
+            1.0  0.017426743798976168  \\
+            0.8999999999999999  0.017426743798976168  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.01608622504520877  \\
+            1.0  0.0  \\
+            1.1  0.0  \\
+            1.1  0.01608622504520877  \\
+            1.0  0.01608622504520877  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.1  0.014655738589846245  \\
+            1.1  0.0  \\
+            1.1999999999999997  0.0  \\
+            1.1999999999999997  0.014655738589846245  \\
+            1.1  0.014655738589846245  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.2  0.014727712751122345  \\
+            1.2  0.0  \\
+            1.3  0.0  \\
+            1.3  0.014727712751122345  \\
+            1.2  0.014727712751122345  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.3000000000000003  0.013693084182778382  \\
+            1.3000000000000003  0.0  \\
+            1.4  0.0  \\
+            1.4  0.013693084182778382  \\
+            1.3000000000000003  0.013693084182778382  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.4  0.012676449154753442  \\
+            1.4  0.0  \\
+            1.5  0.0  \\
+            1.5  0.012676449154753442  \\
+            1.4  0.012676449154753442  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.5  0.011443891642900198  \\
+            1.5  0.0  \\
+            1.6  0.0  \\
+            1.6  0.011443891642900198  \\
+            1.5  0.011443891642900198  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.6  0.011308940090507508  \\
+            1.6  0.0  \\
+            1.6999999999999997  0.0  \\
+            1.6999999999999997  0.011308940090507508  \\
+            1.6  0.011308940090507508  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.7  0.010688162949501128  \\
+            1.7  0.0  \\
+            1.8  0.0  \\
+            1.8  0.010688162949501128  \\
+            1.7  0.010688162949501128  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.8000000000000003  0.009878453635144982  \\
+            1.8000000000000003  0.0  \\
+            1.9  0.0  \\
+            1.9  0.009878453635144982  \\
+            1.8000000000000003  0.009878453635144982  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.9  0.010022401957697186  \\
+            1.9  0.0  \\
+            2.0  0.0  \\
+            2.0  0.010022401957697186  \\
+            1.9  0.010022401957697186  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.9999999999999998  0.008744860595046377  \\
+            1.9999999999999998  0.0  \\
+            2.0999999999999996  0.0  \\
+            2.0999999999999996  0.008744860595046377  \\
+            1.9999999999999998  0.008744860595046377  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.1000000000000005  0.009203695873181527  \\
+            2.1000000000000005  0.0  \\
+            2.2  0.0  \\
+            2.2  0.009203695873181527  \\
+            2.1000000000000005  0.009203695873181527  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.2  0.008420976869303919  \\
+            2.2  0.0  \\
+            2.3  0.0  \\
+            2.3  0.008420976869303919  \\
+            2.2  0.008420976869303919  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.3  0.008151073764518537  \\
+            2.3  0.0  \\
+            2.3999999999999995  0.0  \\
+            2.3999999999999995  0.008151073764518537  \\
+            2.3  0.008151073764518537  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.4000000000000004  0.008034115752444872  \\
+            2.4000000000000004  0.0  \\
+            2.5  0.0  \\
+            2.5  0.008034115752444872  \\
+            2.4000000000000004  0.008034115752444872  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.5  0.0074043418412789806  \\
+            2.5  0.0  \\
+            2.5999999999999996  0.0  \\
+            2.5999999999999996  0.0074043418412789806  \\
+            2.5  0.0074043418412789806  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.6000000000000005  0.007584277244469235  \\
+            2.6000000000000005  0.0  \\
+            2.7  0.0  \\
+            2.7  0.007584277244469235  \\
+            2.6000000000000005  0.007584277244469235  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.7  0.007251396748567264  \\
+            2.7  0.0  \\
+            2.8  0.0  \\
+            2.8  0.007251396748567264  \\
+            2.7  0.007251396748567264  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.8  0.007197416127610187  \\
+            2.8  0.0  \\
+            2.8999999999999995  0.0  \\
+            2.8999999999999995  0.007197416127610187  \\
+            2.8  0.007197416127610187  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.9000000000000004  0.006621622837401373  \\
+            2.9000000000000004  0.0  \\
+            3.0  0.0  \\
+            3.0  0.006621622837401373  \\
+            2.9000000000000004  0.006621622837401373  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  0.006675603458358449  \\
+            3.0  0.0  \\
+            3.0999999999999996  0.0  \\
+            3.0999999999999996  0.006675603458358449  \\
+            3.0  0.006675603458358449  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.1000000000000005  0.006369713272935016  \\
+            3.1000000000000005  0.0  \\
+            3.2  0.0  \\
+            3.2  0.006369713272935016  \\
+            3.1000000000000005  0.006369713272935016  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.2  0.006297739111658914  \\
+            3.2  0.0  \\
+            3.3  0.0  \\
+            3.3  0.006297739111658914  \\
+            3.2  0.006297739111658914  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.3  0.005784923212566688  \\
+            3.3  0.0  \\
+            3.3999999999999995  0.0  \\
+            3.3999999999999995  0.005784923212566688  \\
+            3.3  0.005784923212566688  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.4000000000000004  0.005676961970652535  \\
+            3.4000000000000004  0.0  \\
+            3.5  0.0  \\
+            3.5  0.005676961970652535  \\
+            3.4000000000000004  0.005676961970652535  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.5  0.005551007188419357  \\
+            3.5  0.0  \\
+            3.5999999999999996  0.0  \\
+            3.5999999999999996  0.005551007188419357  \\
+            3.5  0.005551007188419357  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.6000000000000005  0.005533013648100332  \\
+            3.6000000000000005  0.0  \\
+            3.7  0.0  \\
+            3.7  0.005533013648100332  \\
+            3.6000000000000005  0.005533013648100332  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.7  0.005137155761081771  \\
+            3.7  0.0  \\
+            3.8  0.0  \\
+            3.8  0.005137155761081771  \\
+            3.7  0.005137155761081771  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.8  0.004660326942627596  \\
+            3.8  0.0  \\
+            3.8999999999999995  0.0  \\
+            3.8999999999999995  0.004660326942627596  \\
+            3.8  0.004660326942627596  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={131}, area legend, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.9000000000000004  0.005173142841719822  \\
+            3.9000000000000004  0.0  \\
+            4.0  0.0  \\
+            4.0  0.005173142841719822  \\
+            3.9000000000000004  0.005173142841719822  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.9333;green,0.4;blue,0.4667}, name path={132}, only marks, draw opacity={1.0}, line width={0}, solid, mark={*}, mark size={0.0 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.0}, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={0.0}, line width={0.75}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.95  0.0047592914143822366  \\
+            -3.8499999999999996  0.005092171910284208  \\
+            -3.75  0.004885246196615415  \\
+            -3.6500000000000004  0.005479033027143255  \\
+            -3.55  0.005649971660173997  \\
+            -3.45  0.0057399393617691245  \\
+            -3.3499999999999996  0.005775926442407176  \\
+            -3.25  0.005649971660173997  \\
+            -3.1500000000000004  0.006378710043094529  \\
+            -3.05  0.006225764950382812  \\
+            -2.95  0.006522658365646732  \\
+            -2.8499999999999996  0.007188419357450675  \\
+            -2.75  0.007332367680002879  \\
+            -2.6500000000000004  0.006999487184100908  \\
+            -2.55  0.007881170659733155  \\
+            -2.45  0.007431332151757519  \\
+            -2.3499999999999996  0.008151073764518537  \\
+            -2.25  0.008807837986162966  \\
+            -2.1500000000000004  0.008465960720101483  \\
+            -2.05  0.00931165711509568  \\
+            -1.95  0.009536576369083498  \\
+            -1.85  0.009941431026261572  \\
+            -1.75  0.010634182328544052  \\
+            -1.65  0.011039036985722126  \\
+            -1.55  0.011929717231513886  \\
+            -1.45  0.01286538132810321  \\
+            -1.35  0.013153277973207618  \\
+            -1.25  0.013998974368201815  \\
+            -1.15  0.015573409146116542  \\
+            -1.05  0.01652706678302489  \\
+            -0.95  0.017390756718338115  \\
+            -0.8500000000000001  0.019136130129283585  \\
+            -0.75  0.020476648883050983  \\
+            -0.6499999999999999  0.021196390495812  \\
+            -0.55  0.024210308499248767  \\
+            -0.45  0.02471412762818148  \\
+            -0.35  0.026612446131838666  \\
+            -0.25  0.02799794873640363  \\
+            -0.15000000000000002  0.028150893829115346  \\
+            -0.05  0.02948241581272323  \\
+            0.05  0.030004228481974968  \\
+            0.15000000000000002  0.028438790474219752  \\
+            0.25  0.028402803393581703  \\
+            0.35  0.02668442029311477  \\
+            0.45  0.02510998551520004  \\
+            0.55  0.023184676701064316  \\
+            0.6499999999999999  0.022761828503567217  \\
+            0.75  0.02036868764113683  \\
+            0.8500000000000001  0.018668298080988924  \\
+            0.95  0.017426743798976168  \\
+            1.05  0.01608622504520877  \\
+            1.15  0.014655738589846245  \\
+            1.25  0.014727712751122345  \\
+            1.35  0.013693084182778382  \\
+            1.45  0.012676449154753442  \\
+            1.55  0.011443891642900198  \\
+            1.65  0.011308940090507508  \\
+            1.75  0.010688162949501128  \\
+            1.85  0.009878453635144982  \\
+            1.95  0.010022401957697186  \\
+            2.05  0.008744860595046377  \\
+            2.1500000000000004  0.009203695873181527  \\
+            2.25  0.008420976869303919  \\
+            2.3499999999999996  0.008151073764518537  \\
+            2.45  0.008034115752444872  \\
+            2.55  0.0074043418412789806  \\
+            2.6500000000000004  0.007584277244469235  \\
+            2.75  0.007251396748567264  \\
+            2.8499999999999996  0.007197416127610187  \\
+            2.95  0.006621622837401373  \\
+            3.05  0.006675603458358449  \\
+            3.1500000000000004  0.006369713272935016  \\
+            3.25  0.006297739111658914  \\
+            3.3499999999999996  0.005784923212566688  \\
+            3.45  0.005676961970652535  \\
+            3.55  0.005551007188419357  \\
+            3.6500000000000004  0.005533013648100332  \\
+            3.75  0.005137155761081771  \\
+            3.8499999999999996  0.004660326942627596  \\
+            3.95  0.005173142841719822  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid]
+        table[row sep={\\}]
+        {
+            \\
+            -4.0  0.0030370014416146083  \\
+            -4.0  0.0  \\
+            -3.9000000000000004  0.0  \\
+            -3.9000000000000004  0.0030370014416146083  \\
+            -4.0  0.0030370014416146083  \\
+        }
+        ;
+    \addlegendentry {$S=10^{8}$}
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.8999999999999995  0.003133109082172033  \\
+            -3.8999999999999995  0.0  \\
+            -3.8  0.0  \\
+            -3.8  0.003133109082172033  \\
+            -3.8999999999999995  0.003133109082172033  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.8  0.003152330610283518  \\
+            -3.8  0.0  \\
+            -3.7  0.0  \\
+            -3.7  0.003152330610283518  \\
+            -3.8  0.003152330610283518  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.7  0.0034406535319557907  \\
+            -3.7  0.0  \\
+            -3.6000000000000005  0.0  \\
+            -3.6000000000000005  0.0034406535319557907  \\
+            -3.7  0.0034406535319557907  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.5999999999999996  0.0032035880185808108  \\
+            -3.5999999999999996  0.0  \\
+            -3.5  0.0  \\
+            -3.5  0.0032035880185808108  \\
+            -3.5999999999999996  0.0032035880185808108  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.5  0.003376581771584174  \\
+            -3.5  0.0  \\
+            -3.4000000000000004  0.0  \\
+            -3.4000000000000004  0.003376581771584174  \\
+            -3.5  0.003376581771584174  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.3999999999999995  0.003696940573442255  \\
+            -3.3999999999999995  0.0  \\
+            -3.3  0.0  \\
+            -3.3  0.003696940573442255  \\
+            -3.3999999999999995  0.003696940573442255  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.3  0.003786641037962518  \\
+            -3.3  0.0  \\
+            -3.2  0.0  \\
+            -3.2  0.003786641037962518  \\
+            -3.3  0.003786641037962518  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.2  0.003876341502482781  \\
+            -3.2  0.0  \\
+            -3.1000000000000005  0.0  \\
+            -3.1000000000000005  0.003876341502482781  \\
+            -3.2  0.003876341502482781  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.0999999999999996  0.003741790805702387  \\
+            -3.0999999999999996  0.0  \\
+            -3.0  0.0  \\
+            -3.0  0.003741790805702387  \\
+            -3.0999999999999996  0.003741790805702387  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.0  0.004151850072080731  \\
+            -3.0  0.0  \\
+            -2.9000000000000004  0.0  \\
+            -2.9000000000000004  0.004151850072080731  \\
+            -3.0  0.004151850072080731  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.8999999999999995  0.004267179240749639  \\
+            -2.8999999999999995  0.0  \\
+            -2.8  0.0  \\
+            -2.8  0.004267179240749639  \\
+            -2.8999999999999995  0.004267179240749639  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.8  0.00446580169790165  \\
+            -2.8  0.0  \\
+            -2.7  0.0  \\
+            -2.7  0.00446580169790165  \\
+            -2.8  0.00446580169790165  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.7  0.004651609802979337  \\
+            -2.7  0.0  \\
+            -2.6000000000000005  0.0  \\
+            -2.6000000000000005  0.004651609802979337  \\
+            -2.7  0.004651609802979337  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.5999999999999996  0.004831010732019862  \\
+            -2.5999999999999996  0.0  \\
+            -2.5  0.0  \\
+            -2.5  0.004831010732019862  \\
+            -2.5999999999999996  0.004831010732019862  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.5  0.005055261893320519  \\
+            -2.5  0.0  \\
+            -2.4000000000000004  0.0  \\
+            -2.4000000000000004  0.005055261893320519  \\
+            -2.5  0.005055261893320519  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.3999999999999995  0.004715681563350953  \\
+            -2.3999999999999995  0.0  \\
+            -2.3  0.0  \\
+            -2.3  0.004715681563350953  \\
+            -2.3999999999999995  0.004715681563350953  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.3  0.005042447541246196  \\
+            -2.3  0.0  \\
+            -2.2  0.0  \\
+            -2.2  0.005042447541246196  \\
+            -2.3  0.005042447541246196  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.2  0.00568957232099952  \\
+            -2.2  0.0  \\
+            -2.1000000000000005  0.0  \\
+            -2.1000000000000005  0.00568957232099952  \\
+            -2.2  0.00568957232099952  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.0999999999999996  0.006311068396604197  \\
+            -2.0999999999999996  0.0  \\
+            -1.9999999999999998  0.0  \\
+            -1.9999999999999998  0.006311068396604197  \\
+            -2.0999999999999996  0.006311068396604197  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.0  0.006490469325644723  \\
+            -2.0  0.0  \\
+            -1.9  0.0  \\
+            -1.9  0.006490469325644723  \\
+            -2.0  0.006490469325644723  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.9  0.00663783437449944  \\
+            -1.9  0.0  \\
+            -1.8000000000000003  0.0  \\
+            -1.8000000000000003  0.00663783437449944  \\
+            -1.9  0.00663783437449944  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.8  0.007182444337658177  \\
+            -1.8  0.0  \\
+            -1.7  0.0  \\
+            -1.7  0.007182444337658177  \\
+            -1.8  0.007182444337658177  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.6999999999999997  0.008028191574563512  \\
+            -1.6999999999999997  0.0  \\
+            -1.6  0.0  \\
+            -1.6  0.008028191574563512  \\
+            -1.6999999999999997  0.008028191574563512  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.6  0.008284478616049976  \\
+            -1.6  0.0  \\
+            -1.5  0.0  \\
+            -1.5  0.008284478616049976  \\
+            -1.6  0.008284478616049976  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.5  0.008976453628063432  \\
+            -1.5  0.0  \\
+            -1.4  0.0  \\
+            -1.4  0.008976453628063432  \\
+            -1.5  0.008976453628063432  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.4  0.00975812910459715  \\
+            -1.4  0.0  \\
+            -1.3000000000000003  0.0  \\
+            -1.3000000000000003  0.00975812910459715  \\
+            -1.4  0.00975812910459715  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.3  0.011090821720326766  \\
+            -1.3  0.0  \\
+            -1.2  0.0  \\
+            -1.2  0.011090821720326766  \\
+            -1.3  0.011090821720326766  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.1999999999999997  0.01225052058305302  \\
+            -1.1999999999999997  0.0  \\
+            -1.1  0.0  \\
+            -1.1  0.01225052058305302  \\
+            -1.1999999999999997  0.01225052058305302  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.1  0.013525548614448182  \\
+            -1.1  0.0  \\
+            -1.0  0.0  \\
+            -1.0  0.013525548614448182  \\
+            -1.1  0.013525548614448182  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.0  0.014672433125100113  \\
+            -1.0  0.0  \\
+            -0.8999999999999999  0.0  \\
+            -0.8999999999999999  0.014672433125100113  \\
+            -1.0  0.014672433125100113  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.9000000000000001  0.01628063431042768  \\
+            -0.9000000000000001  0.0  \\
+            -0.8  0.0  \\
+            -0.8  0.01628063431042768  \\
+            -0.9000000000000001  0.01628063431042768  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.8  0.01821560147365049  \\
+            -0.8  0.0  \\
+            -0.7  0.0  \\
+            -0.7  0.01821560147365049  \\
+            -0.8  0.01821560147365049  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.7  0.019977574883869934  \\
+            -0.7  0.0  \\
+            -0.5999999999999999  0.0  \\
+            -0.5999999999999999  0.019977574883869934  \\
+            -0.7  0.019977574883869934  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.6000000000000001  0.023719365689572322  \\
+            -0.6000000000000001  0.0  \\
+            -0.5  0.0  \\
+            -0.5  0.023719365689572322  \\
+            -0.6000000000000001  0.023719365689572322  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.5  0.02810828127502803  \\
+            -0.5  0.0  \\
+            -0.4  0.0  \\
+            -0.4  0.02810828127502803  \\
+            -0.5  0.02810828127502803  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.4  0.035361204549094985  \\
+            -0.4  0.0  \\
+            -0.29999999999999993  0.0  \\
+            -0.29999999999999993  0.035361204549094985  \\
+            -0.4  0.035361204549094985  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.3  0.04388274867851994  \\
+            -0.3  0.0  \\
+            -0.2  0.0  \\
+            -0.2  0.04388274867851994  \\
+            -0.3  0.04388274867851994  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.2  0.05468524747717444  \\
+            -0.2  0.0  \\
+            -0.10000000000000002  0.0  \\
+            -0.10000000000000002  0.05468524747717444  \\
+            -0.2  0.05468524747717444  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.1  0.06509690853756207  \\
+            -0.1  0.0  \\
+            0.0  0.0  \\
+            0.0  0.06509690853756207  \\
+            -0.1  0.06509690853756207  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.0  0.06396924555502162  \\
+            0.0  0.0  \\
+            0.1  0.0  \\
+            0.1  0.06396924555502162  \\
+            0.0  0.06396924555502162  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.10000000000000002  0.05572320999519462  \\
+            0.10000000000000002  0.0  \\
+            0.2  0.0  \\
+            0.2  0.05572320999519462  \\
+            0.10000000000000002  0.05572320999519462  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.2  0.04452346628223611  \\
+            0.2  0.0  \\
+            0.3  0.0  \\
+            0.3  0.04452346628223611  \\
+            0.2  0.04452346628223611  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.29999999999999993  0.03549575524587538  \\
+            0.29999999999999993  0.0  \\
+            0.4  0.0  \\
+            0.4  0.03549575524587538  \\
+            0.29999999999999993  0.03549575524587538  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.4  0.028947621335896203  \\
+            0.4  0.0  \\
+            0.5  0.0  \\
+            0.5  0.028947621335896203  \\
+            0.4  0.028947621335896203  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.5  0.02446259810988307  \\
+            0.5  0.0  \\
+            0.6000000000000001  0.0  \\
+            0.6000000000000001  0.02446259810988307  \\
+            0.5  0.02446259810988307  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.5999999999999999  0.020156975812910462  \\
+            0.5999999999999999  0.0  \\
+            0.7  0.0  \\
+            0.7  0.020156975812910462  \\
+            0.5999999999999999  0.020156975812910462  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.7  0.018670510972288962  \\
+            0.7  0.0  \\
+            0.8  0.0  \\
+            0.8  0.018670510972288962  \\
+            0.7  0.018670510972288962  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.8  0.016645843344545892  \\
+            0.8  0.0  \\
+            0.9000000000000001  0.0  \\
+            0.9000000000000001  0.016645843344545892  \\
+            0.8  0.016645843344545892  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.8999999999999999  0.014954348870735224  \\
+            0.8999999999999999  0.0  \\
+            1.0  0.0  \\
+            1.0  0.014954348870735224  \\
+            0.8999999999999999  0.014954348870735224  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.013608841902931284  \\
+            1.0  0.0  \\
+            1.1  0.0  \\
+            1.1  0.013608841902931284  \\
+            1.0  0.013608841902931284  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.1  0.012276149287201665  \\
+            1.1  0.0  \\
+            1.1999999999999997  0.0  \\
+            1.1999999999999997  0.012276149287201665  \\
+            1.1  0.012276149287201665  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.2  0.011013935607880826  \\
+            1.2  0.0  \\
+            1.3  0.0  \\
+            1.3  0.011013935607880826  \\
+            1.2  0.011013935607880826  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.3000000000000003  0.010405253884350473  \\
+            1.3000000000000003  0.0  \\
+            1.4  0.0  \\
+            1.4  0.010405253884350473  \\
+            1.3000000000000003  0.010405253884350473  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.4  0.009521063591222168  \\
+            1.4  0.0  \\
+            1.5  0.0  \\
+            1.5  0.009521063591222168  \\
+            1.4  0.009521063591222168  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.5  0.00885471728335736  \\
+            1.5  0.0  \\
+            1.6  0.0  \\
+            1.6  0.00885471728335736  \\
+            1.5  0.00885471728335736  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.6  0.008111484863046612  \\
+            1.6  0.0  \\
+            1.6999999999999997  0.0  \\
+            1.6999999999999997  0.008111484863046612  \\
+            1.6  0.008111484863046612  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.7  0.007727054300816915  \\
+            1.7  0.0  \\
+            1.8  0.0  \\
+            1.8  0.007727054300816915  \\
+            1.7  0.007727054300816915  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.8000000000000003  0.007015857760691975  \\
+            1.8000000000000003  0.0  \\
+            1.9  0.0  \\
+            1.9  0.007015857760691975  \\
+            1.8000000000000003  0.007015857760691975  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.9  0.006432804741310268  \\
+            1.9  0.0  \\
+            2.0  0.0  \\
+            2.0  0.006432804741310268  \\
+            1.9  0.006432804741310268  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.9999999999999998  0.006214960756046772  \\
+            1.9999999999999998  0.0  \\
+            2.0999999999999996  0.0  \\
+            2.0999999999999996  0.006214960756046772  \\
+            1.9999999999999998  0.006214960756046772  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.1000000000000005  0.005715201025148166  \\
+            2.1000000000000005  0.0  \\
+            2.2  0.0  \\
+            2.2  0.005715201025148166  \\
+            2.1000000000000005  0.005715201025148166  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.2  0.005420470927438732  \\
+            2.2  0.0  \\
+            2.3  0.0  \\
+            2.3  0.005420470927438732  \\
+            2.2  0.005420470927438732  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.3  0.005016818837097549  \\
+            2.3  0.0  \\
+            2.3999999999999995  0.0  \\
+            2.3999999999999995  0.005016818837097549  \\
+            2.3  0.005016818837097549  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.4000000000000004  0.005260291526509691  \\
+            2.4000000000000004  0.0  \\
+            2.5  0.0  \\
+            2.5  0.005260291526509691  \\
+            2.4000000000000004  0.005260291526509691  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.5  0.004850232260131347  \\
+            2.5  0.0  \\
+            2.5999999999999996  0.0  \\
+            2.5999999999999996  0.004850232260131347  \\
+            2.5  0.004850232260131347  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.6000000000000005  0.004568316514496236  \\
+            2.6000000000000005  0.0  \\
+            2.7  0.0  \\
+            2.7  0.004568316514496236  \\
+            2.6000000000000005  0.004568316514496236  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.7  0.004549094986384751  \\
+            2.7  0.0  \\
+            2.8  0.0  \\
+            2.8  0.004549094986384751  \\
+            2.7  0.004549094986384751  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.8  0.004491430402050296  \\
+            2.8  0.0  \\
+            2.8999999999999995  0.0  \\
+            2.8999999999999995  0.004491430402050296  \\
+            2.8  0.004491430402050296  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.9000000000000004  0.004286400768861124  \\
+            2.9000000000000004  0.0  \\
+            3.0  0.0  \\
+            3.0  0.004286400768861124  \\
+            2.9000000000000004  0.004286400768861124  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  0.004049335255486145  \\
+            3.0  0.0  \\
+            3.0999999999999996  0.0  \\
+            3.0999999999999996  0.004049335255486145  \\
+            3.0  0.004049335255486145  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.1000000000000005  0.003959634790965882  \\
+            3.1000000000000005  0.0  \\
+            3.2  0.0  \\
+            3.2  0.003959634790965882  \\
+            3.1000000000000005  0.003959634790965882  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.2  0.00403011372737466  \\
+            3.2  0.0  \\
+            3.3  0.0  \\
+            3.3  0.00403011372737466  \\
+            3.2  0.00403011372737466  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.3  0.003632868813070639  \\
+            3.3  0.0  \\
+            3.3999999999999995  0.0  \\
+            3.3999999999999995  0.003632868813070639  \\
+            3.3  0.003632868813070639  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.4000000000000004  0.003632868813070639  \\
+            3.4000000000000004  0.0  \\
+            3.5  0.0  \\
+            3.5  0.003632868813070639  \\
+            3.4000000000000004  0.003632868813070639  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.5  0.003184366490469326  \\
+            3.5  0.0  \\
+            3.5999999999999996  0.0  \\
+            3.5999999999999996  0.003184366490469326  \\
+            3.5  0.003184366490469326  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.6000000000000005  0.00328047413102675  \\
+            3.6000000000000005  0.0  \\
+            3.7  0.0  \\
+            3.7  0.00328047413102675  \\
+            3.6000000000000005  0.00328047413102675  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.7  0.003145923434246356  \\
+            3.7  0.0  \\
+            3.8  0.0  \\
+            3.8  0.003145923434246356  \\
+            3.7  0.003145923434246356  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.8  0.003165144962357841  \\
+            3.8  0.0  \\
+            3.8999999999999995  0.0  \\
+            3.8999999999999995  0.003165144962357841  \\
+            3.8  0.003165144962357841  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={133}, area legend, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.9000000000000004  0.003177959314432164  \\
+            3.9000000000000004  0.0  \\
+            4.0  0.0  \\
+            4.0  0.003177959314432164  \\
+            3.9000000000000004  0.003177959314432164  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, name path={134}, only marks, draw opacity={1.0}, line width={0}, solid, mark={*}, mark size={0.0 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.0}, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={0.0}, line width={0.75}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.95  0.0030370014416146083  \\
+            -3.8499999999999996  0.003133109082172033  \\
+            -3.75  0.003152330610283518  \\
+            -3.6500000000000004  0.0034406535319557907  \\
+            -3.55  0.0032035880185808108  \\
+            -3.45  0.003376581771584174  \\
+            -3.3499999999999996  0.003696940573442255  \\
+            -3.25  0.003786641037962518  \\
+            -3.1500000000000004  0.003876341502482781  \\
+            -3.05  0.003741790805702387  \\
+            -2.95  0.004151850072080731  \\
+            -2.8499999999999996  0.004267179240749639  \\
+            -2.75  0.00446580169790165  \\
+            -2.6500000000000004  0.004651609802979337  \\
+            -2.55  0.004831010732019862  \\
+            -2.45  0.005055261893320519  \\
+            -2.3499999999999996  0.004715681563350953  \\
+            -2.25  0.005042447541246196  \\
+            -2.1500000000000004  0.00568957232099952  \\
+            -2.05  0.006311068396604197  \\
+            -1.95  0.006490469325644723  \\
+            -1.85  0.00663783437449944  \\
+            -1.75  0.007182444337658177  \\
+            -1.65  0.008028191574563512  \\
+            -1.55  0.008284478616049976  \\
+            -1.45  0.008976453628063432  \\
+            -1.35  0.00975812910459715  \\
+            -1.25  0.011090821720326766  \\
+            -1.15  0.01225052058305302  \\
+            -1.05  0.013525548614448182  \\
+            -0.95  0.014672433125100113  \\
+            -0.8500000000000001  0.01628063431042768  \\
+            -0.75  0.01821560147365049  \\
+            -0.6499999999999999  0.019977574883869934  \\
+            -0.55  0.023719365689572322  \\
+            -0.45  0.02810828127502803  \\
+            -0.35  0.035361204549094985  \\
+            -0.25  0.04388274867851994  \\
+            -0.15000000000000002  0.05468524747717444  \\
+            -0.05  0.06509690853756207  \\
+            0.05  0.06396924555502162  \\
+            0.15000000000000002  0.05572320999519462  \\
+            0.25  0.04452346628223611  \\
+            0.35  0.03549575524587538  \\
+            0.45  0.028947621335896203  \\
+            0.55  0.02446259810988307  \\
+            0.6499999999999999  0.020156975812910462  \\
+            0.75  0.018670510972288962  \\
+            0.8500000000000001  0.016645843344545892  \\
+            0.95  0.014954348870735224  \\
+            1.05  0.013608841902931284  \\
+            1.15  0.012276149287201665  \\
+            1.25  0.011013935607880826  \\
+            1.35  0.010405253884350473  \\
+            1.45  0.009521063591222168  \\
+            1.55  0.00885471728335736  \\
+            1.65  0.008111484863046612  \\
+            1.75  0.007727054300816915  \\
+            1.85  0.007015857760691975  \\
+            1.95  0.006432804741310268  \\
+            2.05  0.006214960756046772  \\
+            2.1500000000000004  0.005715201025148166  \\
+            2.25  0.005420470927438732  \\
+            2.3499999999999996  0.005016818837097549  \\
+            2.45  0.005260291526509691  \\
+            2.55  0.004850232260131347  \\
+            2.6500000000000004  0.004568316514496236  \\
+            2.75  0.004549094986384751  \\
+            2.8499999999999996  0.004491430402050296  \\
+            2.95  0.004286400768861124  \\
+            3.05  0.004049335255486145  \\
+            3.1500000000000004  0.003959634790965882  \\
+            3.25  0.00403011372737466  \\
+            3.3499999999999996  0.003632868813070639  \\
+            3.45  0.003632868813070639  \\
+            3.55  0.003184366490469326  \\
+            3.6500000000000004  0.00328047413102675  \\
+            3.75  0.003145923434246356  \\
+            3.8499999999999996  0.003165144962357841  \\
+            3.95  0.003177959314432164  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid]
+        table[row sep={\\}]
+        {
+            \\
+            -4.0  0.0010914395457932353  \\
+            -4.0  0.0  \\
+            -3.9000000000000004  0.0  \\
+            -3.9000000000000004  0.0010914395457932353  \\
+            -4.0  0.0010914395457932353  \\
+        }
+        ;
+    \addlegendentry {$S=10^{9}$}
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.8999999999999995  0.0012908371551208454  \\
+            -3.8999999999999995  0.0  \\
+            -3.8  0.0  \\
+            -3.8  0.0012908371551208454  \\
+            -3.8999999999999995  0.0012908371551208454  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.8  0.0013275682936811947  \\
+            -3.8  0.0  \\
+            -3.7  0.0  \\
+            -3.7  0.0013275682936811947  \\
+            -3.8  0.0013275682936811947  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.7  0.001479740153431213  \\
+            -3.7  0.0  \\
+            -3.6000000000000005  0.0  \\
+            -3.6000000000000005  0.001479740153431213  \\
+            -3.7  0.001479740153431213  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.5999999999999996  0.0016056754856381248  \\
+            -3.5999999999999996  0.0  \\
+            -3.5  0.0  \\
+            -3.5  0.0016056754856381248  \\
+            -3.5999999999999996  0.0016056754856381248  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.5  0.0016319120131812314  \\
+            -3.5  0.0  \\
+            -3.4000000000000004  0.0  \\
+            -3.4000000000000004  0.0016319120131812314  \\
+            -3.5  0.0016319120131812314  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.3999999999999995  0.00162666470767261  \\
+            -3.3999999999999995  0.0  \\
+            -3.3  0.0  \\
+            -3.3  0.00162666470767261  \\
+            -3.3999999999999995  0.00162666470767261  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.3  0.0017473527343709007  \\
+            -3.3  0.0  \\
+            -3.2  0.0  \\
+            -3.2  0.0017473527343709007  \\
+            -3.3  0.0017473527343709007  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.2  0.0021618898695519853  \\
+            -3.2  0.0  \\
+            -3.1000000000000005  0.0  \\
+            -3.1000000000000005  0.0021618898695519853  \\
+            -3.2  0.0021618898695519853  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.0999999999999996  0.0022196102301468195  \\
+            -3.0999999999999996  0.0  \\
+            -3.0  0.0  \\
+            -3.0  0.0022196102301468195  \\
+            -3.0999999999999996  0.0022196102301468195  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.0  0.002230104841164062  \\
+            -3.0  0.0  \\
+            -2.9000000000000004  0.0  \\
+            -2.9000000000000004  0.002230104841164062  \\
+            -3.0  0.002230104841164062  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.8999999999999995  0.00241900783947443  \\
+            -2.8999999999999995  0.0  \\
+            -2.8  0.0  \\
+            -2.8  0.00241900783947443  \\
+            -2.8999999999999995  0.00241900783947443  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.8  0.002466233589052022  \\
+            -2.8  0.0  \\
+            -2.7  0.0  \\
+            -2.7  0.002466233589052022  \\
+            -2.8  0.002466233589052022  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.7  0.002712856947957224  \\
+            -2.7  0.0  \\
+            -2.6000000000000005  0.0  \\
+            -2.6000000000000005  0.002712856947957224  \\
+            -2.7  0.002712856947957224  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.5999999999999996  0.0030906629445779593  \\
+            -2.5999999999999996  0.0  \\
+            -2.5  0.0  \\
+            -2.5  0.0030906629445779593  \\
+            -2.5999999999999996  0.0030906629445779593  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.5  0.0031536306106814153  \\
+            -2.5  0.0  \\
+            -2.4000000000000004  0.0  \\
+            -2.4000000000000004  0.0031536306106814153  \\
+            -2.5  0.0031536306106814153  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.3999999999999995  0.0033058024704314334  \\
+            -2.3999999999999995  0.0  \\
+            -2.3  0.0  \\
+            -2.3  0.0033058024704314334  \\
+            -2.3999999999999995  0.0033058024704314334  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.3  0.0036311354119659555  \\
+            -2.3  0.0  \\
+            -2.2  0.0  \\
+            -2.2  0.0036311354119659555  \\
+            -2.3  0.0036311354119659555  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.2  0.003578662356879742  \\
+            -2.2  0.0  \\
+            -2.1000000000000005  0.0  \\
+            -2.1000000000000005  0.003578662356879742  \\
+            -2.2  0.003578662356879742  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.0999999999999996  0.004187349795879816  \\
+            -2.0999999999999996  0.0  \\
+            -1.9999999999999998  0.0  \\
+            -1.9999999999999998  0.004187349795879816  \\
+            -2.0999999999999996  0.004187349795879816  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -2.0  0.004260812073000515  \\
+            -2.0  0.0  \\
+            -1.9  0.0  \\
+            -1.9  0.004260812073000515  \\
+            -2.0  0.004260812073000515  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.9  0.004764553401828161  \\
+            -1.9  0.0  \\
+            -1.8000000000000003  0.0  \\
+            -1.8000000000000003  0.004764553401828161  \\
+            -1.9  0.004764553401828161  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.8  0.005415219284897205  \\
+            -1.8  0.0  \\
+            -1.7  0.0  \\
+            -1.7  0.005415219284897205  \\
+            -1.8  0.005415219284897205  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.6999999999999997  0.005777283364992077  \\
+            -1.6999999999999997  0.0  \\
+            -1.6  0.0  \\
+            -1.6  0.005777283364992077  \\
+            -1.6999999999999997  0.005777283364992077  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.6  0.006443691164586984  \\
+            -1.6  0.0  \\
+            -1.5  0.0  \\
+            -1.5  0.006443691164586984  \\
+            -1.6  0.006443691164586984  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.5  0.006286271999328345  \\
+            -1.5  0.0  \\
+            -1.4  0.0  \\
+            -1.4  0.006286271999328345  \\
+            -1.5  0.006286271999328345  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.4  0.00722029237986294  \\
+            -1.4  0.0  \\
+            -1.3000000000000003  0.0  \\
+            -1.3000000000000003  0.00722029237986294  \\
+            -1.4  0.00722029237986294  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.3  0.00801263551166476  \\
+            -1.3  0.0  \\
+            -1.2  0.0  \\
+            -1.2  0.00801263551166476  \\
+            -1.3  0.00801263551166476  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.1999999999999997  0.00892566667016487  \\
+            -1.1999999999999997  0.0  \\
+            -1.1  0.0  \\
+            -1.1  0.00892566667016487  \\
+            -1.1999999999999997  0.00892566667016487  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.1  0.009397924165940789  \\
+            -1.1  0.0  \\
+            -1.0  0.0  \\
+            -1.0  0.009397924165940789  \\
+            -1.1  0.009397924165940789  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -1.0  0.010730739765130606  \\
+            -1.0  0.0  \\
+            -0.8999999999999999  0.0  \\
+            -0.8999999999999999  0.010730739765130606  \\
+            -1.0  0.010730739765130606  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.9000000000000001  0.01158605056303588  \\
+            -0.9000000000000001  0.0  \\
+            -0.8  0.0  \\
+            -0.8  0.01158605056303588  \\
+            -0.9000000000000001  0.01158605056303588  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.8  0.013490822462665421  \\
+            -0.8  0.0  \\
+            -0.7  0.0  \\
+            -0.7  0.013490822462665421  \\
+            -0.8  0.013490822462665421  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.7  0.015794389580950183  \\
+            -0.7  0.0  \\
+            -0.5999999999999999  0.0  \\
+            -0.5999999999999999  0.015794389580950183  \\
+            -0.7  0.015794389580950183  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.6000000000000001  0.018827332164933305  \\
+            -0.6000000000000001  0.0  \\
+            -0.5  0.0  \\
+            -0.5  0.018827332164933305  \\
+            -0.6000000000000001  0.018827332164933305  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.5  0.02431076642144259  \\
+            -0.5  0.0  \\
+            -0.4  0.0  \\
+            -0.4  0.02431076642144259  \\
+            -0.5  0.02431076642144259  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.4  0.03270120792972808  \\
+            -0.4  0.0  \\
+            -0.29999999999999993  0.0  \\
+            -0.29999999999999993  0.03270120792972808  \\
+            -0.4  0.03270120792972808  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.3  0.04576699864619518  \\
+            -0.3  0.0  \\
+            -0.2  0.0  \\
+            -0.2  0.04576699864619518  \\
+            -0.3  0.04576699864619518  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.2  0.07213470882701732  \\
+            -0.2  0.0  \\
+            -0.10000000000000002  0.0  \\
+            -0.10000000000000002  0.07213470882701732  \\
+            -0.2  0.07213470882701732  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -0.1  0.1399508852204393  \\
+            -0.1  0.0  \\
+            0.0  0.0  \\
+            0.0  0.1399508852204393  \\
+            -0.1  0.1399508852204393  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.0  0.13968327263949962  \\
+            0.0  0.0  \\
+            0.1  0.0  \\
+            0.1  0.13968327263949962  \\
+            0.0  0.13968327263949962  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.10000000000000002  0.0741444268368193  \\
+            0.10000000000000002  0.0  \\
+            0.2  0.0  \\
+            0.2  0.0741444268368193  \\
+            0.10000000000000002  0.0741444268368193  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.2  0.04553086989830722  \\
+            0.2  0.0  \\
+            0.3  0.0  \\
+            0.3  0.04553086989830722  \\
+            0.2  0.04553086989830722  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.29999999999999993  0.032743186373797056  \\
+            0.29999999999999993  0.0  \\
+            0.4  0.0  \\
+            0.4  0.032743186373797056  \\
+            0.29999999999999993  0.032743186373797056  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.4  0.02502439997061509  \\
+            0.4  0.0  \\
+            0.5  0.0  \\
+            0.5  0.02502439997061509  \\
+            0.4  0.02502439997061509  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.5  0.019357310021304062  \\
+            0.5  0.0  \\
+            0.6000000000000001  0.0  \\
+            0.6000000000000001  0.019357310021304062  \\
+            0.5  0.019357310021304062  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.5999999999999999  0.015694690776286376  \\
+            0.5999999999999999  0.0  \\
+            0.7  0.0  \\
+            0.7  0.015694690776286376  \\
+            0.5999999999999999  0.015694690776286376  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.7  0.013354392519441267  \\
+            0.7  0.0  \\
+            0.8  0.0  \\
+            0.8  0.013354392519441267  \\
+            0.7  0.013354392519441267  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.8  0.011916630810079024  \\
+            0.8  0.0  \\
+            0.9000000000000001  0.0  \\
+            0.9000000000000001  0.011916630810079024  \\
+            0.8  0.011916630810079024  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            0.8999999999999999  0.010468374489699539  \\
+            0.8999999999999999  0.0  \\
+            1.0  0.0  \\
+            1.0  0.010468374489699539  \\
+            0.8999999999999999  0.010468374489699539  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.009613063691794264  \\
+            1.0  0.0  \\
+            1.1  0.0  \\
+            1.1  0.009613063691794264  \\
+            1.0  0.009613063691794264  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.1  0.0088836882260959  \\
+            1.1  0.0  \\
+            1.1999999999999997  0.0  \\
+            1.1999999999999997  0.0088836882260959  \\
+            1.1  0.0088836882260959  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.2  0.008038872039207867  \\
+            1.2  0.0  \\
+            1.3  0.0  \\
+            1.3  0.008038872039207867  \\
+            1.2  0.008038872039207867  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.3000000000000003  0.0074301846002077935  \\
+            1.3000000000000003  0.0  \\
+            1.4  0.0  \\
+            1.4  0.0074301846002077935  \\
+            1.3000000000000003  0.0074301846002077935  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.4  0.006737540273069779  \\
+            1.4  0.0  \\
+            1.5  0.0  \\
+            1.5  0.006737540273069779  \\
+            1.4  0.006737540273069779  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.5  0.006244293555259375  \\
+            1.5  0.0  \\
+            1.6  0.0  \\
+            1.6  0.006244293555259375  \\
+            1.5  0.006244293555259375  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.6  0.005835003725586911  \\
+            1.6  0.0  \\
+            1.6999999999999997  0.0  \\
+            1.6999999999999997  0.005835003725586911  \\
+            1.6  0.005835003725586911  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.7  0.0051948324535351096  \\
+            1.7  0.0  \\
+            1.8  0.0  \\
+            1.8  0.0051948324535351096  \\
+            1.7  0.0051948324535351096  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.8000000000000003  0.005074144426836819  \\
+            1.8000000000000003  0.0  \\
+            1.9  0.0  \\
+            1.9  0.005074144426836819  \\
+            1.8000000000000003  0.005074144426836819  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.9  0.00455990848699193  \\
+            1.9  0.0  \\
+            2.0  0.0  \\
+            2.0  0.00455990848699193  \\
+            1.9  0.00455990848699193  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            1.9999999999999998  0.004208339017914301  \\
+            1.9999999999999998  0.0  \\
+            2.0999999999999996  0.0  \\
+            2.0999999999999996  0.004208339017914301  \\
+            1.9999999999999998  0.004208339017914301  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.1000000000000005  0.003578662356879742  \\
+            2.1000000000000005  0.0  \\
+            2.2  0.0  \\
+            2.2  0.003578662356879742  \\
+            2.1000000000000005  0.003578662356879742  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.2  0.003541931218319393  \\
+            2.2  0.0  \\
+            2.3  0.0  \\
+            2.3  0.003541931218319393  \\
+            2.2  0.003541931218319393  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.3  0.0031851144437331433  \\
+            2.3  0.0  \\
+            2.3999999999999995  0.0  \\
+            2.3999999999999995  0.0031851144437331433  \\
+            2.3  0.0031851144437331433  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.4000000000000004  0.003006706056440018  \\
+            2.4000000000000004  0.0  \\
+            2.5  0.0  \\
+            2.5  0.003006706056440018  \\
+            2.4000000000000004  0.003006706056440018  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.5  0.002665631198379632  \\
+            2.5  0.0  \\
+            2.5999999999999996  0.0  \\
+            2.5999999999999996  0.002665631198379632  \\
+            2.5  0.002665631198379632  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.6000000000000005  0.0027548353920261947  \\
+            2.6000000000000005  0.0  \\
+            2.7  0.0  \\
+            2.7  0.0027548353920261947  \\
+            2.6000000000000005  0.0027548353920261947  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.7  0.0024609862835434006  \\
+            2.7  0.0  \\
+            2.8  0.0  \\
+            2.8  0.0024609862835434006  \\
+            2.7  0.0024609862835434006  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.8  0.0024085132284571873  \\
+            2.8  0.0  \\
+            2.8999999999999995  0.0  \\
+            2.8999999999999995  0.0024085132284571873  \\
+            2.8  0.0024085132284571873  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            2.9000000000000004  0.002356040173370974  \\
+            2.9000000000000004  0.0  \\
+            3.0  0.0  \\
+            3.0  0.002356040173370974  \\
+            2.9000000000000004  0.002356040173370974  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  0.0020202126208192094  \\
+            3.0  0.0  \\
+            3.0999999999999996  0.0  \\
+            3.0999999999999996  0.0020202126208192094  \\
+            3.0  0.0020202126208192094  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.1000000000000005  0.0018260623170002204  \\
+            3.1000000000000005  0.0  \\
+            3.2  0.0  \\
+            3.2  0.0018260623170002204  \\
+            3.1000000000000005  0.0018260623170002204  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.2  0.001899524594120919  \\
+            3.2  0.0  \\
+            3.3  0.0  \\
+            3.3  0.001899524594120919  \\
+            3.2  0.001899524594120919  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.3  0.001852298844543327  \\
+            3.3  0.0  \\
+            3.3999999999999995  0.0  \\
+            3.3999999999999995  0.001852298844543327  \\
+            3.3  0.001852298844543327  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.4000000000000004  0.0016161700966553674  \\
+            3.4000000000000004  0.0  \\
+            3.5  0.0  \\
+            3.5  0.0016161700966553674  \\
+            3.4000000000000004  0.0016161700966553674  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.5  0.0013905359597846507  \\
+            3.5  0.0  \\
+            3.5999999999999996  0.0  \\
+            3.5999999999999996  0.0013905359597846507  \\
+            3.5  0.0013905359597846507  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.6000000000000005  0.0013852886542760293  \\
+            3.6000000000000005  0.0  \\
+            3.7  0.0  \\
+            3.7  0.0013852886542760293  \\
+            3.6000000000000005  0.0013852886542760293  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.7  0.0014062778763105147  \\
+            3.7  0.0  \\
+            3.8  0.0  \\
+            3.8  0.0014062778763105147  \\
+            3.7  0.0014062778763105147  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.8  0.0011176760733363417  \\
+            3.8  0.0  \\
+            3.8999999999999995  0.0  \\
+            3.8999999999999995  0.0011176760733363417  \\
+            3.8  0.0011176760733363417  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={135}, area legend, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.5}, draw opacity={1.0}, line width={0.5}, solid, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.9000000000000004  0.0010337191851984007  \\
+            3.9000000000000004  0.0  \\
+            4.0  0.0  \\
+            4.0  0.0010337191851984007  \\
+            3.9000000000000004  0.0010337191851984007  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.1333;green,0.5333;blue,0.2}, name path={136}, only marks, draw opacity={1.0}, line width={0}, solid, mark={*}, mark size={0.0 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.0}, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={0.0}, line width={0.75}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            -3.95  0.0010914395457932353  \\
+            -3.8499999999999996  0.0012908371551208454  \\
+            -3.75  0.0013275682936811947  \\
+            -3.6500000000000004  0.001479740153431213  \\
+            -3.55  0.0016056754856381248  \\
+            -3.45  0.0016319120131812314  \\
+            -3.3499999999999996  0.00162666470767261  \\
+            -3.25  0.0017473527343709007  \\
+            -3.1500000000000004  0.0021618898695519853  \\
+            -3.05  0.0022196102301468195  \\
+            -2.95  0.002230104841164062  \\
+            -2.8499999999999996  0.00241900783947443  \\
+            -2.75  0.002466233589052022  \\
+            -2.6500000000000004  0.002712856947957224  \\
+            -2.55  0.0030906629445779593  \\
+            -2.45  0.0031536306106814153  \\
+            -2.3499999999999996  0.0033058024704314334  \\
+            -2.25  0.0036311354119659555  \\
+            -2.1500000000000004  0.003578662356879742  \\
+            -2.05  0.004187349795879816  \\
+            -1.95  0.004260812073000515  \\
+            -1.85  0.004764553401828161  \\
+            -1.75  0.005415219284897205  \\
+            -1.65  0.005777283364992077  \\
+            -1.55  0.006443691164586984  \\
+            -1.45  0.006286271999328345  \\
+            -1.35  0.00722029237986294  \\
+            -1.25  0.00801263551166476  \\
+            -1.15  0.00892566667016487  \\
+            -1.05  0.009397924165940789  \\
+            -0.95  0.010730739765130606  \\
+            -0.8500000000000001  0.01158605056303588  \\
+            -0.75  0.013490822462665421  \\
+            -0.6499999999999999  0.015794389580950183  \\
+            -0.55  0.018827332164933305  \\
+            -0.45  0.02431076642144259  \\
+            -0.35  0.03270120792972808  \\
+            -0.25  0.04576699864619518  \\
+            -0.15000000000000002  0.07213470882701732  \\
+            -0.05  0.1399508852204393  \\
+            0.05  0.13968327263949962  \\
+            0.15000000000000002  0.0741444268368193  \\
+            0.25  0.04553086989830722  \\
+            0.35  0.032743186373797056  \\
+            0.45  0.02502439997061509  \\
+            0.55  0.019357310021304062  \\
+            0.6499999999999999  0.015694690776286376  \\
+            0.75  0.013354392519441267  \\
+            0.8500000000000001  0.011916630810079024  \\
+            0.95  0.010468374489699539  \\
+            1.05  0.009613063691794264  \\
+            1.15  0.0088836882260959  \\
+            1.25  0.008038872039207867  \\
+            1.35  0.0074301846002077935  \\
+            1.45  0.006737540273069779  \\
+            1.55  0.006244293555259375  \\
+            1.65  0.005835003725586911  \\
+            1.75  0.0051948324535351096  \\
+            1.85  0.005074144426836819  \\
+            1.95  0.00455990848699193  \\
+            2.05  0.004208339017914301  \\
+            2.1500000000000004  0.003578662356879742  \\
+            2.25  0.003541931218319393  \\
+            2.3499999999999996  0.0031851144437331433  \\
+            2.45  0.003006706056440018  \\
+            2.55  0.002665631198379632  \\
+            2.6500000000000004  0.0027548353920261947  \\
+            2.75  0.0024609862835434006  \\
+            2.8499999999999996  0.0024085132284571873  \\
+            2.95  0.002356040173370974  \\
+            3.05  0.0020202126208192094  \\
+            3.1500000000000004  0.0018260623170002204  \\
+            3.25  0.001899524594120919  \\
+            3.3499999999999996  0.001852298844543327  \\
+            3.45  0.0016161700966553674  \\
+            3.55  0.0013905359597846507  \\
+            3.6500000000000004  0.0013852886542760293  \\
+            3.75  0.0014062778763105147  \\
+            3.8499999999999996  0.0011176760733363417  \\
+            3.95  0.0010337191851984007  \\
+        }
+        ;
+\end{axis}
+\end{tikzpicture}
+\end{document}
