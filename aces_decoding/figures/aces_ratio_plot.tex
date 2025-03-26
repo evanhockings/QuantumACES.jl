@@ -1,0 +1,801 @@
+\RequirePackage{luatex85}
+\documentclass[tikz]{standalone}
+% Default preamble
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+\usepgfplotslibrary{groupplots}
+\usepgfplotslibrary{polar}
+\usepgfplotslibrary{smithchart}
+\usepgfplotslibrary{statistics}
+\usepgfplotslibrary{dateplot}
+\usepgfplotslibrary{ternary}
+% Custom preamble from global variable:
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{backgrounds}
+\usepgfplotslibrary{patchplots}
+\usepgfplotslibrary{fillbetween}
+\pgfplotsset{%
+    layers/standard/.define layer set={%
+        background,axis background,axis grid,axis ticks,axis lines,axis tick labels,pre main,main,axis descriptions,axis foreground%
+    }{
+        grid style={/pgfplots/on layer=axis grid},%
+        tick style={/pgfplots/on layer=axis ticks},%
+        axis line style={/pgfplots/on layer=axis lines},%
+        label style={/pgfplots/on layer=axis descriptions},%
+        legend style={/pgfplots/on layer=axis descriptions},%
+        title style={/pgfplots/on layer=axis descriptions},%
+        colorbar style={/pgfplots/on layer=axis descriptions},%
+        ticklabel style={/pgfplots/on layer=axis tick labels},%
+        axis background@ style={/pgfplots/on layer=axis background},%
+        3d box foreground style={/pgfplots/on layer=axis foreground},%
+    },
+}
+
+\begin{document}
+\begin{tikzpicture}[/tikz/background rectangle/.style={fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={0.0}, draw opacity={0.0}}, show background rectangle]
+\begin{axis}[point meta max={nan}, point meta min={nan}, legend cell align={left}, legend columns={1}, title={}, title style={at={{(0.5,1)}}, anchor={south}, font={{\fontsize{10 pt}{13.0 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}, align={center}}, legend style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={0.0}, text opacity={1.0}, font={{\fontsize{7 pt}{9.1 pt}\selectfont}}, text={rgb,1:red,0.0;green,0.0;blue,0.0}, cells={anchor={west}}, at={(0.02, 0.02)}, anchor={south west}}, axis background/.style={fill={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={0.0}}, anchor={north west}, xshift={0.0mm}, yshift={-0.0mm}, width={84.80774263179742mm}, height={66.2709090909091mm}, scaled x ticks={false}, xlabel={Distance}, x tick style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}}, x tick label style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}, rotate={0}}, xlabel style={at={(ticklabel cs:0.5)}, anchor=near ticklabel, at={{(ticklabel cs:0.5)}}, anchor={near ticklabel}, font={{\fontsize{9 pt}{11.700000000000001 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, xmajorgrids={false}, xmin={2.7750000000000004}, xmax={13.225}, xticklabels={{$3$,$5$,$7$,$9$,$11$,$13$}}, xtick={{3.0,5.0,7.0,9.0,11.0,13.0}}, xtick align={outside}, xticklabel style={font={{\fontsize{7 pt}{9.1 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, x grid style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.1}, line width={0.5}, solid}, axis x line*={left}, x axis line style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid}, scaled y ticks={false}, ylabel={Relative logical error per round (\%)}, y tick style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}}, y tick label style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}, rotate={0}}, ylabel style={at={(ticklabel cs:0.5)}, anchor=near ticklabel, at={{(ticklabel cs:0.5)}}, anchor={near ticklabel}, font={{\fontsize{9 pt}{11.700000000000001 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, ymajorgrids={false}, ymin={87.64}, ymax={100.36}, yticklabels={{$88$,$91$,$94$,$97$,$100$}}, ytick={{88.0,91.0,94.0,97.0,100.0}}, ytick align={outside}, yticklabel style={font={{\fontsize{7 pt}{9.1 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, y grid style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.1}, line width={0.5}, solid}, axis y line*={left}, y axis line style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid}, colorbar={false}]
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={65}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.89851494300025  \\
+            3.0  99.99238823089094  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={65}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            5.0  100.13799843765203  \\
+            5.0  100.30585347807185  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={65}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            7.0  99.87802871556813  \\
+            7.0  100.12901867196008  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={65}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            9.0  99.77153838605065  \\
+            9.0  100.14518308054397  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={65}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            11.0  99.69753403639066  \\
+            11.0  100.18154638540167  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={65}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            13.0  99.47127868043147  \\
+            13.0  99.95540148627354  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, name path={66}, only marks, draw opacity={1.0}, line width={0}, solid, mark={*}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.9454515869456  \\
+            5.0  100.22192595786194  \\
+            7.0  100.00352369376411  \\
+            9.0  99.95836073329731  \\
+            11.0  99.93954021089617  \\
+            13.0  99.7133400833525  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, name path={67}, only marks, draw opacity={1.0}, line width={0}, solid, mark={*}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, fill opacity={1.0}, line width={0.1875}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.9454515869456  \\
+            5.0  100.22192595786194  \\
+            7.0  100.00352369376411  \\
+            9.0  99.95836073329731  \\
+            11.0  99.93954021089617  \\
+            13.0  99.7133400833525  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.2667;green,0.4667;blue,0.6667}, name path={68}, draw opacity={1.0}, line width={1}, solid]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  100.0  \\
+            3.1  100.0  \\
+            3.2  100.0  \\
+            3.3  100.0  \\
+            3.4  100.0  \\
+            3.5  100.0  \\
+            3.6  100.0  \\
+            3.7  100.0  \\
+            3.8  100.0  \\
+            3.9  100.0  \\
+            4.0  100.0  \\
+            4.1  100.0  \\
+            4.2  100.0  \\
+            4.3  100.0  \\
+            4.4  100.0  \\
+            4.5  100.0  \\
+            4.6  100.0  \\
+            4.7  100.0  \\
+            4.8  100.0  \\
+            4.9  100.0  \\
+            5.0  100.0  \\
+            5.1  100.0  \\
+            5.2  100.0  \\
+            5.3  100.0  \\
+            5.4  100.0  \\
+            5.5  100.0  \\
+            5.6  100.0  \\
+            5.7  100.0  \\
+            5.8  100.0  \\
+            5.9  100.0  \\
+            6.0  100.0  \\
+            6.1  100.0  \\
+            6.2  100.0  \\
+            6.3  100.0  \\
+            6.4  100.0  \\
+            6.5  100.0  \\
+            6.6  100.0  \\
+            6.7  100.0  \\
+            6.8  100.0  \\
+            6.9  100.0  \\
+            7.0  100.0  \\
+            7.1  100.0  \\
+            7.2  100.0  \\
+            7.3  100.0  \\
+            7.4  100.0  \\
+            7.5  100.0  \\
+            7.6  100.0  \\
+            7.7  100.0  \\
+            7.8  100.0  \\
+            7.9  100.0  \\
+            8.0  100.0  \\
+            8.1  100.0  \\
+            8.2  100.0  \\
+            8.3  100.0  \\
+            8.4  100.0  \\
+            8.5  100.0  \\
+            8.6  100.0  \\
+            8.7  100.0  \\
+            8.8  100.0  \\
+            8.9  100.0  \\
+            9.0  100.0  \\
+            9.1  100.0  \\
+            9.2  100.0  \\
+            9.3  100.0  \\
+            9.4  100.0  \\
+            9.5  100.0  \\
+            9.6  100.0  \\
+            9.7  100.0  \\
+            9.8  100.0  \\
+            9.9  100.0  \\
+            10.0  100.0  \\
+            10.1  100.0  \\
+            10.2  100.0  \\
+            10.3  100.0  \\
+            10.4  100.0  \\
+            10.5  100.0  \\
+            10.6  100.0  \\
+            10.7  100.0  \\
+            10.8  100.0  \\
+            10.9  100.0  \\
+            11.0  100.0  \\
+            11.1  100.0  \\
+            11.2  100.0  \\
+            11.3  100.0  \\
+            11.4  100.0  \\
+            11.5  100.0  \\
+            11.6  100.0  \\
+            11.7  100.0  \\
+            11.8  100.0  \\
+            11.9  100.0  \\
+            12.0  100.0  \\
+            12.1  100.0  \\
+            12.2  100.0  \\
+            12.3  100.0  \\
+            12.4  100.0  \\
+            12.5  100.0  \\
+            12.6  100.0  \\
+            12.7  100.0  \\
+            12.8  100.0  \\
+            12.9  100.0  \\
+            13.0  100.0  \\
+            13.1  100.0  \\
+            13.2  100.0  \\
+            13.3  100.0  \\
+            13.4  100.0  \\
+            13.5  100.0  \\
+            13.6  100.0  \\
+            13.7  100.0  \\
+            13.8  100.0  \\
+            13.9  100.0  \\
+            14.0  100.0  \\
+        }
+        ;
+    \addlegendentry {Tuned depolarising}
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={69}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.30365089937891  \\
+            3.0  99.36828869862867  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={69}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            5.0  97.11138017499411  \\
+            5.0  97.14758385525448  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={69}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            7.0  94.94899085934412  \\
+            7.0  95.00782919760644  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={69}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            9.0  92.94357289588594  \\
+            9.0  93.02510872683227  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={69}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            11.0  90.85116429703375  \\
+            11.0  90.97256170964171  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={69}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            13.0  88.78778556367237  \\
+            13.0  88.95641379307034  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.9333;green,0.4;blue,0.4667}, name path={70}, only marks, draw opacity={1.0}, line width={0}, solid, mark={*}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.33596979900379  \\
+            5.0  97.1294820151243  \\
+            7.0  94.97841002847528  \\
+            9.0  92.9843408113591  \\
+            11.0  90.91186300333773  \\
+            13.0  88.87209967837136  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.9333;green,0.4;blue,0.4667}, name path={71}, only marks, draw opacity={1.0}, line width={0}, solid, mark={*}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.9333;green,0.4;blue,0.4667}, fill opacity={1.0}, line width={0.1875}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.33596979900379  \\
+            5.0  97.1294820151243  \\
+            7.0  94.97841002847528  \\
+            9.0  92.9843408113591  \\
+            11.0  90.91186300333773  \\
+            13.0  88.87209967837136  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.9333;green,0.4;blue,0.4667}, name path={72}, draw opacity={1.0}, line width={1}, dashed]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.31087191251015  \\
+            3.1  99.20100304785952  \\
+            3.2  99.09125573251345  \\
+            3.3  98.98162983200046  \\
+            3.4  98.87212521199783  \\
+            3.5  98.76274173833131  \\
+            3.6  98.65347927697529  \\
+            3.7  98.54433769405226  \\
+            3.8  98.43531685583292  \\
+            3.9  98.32641662873588  \\
+            4.0  98.21763687932756  \\
+            4.1  98.10897747432195  \\
+            4.2  98.00043828058054  \\
+            4.3  97.89201916511213  \\
+            4.4  97.78371999507256  \\
+            4.5  97.67554063776473  \\
+            4.6  97.5674809606383  \\
+            4.7  97.4595408312896  \\
+            4.8  97.35172011746143  \\
+            4.9  97.24401868704282  \\
+            5.0  97.13643640806916  \\
+            5.1  97.02897314872163  \\
+            5.2  96.9216287773273  \\
+            5.3  96.81440316235904  \\
+            5.4  96.70729617243502  \\
+            5.5  96.60030767631889  \\
+            5.6  96.49343754291952  \\
+            5.7  96.38668564129067  \\
+            5.8  96.2800518406311  \\
+            5.9  96.1735360102842  \\
+            6.0  96.06713801973795  \\
+            6.1  95.96085773862467  \\
+            6.2  95.85469503672095  \\
+            6.3  95.74864978394746  \\
+            6.4  95.64272185036874  \\
+            6.5  95.53691110619307  \\
+            6.6  95.43121742177235  \\
+            6.7  95.32564066760192  \\
+            6.8  95.22018071432034  \\
+            6.9  95.11483743270936  \\
+            7.0  95.00961069369363  \\
+            7.1  94.9045003683406  \\
+            7.2  94.79950632786041  \\
+            7.3  94.69462844360561  \\
+            7.4  94.5898665870711  \\
+            7.5  94.485220629894  \\
+            7.6  94.38069044385338  \\
+            7.7  94.27627590087015  \\
+            7.8  94.17197687300697  \\
+            7.9  94.067793232468  \\
+            8.0  93.96372485159883  \\
+            8.1  93.85977160288617  \\
+            8.2  93.75593335895793  \\
+            8.3  93.65220999258284  \\
+            8.4  93.54860137667043  \\
+            8.5  93.44510738427083  \\
+            8.6  93.34172788857464  \\
+            8.7  93.23846276291265  \\
+            8.8  93.13531188075586  \\
+            8.9  93.03227511571531  \\
+            9.0  92.92935234154174  \\
+            9.1  92.82654343212569  \\
+            9.2  92.72384826149707  \\
+            9.3  92.62126670382528  \\
+            9.4  92.51879863341885  \\
+            9.5  92.41644392472541  \\
+            9.6  92.3142024523315  \\
+            9.7  92.21207409096233  \\
+            9.8  92.11005871548178  \\
+            9.9  92.00815620089216  \\
+            10.0  91.906366422334  \\
+            10.1  91.80468925508605  \\
+            10.2  91.703124574565  \\
+            10.3  91.60167225632536  \\
+            10.4  91.50033217605933  \\
+            10.5  91.39910420959664  \\
+            10.6  91.29798823290436  \\
+            10.7  91.19698412208683  \\
+            10.8  91.0960917533854  \\
+            10.9  90.99531100317839  \\
+            11.0  90.89464174798086  \\
+            11.1  90.79408386444445  \\
+            11.2  90.69363722935728  \\
+            11.3  90.59330171964385  \\
+            11.4  90.49307721236475  \\
+            11.5  90.39296358471654  \\
+            11.6  90.29296071403176  \\
+            11.7  90.19306847777855  \\
+            11.8  90.09328675356069  \\
+            11.9  89.99361541911728  \\
+            12.0  89.89405435232275  \\
+            12.1  89.7946034311866  \\
+            12.2  89.69526253385331  \\
+            12.3  89.59603153860218  \\
+            12.4  89.49691032384713  \\
+            12.5  89.39789876813666  \\
+            12.6  89.29899675015355  \\
+            12.7  89.20020414871487  \\
+            12.8  89.1015208427717  \\
+            12.9  89.00294671140908  \\
+            13.0  88.90448163384578  \\
+            13.1  88.80612548943421  \\
+            13.2  88.70787815766028  \\
+            13.3  88.6097395181432  \\
+            13.4  88.51170945063532  \\
+            13.5  88.41378783502213  \\
+            13.6  88.31597455132189  \\
+            13.7  88.21826947968563  \\
+            13.8  88.12067250039705  \\
+            13.9  88.02318349387217  \\
+            14.0  87.9258023406594  \\
+        }
+        ;
+    \addlegendentry {ACES: $10^6$ shots}
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={73}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.11817298392918  \\
+            3.0  99.14758880399768  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={73}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            5.0  96.87624875914285  \\
+            5.0  96.89418491909315  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={73}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            7.0  94.66477590167516  \\
+            7.0  94.69940122445509  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={73}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            9.0  92.5090442762771  \\
+            9.0  92.55487621404187  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={73}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            11.0  90.4369497976915  \\
+            11.0  90.50838744145624  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={73}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            13.0  88.34958619448926  \\
+            13.0  88.45862738717273  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.8;green,0.7333;blue,0.2667}, name path={74}, only marks, draw opacity={1.0}, line width={0}, solid, mark={*}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.13288089396343  \\
+            5.0  96.885216839118  \\
+            7.0  94.68208856306512  \\
+            9.0  92.53196024515948  \\
+            11.0  90.47266861957387  \\
+            13.0  88.404106790831  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.8;green,0.7333;blue,0.2667}, name path={75}, only marks, draw opacity={1.0}, line width={0}, solid, mark={*}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.8;green,0.7333;blue,0.2667}, fill opacity={1.0}, line width={0.1875}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.13288089396343  \\
+            5.0  96.885216839118  \\
+            7.0  94.68208856306512  \\
+            9.0  92.53196024515948  \\
+            11.0  90.47266861957387  \\
+            13.0  88.404106790831  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.8;green,0.7333;blue,0.2667}, name path={76}, draw opacity={1.0}, line width={1}, dashdotted]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.13100887887984  \\
+            3.1  99.01745155630911  \\
+            3.2  98.90402431680371  \\
+            3.3  98.79072701134997  \\
+            3.4  98.67755949110477  \\
+            3.5  98.56452160739558  \\
+            3.6  98.45161321172014  \\
+            3.7  98.33883415574631  \\
+            3.8  98.22618429131187  \\
+            3.9  98.1136634704243  \\
+            4.0  98.00127154526068  \\
+            4.1  97.88900836816735  \\
+            4.2  97.77687379165984  \\
+            4.3  97.66486766842262  \\
+            4.4  97.55298985130885  \\
+            4.5  97.44124019334036  \\
+            4.6  97.32961854770727  \\
+            4.7  97.21812476776789  \\
+            4.8  97.10675870704854  \\
+            4.9  96.99552021924326  \\
+            5.0  96.88440915821378  \\
+            5.1  96.77342537798921  \\
+            5.2  96.66256873276578  \\
+            5.3  96.55183907690687  \\
+            5.4  96.44123626494263  \\
+            5.5  96.33076015156988  \\
+            5.6  96.22041059165181  \\
+            5.7  96.11018744021796  \\
+            5.8  96.00009055246392  \\
+            5.9  95.89011978375109  \\
+            6.0  95.78027498960664  \\
+            6.1  95.67055602572322  \\
+            6.2  95.56096274795873  \\
+            6.3  95.45149501233625  \\
+            6.4  95.34215267504378  \\
+            6.5  95.23293559243406  \\
+            6.6  95.12384362102436  \\
+            6.7  95.01487661749634  \\
+            6.8  94.90603443869578  \\
+            6.9  94.79731694163254  \\
+            7.0  94.68872398348022  \\
+            7.1  94.58025542157601  \\
+            7.2  94.47191111342057  \\
+            7.3  94.36369091667778  \\
+            7.4  94.2555946891746  \\
+            7.5  94.14762228890078  \\
+            7.6  94.03977357400885  \\
+            7.7  93.93204840281369  \\
+            7.8  93.82444663379263  \\
+            7.9  93.71696812558504  \\
+            8.0  93.60961273699223  \\
+            8.1  93.50238032697725  \\
+            8.2  93.39527075466476  \\
+            8.3  93.28828387934072  \\
+            8.4  93.18141956045234  \\
+            8.5  93.07467765760784  \\
+            8.6  92.96805803057624  \\
+            8.7  92.86156053928715  \\
+            8.8  92.75518504383075  \\
+            8.9  92.64893140445741  \\
+            9.0  92.54279948157759  \\
+            9.1  92.43678913576171  \\
+            9.2  92.33090022773978  \\
+            9.3  92.22513261840155  \\
+            9.4  92.11948616879589  \\
+            9.5  92.01396074013103  \\
+            9.6  91.90855619377413  \\
+            9.7  91.80327239125118  \\
+            9.8  91.69810919424665  \\
+            9.9  91.5930664646037  \\
+            10.0  91.48814406432354  \\
+            10.1  91.38334185556558  \\
+            10.2  91.27865970064707  \\
+            10.3  91.17409746204304  \\
+            10.4  91.069655002386  \\
+            10.5  90.96533218446584  \\
+            10.6  90.86112887122961  \\
+            10.7  90.75704492578144  \\
+            10.8  90.65308021138216  \\
+            10.9  90.5492345914493  \\
+            11.0  90.44550792955688  \\
+            11.1  90.34190008943511  \\
+            11.2  90.23841093497036  \\
+            11.3  90.13504033020496  \\
+            11.4  90.03178813933691  \\
+            11.5  89.9286542267198  \\
+            11.6  89.8256384568626  \\
+            11.7  89.72274069442953  \\
+            11.8  89.61996080423978  \\
+            11.9  89.51729865126748  \\
+            12.0  89.41475410064128  \\
+            12.1  89.31232701764452  \\
+            12.2  89.2100172677147  \\
+            12.3  89.10782471644359  \\
+            12.4  89.00574922957685  \\
+            12.5  88.90379067301394  \\
+            12.6  88.80194891280799  \\
+            12.7  88.70022381516547  \\
+            12.8  88.59861524644624  \\
+            12.9  88.49712307316315  \\
+            13.0  88.39574716198202  \\
+            13.1  88.29448737972133  \\
+            13.2  88.19334359335224  \\
+            13.3  88.0923156699982  \\
+            13.4  87.99140347693492  \\
+            13.5  87.89060688159016  \\
+            13.6  87.78992575154349  \\
+            13.7  87.6893599545262  \\
+            13.8  87.58890935842115  \\
+            13.9  87.48857383126247  \\
+            14.0  87.38835324123549  \\
+        }
+        ;
+    \addlegendentry {ACES: $10^7$ shots}
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={77}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.12213270610437  \\
+            3.0  99.12213270610437  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={77}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            5.0  96.86540654226067  \\
+            5.0  96.86540654226067  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={77}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            7.0  94.66005954913837  \\
+            7.0  94.66005954913837  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={77}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            9.0  92.50492197064284  \\
+            9.0  92.50492197064284  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={77}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            11.0  90.39885068266486  \\
+            11.0  90.39885068266486  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.0;green,0.0;blue,0.0}, name path={77}, draw opacity={1.0}, line width={0.5}, solid, mark={-}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.0;blue,0.0}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            13.0  88.34072858674664  \\
+            13.0  88.34072858674664  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.1333;green,0.5333;blue,0.2}, name path={78}, only marks, draw opacity={1.0}, line width={0}, solid, mark={*}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={1.0}, line width={0.375}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.12213270610437  \\
+            5.0  96.86540654226067  \\
+            7.0  94.66005954913837  \\
+            9.0  92.50492197064284  \\
+            11.0  90.39885068266486  \\
+            13.0  88.34072858674664  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.1333;green,0.5333;blue,0.2}, name path={79}, only marks, draw opacity={1.0}, line width={0}, solid, mark={*}, mark size={0.9375 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.1333;green,0.5333;blue,0.2}, fill opacity={1.0}, line width={0.1875}, rotate={0}, solid}, forget plot]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.12213270610437  \\
+            5.0  96.86540654226067  \\
+            7.0  94.66005954913837  \\
+            9.0  92.50492197064284  \\
+            11.0  90.39885068266486  \\
+            13.0  88.34072858674664  \\
+        }
+        ;
+    \addplot[color={rgb,1:red,0.1333;green,0.5333;blue,0.2}, name path={80}, draw opacity={1.0}, line width={1}, dotted]
+        table[row sep={\\}]
+        {
+            \\
+            3.0  99.12213270610437  \\
+            3.1  99.00805777573055  \\
+            3.2  98.89411412874807  \\
+            3.3  98.78030161406916  \\
+            3.4  98.6666200807799  \\
+            3.5  98.5530693781401  \\
+            3.6  98.43964935558293  \\
+            3.7  98.32635986271501  \\
+            3.8  98.21320074931592  \\
+            3.9  98.10017186533811  \\
+            4.0  97.98727306090682  \\
+            4.1  97.87450418631967  \\
+            4.2  97.76186509204663  \\
+            4.3  97.64935562872972  \\
+            4.4  97.53697564718287  \\
+            4.5  97.42472499839168  \\
+            4.6  97.31260353351327  \\
+            4.7  97.20061110387603  \\
+            4.8  97.08874756097946  \\
+            4.9  96.97701275649396  \\
+            5.0  96.86540654226067  \\
+            5.1  96.75392877029118  \\
+            5.2  96.64257929276741  \\
+            5.3  96.53135796204144  \\
+            5.4  96.4202646306352  \\
+            5.5  96.30929915124042  \\
+            5.6  96.19846137671833  \\
+            5.7  96.08775116009942  \\
+            5.8  95.97716835458347  \\
+            5.9  95.86671281353907  \\
+            6.0  95.75638439050365  \\
+            6.1  95.64618293918313  \\
+            6.2  95.53610831345186  \\
+            6.3  95.42616036735231  \\
+            6.4  95.31633895509492  \\
+            6.5  95.20664393105798  \\
+            6.6  95.09707514978726  \\
+            6.7  94.98763246599603  \\
+            6.8  94.8783157345647  \\
+            6.9  94.76912481054073  \\
+            7.0  94.66005954913837  \\
+            7.1  94.5511198057385  \\
+            7.2  94.44230543588846  \\
+            7.3  94.33361629530178  \\
+            7.4  94.22505223985813  \\
+            7.5  94.11661312560297  \\
+            7.6  94.00829880874747  \\
+            7.7  93.90010914566821  \\
+            7.8  93.79204399290715  \\
+            7.9  93.68410320717129  \\
+            8.0  93.57628664533259  \\
+            8.1  93.46859416442764  \\
+            8.2  93.36102562165769  \\
+            8.3  93.25358087438819  \\
+            8.4  93.14625978014884  \\
+            8.5  93.03906219663328  \\
+            8.6  92.93198798169892  \\
+            8.7  92.82503699336672  \\
+            8.8  92.71820908982106  \\
+            8.9  92.61150412940957  \\
+            9.0  92.50492197064284  \\
+            9.1  92.39846247219435  \\
+            9.2  92.29212549290014  \\
+            9.3  92.18591089175885  \\
+            9.4  92.07981852793122  \\
+            9.5  91.9738482607402  \\
+            9.6  91.8679999496706  \\
+            9.7  91.76227345436897  \\
+            9.8  91.6566686346433  \\
+            9.9  91.551185350463  \\
+            10.0  91.44582346195864  \\
+            10.1  91.3405828294217  \\
+            10.2  91.23546331330449  \\
+            10.3  91.13046477421992  \\
+            10.4  91.02558707294125  \\
+            10.5  90.92083007040208  \\
+            10.6  90.81619362769592  \\
+            10.7  90.71167760607631  \\
+            10.8  90.60728186695627  \\
+            10.9  90.50300627190849  \\
+            11.0  90.39885068266486  \\
+            11.1  90.29481496111642  \\
+            11.2  90.19089896931317  \\
+            11.3  90.08710256946387  \\
+            11.4  89.98342562393586  \\
+            11.5  89.87986799525484  \\
+            11.6  89.77642954610475  \\
+            11.7  89.67311013932758  \\
+            11.8  89.56990963792313  \\
+            11.9  89.46682790504889  \\
+            12.0  89.36386480401983  \\
+            12.1  89.26102019830819  \\
+            12.2  89.1582939515434  \\
+            12.3  89.05568592751179  \\
+            12.4  88.95319599015647  \\
+            12.5  88.8508240035771  \\
+            12.6  88.74856983202979  \\
+            12.7  88.64643333992682  \\
+            12.8  88.54441439183657  \\
+            12.9  88.4425128524832  \\
+            13.0  88.34072858674664  \\
+            13.1  88.23906145966225  \\
+            13.2  88.13751133642077  \\
+            13.3  88.03607808236805  \\
+            13.4  87.93476156300494  \\
+            13.5  87.83356164398704  \\
+            13.6  87.73247819112459  \\
+            13.7  87.63151107038223  \\
+            13.8  87.5306601478789  \\
+            13.9  87.4299252898876  \\
+            14.0  87.32930636283523  \\
+        }
+        ;
+    \addlegendentry {True noise}
+\end{axis}
+\end{tikzpicture}
+\end{document}
