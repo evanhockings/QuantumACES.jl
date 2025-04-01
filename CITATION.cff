@@ -1,11 +1,28 @@
-cff-version: 0.2.2
-message: "If you use this software, please cite it as below."
+cff-version: "1.2.0"
 authors:
-- family-names: "Hockings"
-  given-names: "Evan T."
+- family-names: Hockings
+  given-names: Evan T.
   orcid: "https://orcid.org/0000-0002-5890-5705"
-title: "QuantumACES.jl"
-version: 0.2.2
-# doi:
-# date-released:
-url: "https://github.com/evanhockings/QuantumACES.jl"
+doi: 10.5281/zenodo.15043208
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Hockings
+    given-names: Evan T.
+    orcid: "https://orcid.org/0000-0002-5890-5705"
+  date-published: 2025-03-31
+  doi: 10.21105/joss.07707
+  issn: 2475-9066
+  issue: 107
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 7707
+  title: "QuantumACES.jl: design noise characterisation experiments for
+    quantum computers"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.07707"
+  volume: 10
+title: "QuantumACES.jl: design noise characterisation experiments for
+  quantum computers"
