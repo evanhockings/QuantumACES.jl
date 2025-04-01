@@ -1,6 +1,6 @@
 # QuantumACES.jl
 
-`QuantumACES` is a package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits with averaged circuit eigenvalue sampling (ACES).
+QuantumACES is a package for designing and simulating scalable and performant Pauli noise characterisation experiments for stabiliser circuits with averaged circuit eigenvalue sampling (ACES).
 It focuses on the context of quantum error correction and fault-tolerant circuits and, in particular, on the syndrome extraction circuits of topological quantum error correcting codes.
 It interfaces with [Stim](https://github.com/quantumlib/Stim) for stabiliser circuit simulation, [PyMatching](https://github.com/oscarhiggott/PyMatching) and [BeliefMatching](https://github.com/oscarhiggott/BeliefMatching) for decoding, and [Qiskit](https://github.com/Qiskit/qiskit) for implementation on quantum devices.
 
@@ -28,12 +28,12 @@ If you wish to contribute to this package, please refer to the `CONTRIBUTING.md`
 
 ## Index
 
-The [Package Guide](@ref) describes how you can start using `QuantumACES`, and [Creating Circuits and Noise Models](@ref) described the creation of new circuits and noise models to which the methods of `QuantumACES` can be applied.
+The [Package Guide](@ref) describes how you can start using QuantumACES, and [Creating Circuits and Noise Models](@ref) described the creation of new circuits and noise models to which the methods of QuantumACES can be applied.
 
-The [Package Performance](@ref) section describes some important performance optimisations in `QuantumACES`.
+The [Package Performance](@ref) section describes some important performance optimisations in QuantumACES.
 
-The package reference documents the functions and types in `QuantumACES`, including internal functions.
-When making heavy use of the internal functions, you may find it convenient to rename the package as `ACES` as follows.
+The package reference documents the functions and types in QuantumACES, including internal functions.
+When making heavy use of the internal functions, you may find it convenient to import the package as ACES.
 
 ```julia
 using QuantumACES
