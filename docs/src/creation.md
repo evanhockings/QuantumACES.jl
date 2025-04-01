@@ -1,6 +1,6 @@
 # Creating Circuits and Noise Models
 
-`QuantumACES` makes it easy to create new circuits and noise models.
+QuantumACES makes it easy to create new circuits and noise models.
 At a high level, we create new parameter types for the circuit or noise model and then create new methods for the functions [`get_circuit`](@ref) and [`init_gate_probabilities`](@ref), respectively, that take these parameter types as arguments.
 Then [`get_circuit`](@ref) uses the circuit and noise model parameters to create a [`Circuit`](@ref) object.
 
@@ -265,7 +265,7 @@ circuit_example = get_circuit(example_param, dep_param)
 
 The default optimisation target is the generalised least squares (GLS) estimator, as it performs best, even if it cannot be scaled up to very large numbers of qubits.
 This is not an issue here because because the circuit acts on only three qubits.
-`QuantumACES` is geared towards syndrome extraction circuits, which typically are performant when repeated an even number of times.
+QuantumACES is geared towards syndrome extraction circuits, which typically are performant when repeated an even number of times.
 This is not guaranteed for the example circuit, so we set `add_circuit` to be `false`, though note this is the default behaviour.
 
 ```julia
