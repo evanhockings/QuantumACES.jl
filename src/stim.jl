@@ -696,7 +696,12 @@ function batch_simulate_memory(
         if decoder_type == :pymatching
             decoder = Matching(decoder_dem)
         elseif decoder_type == :beliefmatching
-            decoder = BeliefMatching(decoder_dem)
+            if beliefmatching_load[]
+                decoder = BeliefMatching(decoder_dem)
+            else
+                @warn "Failed to load the beliefmatching decoder. Falling back to pymatching."
+                decoder = Matching(decoder_dem)
+            end
         else
             throw(error("Unsupported decoder type $(decoder_type)."))
         end
