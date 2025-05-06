@@ -1,4 +1,6 @@
 name: Draft PDF
+permissions:
+  contents: read
 on:
   push:
     paths:
