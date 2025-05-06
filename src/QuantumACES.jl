@@ -27,34 +27,46 @@ const Matching = PythonCall.pynew()
 const BeliefMatching = PythonCall.pynew()
 const qiskit = PythonCall.pynew()
 const aer = PythonCall.pynew()
+const pickle_load = Ref{Bool}(false)
+const stim_load = Ref{Bool}(false)
+const Matching_load = Ref{Bool}(false)
+const BeliefMatching_load = Ref{Bool}(false)
+const qiskit_load = Ref{Bool}(false)
+const aer_load = Ref{Bool}(false)
 function __init__()
     try
         PythonCall.pycopy!(pickle, pyimport("pickle"))
+        pickle_load[] = true
     catch
         @warn "Failed to import `pickle`. Associated functions will not work."
     end
     try
         PythonCall.pycopy!(stim, pyimport("stim"))
+        stim_load[] = true
     catch
         @warn "Failed to import `stim`. Associated functions will not work."
     end
     try
         PythonCall.pycopy!(Matching, pyimport("pymatching" => "Matching"))
+        Matching_load[] = true
     catch
         @warn "Failed to import the `pymatching` decoder. Associated functions will not work."
     end
     try
         PythonCall.pycopy!(BeliefMatching, pyimport("beliefmatching" => "BeliefMatching"))
+        BeliefMatching_load[] = true
     catch
         @warn "Failed to import the `beliefmatching` decoder. Associated functions will not work."
     end
     try
         PythonCall.pycopy!(qiskit, pyimport("qiskit"))
+        qiskit_load[] = true
     catch
         @warn "Failed to import `qiskit`. Associated functions will not work."
     end
     try
         PythonCall.pycopy!(aer, pyimport("qiskit_aer"))
+        aer_load[] = true
     catch
         @warn "Failed to import `qiskit_aer`. Associated functions will not work."
     end
