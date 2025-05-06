@@ -1,6 +1,4 @@
 name: Format suggestions
-permissions:
-  contents: read
 on:
   pull_request:
     # this argument is not required if you don't use the `suggestion-label` input
@@ -8,6 +6,19 @@ on:
 jobs:
   code-style:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      checks: read
+      contents: write
+      deployments: read
+      issues: read
+      discussions: read
+      packages: read
+      pages: read
+      pull-requests: read
+      repository-projects: read
+      security-events: read
+      statuses: read
     steps:
       - uses: julia-actions/julia-format@v4
         with:

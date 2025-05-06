@@ -1,6 +1,4 @@
 name: CompatHelper
-permissions:
-  contents: read
 on:
   schedule:
     - cron: 0 0 * * *
@@ -8,6 +6,19 @@ on:
 jobs:
   CompatHelper:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      checks: read
+      contents: write
+      deployments: read
+      issues: read
+      discussions: read
+      packages: read
+      pages: read
+      pull-requests: read
+      repository-projects: read
+      security-events: read
+      statuses: read
     steps:
       - name: Pkg.add("CompatHelper")
         run: julia -e 'using Pkg; Pkg.add("CompatHelper")'
