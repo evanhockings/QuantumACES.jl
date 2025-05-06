@@ -29,8 +29,8 @@ const qiskit = PythonCall.pynew()
 const aer = PythonCall.pynew()
 const pickle_load = Ref{Bool}(false)
 const stim_load = Ref{Bool}(false)
-const Matching_load = Ref{Bool}(false)
-const BeliefMatching_load = Ref{Bool}(false)
+const pymatching_load = Ref{Bool}(false)
+const beliefmatching_load = Ref{Bool}(false)
 const qiskit_load = Ref{Bool}(false)
 const aer_load = Ref{Bool}(false)
 function __init__()
@@ -48,13 +48,13 @@ function __init__()
     end
     try
         PythonCall.pycopy!(Matching, pyimport("pymatching" => "Matching"))
-        Matching_load[] = true
+        pymatching_load[] = true
     catch
         @warn "Failed to import the `pymatching` decoder. Associated functions will not work."
     end
     try
         PythonCall.pycopy!(BeliefMatching, pyimport("beliefmatching" => "BeliefMatching"))
-        BeliefMatching_load[] = true
+        beliefmatching_load[] = true
     catch
         @warn "Failed to import the `beliefmatching` decoder. Associated functions will not work."
     end
